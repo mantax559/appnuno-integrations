@@ -2,13 +2,15 @@
 
 ## Install
 
-Upload `opencart/2.3.0.2/appnuno-2.3.0.2.ocmod.zip` from **Extensions → Extension Installer**. Refresh modifications, then open **Extensions → Extensions → Modules**, install **AppNuno Native Navigation**, and configure it.
+Upload `opencart/2.3.0.2/appnuno-2.3.0.2.ocmod.zip` from **Extensions → Extension Installer**. For an existing earlier installation, upload this updated archive over the old module files without uninstalling, then refresh modifications and reload the module settings page. This release fixes saving when the browser omits the hidden configuration field and adds translated labels and destination selectors. For a fresh installation, open **Extensions → Extensions → Modules**, install **AppNuno Native Navigation**, and configure it.
 
 The extension uses OpenCart's pre-view event to add a same-origin bootstrap script to the shared catalog header. That endpoint emits page-specific state without cache and loads the hosted SDK from `https://appnuno.com/sdk/v1/appnuno.js`. Uninstalling removes the module event and settings. To upgrade, upload the newer archive over the existing files and keep the module installed; do not uninstall first because uninstalling deletes module settings. Refresh modifications after upload. No database schema changes are used.
 
 ## Navigation settings
 
 The module provides admin controls for the fallback tab set, exact OpenCart route overrides, the cart badge tab, back-button placement, glass appearance and light/dark navigation colors. A route such as `checkout/cart` can publish a different full set from `common/home`. Keep tab IDs stable when the same destination occurs in multiple sets; the selected cart tab receives the confirmed cart quantity. The module stores these choices as validated JSON internally; administrators do not need to edit JSON manually.
+
+Each tab has a label input for every enabled OpenCart language. The storefront sends the translation matching its current language, falling back to the first configured translation when a label is missing. Destinations can be selected from built-in store routes (home, special offers, account, login, register, cart, checkout), available information pages and categories, or entered as a custom local path.
 
 ```json
 {

@@ -7,6 +7,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $this->document->setTitle($this->language->get('heading_title'));
         $this->load->model('setting/setting');
         $this->load->model('extension/module/appnuno');
+        $this->load->model('localisation/language');
 
         if (isset($this->request->server['REQUEST_METHOD']) && in_array($this->request->server['REQUEST_METHOD'], array('POST'), true) && $this->validate()) {
             $this->model_setting_setting->editSetting('module_appnuno', array(
@@ -23,6 +24,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['text_disabled'] = $this->language->get('text_disabled');
         $data['entry_status'] = $this->language->get('entry_status');
         $data['text_default_tabs'] = $this->language->get('text_default_tabs');
+        $data['languages'] = array_values($this->model_localisation_language->getLanguages());
+        $data['destinations'] = $this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id'));
         $data['help_config'] = $this->language->get('help_config');
         $data['button_save'] = $this->language->get('button_save');
         $data['button_cancel'] = $this->language->get('button_cancel');
@@ -35,12 +38,24 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['action'] = $this->url->link('extension/module/appnuno', 'token=' . $this->session->data['token'], 'SSL');
         $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', 'SSL');
         $data['module_appnuno_status'] = isset($this->request->post['module_appnuno_status']) ? $this->request->post['module_appnuno_status'] : (in_array($this->config->get('module_appnuno_status'), array('1', 1), true) ? '1' : '0');
-        $data['module_appnuno_config'] = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : $this->model_extension_module_appnuno->defaultConfig();
+        $data['module_appnuno_config'] = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : $this->config->get('module_appnuno_config');
+        if (!is_string($data['module_appnuno_config']) || !strlen(trim($data['module_appnuno_config']))) {
+            $data['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
+        }
         $configuration = json_decode($data['module_appnuno_config'], true);
-        if (!is_array($configuration) || json_last_error()) {
+        if (!isset($this->request->server['REQUEST_METHOD']) || !in_array($this->request->server['REQUEST_METHOD'], array('POST'), true)) {
+            if (!is_array($configuration) || $this->model_extension_module_appnuno->validateConfig($data['module_appnuno_config'])) {
+                $data['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
+                $configuration = json_decode($data['module_appnuno_config'], true);
+            }
+        }
+        if (!is_array($configuration)) {
             $configuration = json_decode($this->model_extension_module_appnuno->defaultConfig(), true);
         }
         $data['configuration_json'] = json_encode($configuration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        $data['languages_json'] = json_encode($data['languages'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        $data['destinations_json'] = json_encode($data['destinations'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        $data['default_language_code'] = $this->config->get('config_language');
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
@@ -69,7 +84,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
         if (!isset($this->request->post['module_appnuno_status']) || !in_array($this->request->post['module_appnuno_status'], array('0', '1', 0, 1), true)) {
             $this->error['warning'] = $this->language->get('error_status');
         }
-        $config_error = $this->model_extension_module_appnuno->validateConfig(isset($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : '');
+        if (!isset($this->request->post['module_appnuno_config']) || !is_string($this->request->post['module_appnuno_config']) || !strlen(trim($this->request->post['module_appnuno_config']))) {
+            $stored_config = $this->config->get('module_appnuno_config');
+            $this->request->post['module_appnuno_config'] = is_string($stored_config) && strlen(trim($stored_config)) ? $stored_config : $this->model_extension_module_appnuno->defaultConfig();
+        }
+        $config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config']);
         if ($config_error) {
             $this->error['config'] = $config_error;
         }

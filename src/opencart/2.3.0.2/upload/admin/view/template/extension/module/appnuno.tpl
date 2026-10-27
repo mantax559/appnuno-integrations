@@ -96,6 +96,9 @@
 <script type="text/javascript">
 (function () {
     var configuration = <?php echo $configuration_json; ?> || {};
+    var languages = <?php echo $languages_json; ?> || [];
+    var destinations = <?php echo $destinations_json; ?> || [];
+    var defaultLanguageCode = <?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
     var defaultContainer = document.getElementById('default-tabs');
     var routesContainer = document.getElementById('route-sets');
     var cartSelect = document.getElementById('cart-tab-id');
@@ -119,12 +122,97 @@
         return group;
     }
 
+    function createLabelFields(tab) {
+        var group = document.createElement('div');
+        group.className = 'form-group';
+        var title = document.createElement('label');
+        title.className = 'col-sm-2 control-label';
+        title.textContent = 'Label translations';
+        var column = document.createElement('div');
+        column.className = 'col-sm-10';
+        var labels = tab.labels || {};
+        var legacyLabel = tab.label || '';
+        var legacyAssigned = false;
+        languages.forEach(function (language) {
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.maxLength = 80;
+            input.placeholder = language.name + ' (' + language.code + ')';
+            input.setAttribute('data-language-label', language.code);
+            if (labels[language.code]) {
+                input.value = labels[language.code];
+            } else if (legacyLabel && (language.code === defaultLanguageCode || !legacyAssigned)) {
+                input.value = legacyLabel;
+                legacyAssigned = true;
+            }
+            column.appendChild(input);
+            var spacer = document.createElement('div');
+            spacer.className = 'help-block';
+            spacer.textContent = language.name + ' · ' + language.code;
+            column.appendChild(spacer);
+        });
+        if (!languages.length) {
+            var fallback = document.createElement('input');
+            fallback.type = 'text';
+            fallback.className = 'form-control';
+            fallback.maxLength = 80;
+            fallback.placeholder = 'Label';
+            fallback.value = legacyLabel;
+            fallback.setAttribute('data-language-label', 'default');
+            column.appendChild(fallback);
+        }
+        group.appendChild(title);
+        group.appendChild(column);
+        return group;
+    }
+
+    function createUrlField(tab) {
+        var group = document.createElement('div');
+        group.className = 'form-group';
+        var title = document.createElement('label');
+        title.className = 'col-sm-2 control-label';
+        title.textContent = 'Destination';
+        var column = document.createElement('div');
+        column.className = 'col-sm-10';
+        var select = document.createElement('select');
+        select.className = 'form-control';
+        select.appendChild(new Option('Choose a store page or custom URL', ''));
+        destinations.forEach(function (destination) {
+            select.appendChild(new Option(destination.label, destination.url));
+        });
+        select.appendChild(new Option('Custom URL', '__custom__'));
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'form-control';
+        input.placeholder = '/index.php?route=checkout/cart';
+        input.setAttribute('data-field', 'url');
+        input.value = tab.url || '';
+        var known = destinations.some(function (destination) { return destination.url === input.value; });
+        select.value = known ? input.value : (input.value ? '__custom__' : '');
+        input.style.display = known ? 'none' : '';
+        select.addEventListener('change', function () {
+            if (select.value === '__custom__') {
+                input.style.display = '';
+                input.focus();
+            } else {
+                input.style.display = 'none';
+                input.value = select.value;
+            }
+        });
+        column.appendChild(select);
+        column.appendChild(input);
+        group.appendChild(title);
+        group.appendChild(column);
+        return group;
+    }
+
     function createTab(tab) {
         var card = document.createElement('div');
         card.className = 'well appnuno-tab';
         card.appendChild(createField('Tab ID', tab.id, 'id'));
-        card.appendChild(createField('Label', tab.label, 'label'));
-        card.appendChild(createField('URL', tab.url, 'url'));
+        card.appendChild(createLabelFields(tab));
+        card.appendChild(createUrlField(tab));
         card.appendChild(createField('Icon', tab.icon, 'icon'));
         card.appendChild(createField('Active icon', tab.activeIcon, 'activeIcon'));
         var remove = document.createElement('button');
@@ -187,6 +275,13 @@
                     tab[field.getAttribute('data-field')] = field.value.trim();
                 }
             });
+            var labels = {};
+            Array.prototype.forEach.call(card.querySelectorAll('[data-language-label]'), function (field) {
+                if (field.value.trim()) {
+                    labels[field.getAttribute('data-language-label')] = field.value.trim();
+                }
+            });
+            tab.labels = labels;
             return tab;
         });
     }

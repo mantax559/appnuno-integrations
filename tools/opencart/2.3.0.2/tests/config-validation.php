@@ -17,6 +17,20 @@ $valid = json_encode(array(
 if (strlen($model->validateConfig($valid))) {
     throw new RuntimeException('Expected valid OpenCart navigation configuration.');
 }
+$localized = json_encode(array(
+    'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/')),
+    'routes' => array()
+));
+if (strlen($model->validateConfig($localized))) {
+    throw new RuntimeException('Expected translated tab labels to be valid.');
+}
+$invalid_labels = json_encode(array(
+    'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => ''), 'url' => '/')),
+    'routes' => array()
+));
+if (!strlen($model->validateConfig($invalid_labels))) {
+    throw new RuntimeException('Expected empty tab translations to be rejected.');
+}
 $invalid = json_encode(array(
     'defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '//attacker.example')),
     'routes' => array()
