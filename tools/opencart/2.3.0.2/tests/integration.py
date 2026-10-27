@@ -210,7 +210,7 @@ def check_storefront(page: Page) -> None:
             f"Script URL: {bootstrap_url}. Related responses: {related_responses}"
         )
     sdk_scripts = page.locator('script[src="https://appnuno.com/sdk/v1/appnuno.js"]')
-    sdk_scripts.wait_for()
+    sdk_scripts.wait_for(state="attached")
     if page.evaluate("window.AppNunoIntegration.config.cartTabId") != "ci-added-tab":
         raise AssertionError("The storefront bootstrap did not publish the persisted cart badge tab ID.")
 
