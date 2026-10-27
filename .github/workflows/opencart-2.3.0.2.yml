@@ -59,4 +59,14 @@ jobs:
           OPENCART_DB_USER: root
           OPENCART_DB_PASSWORD: root
           OPENCART_DB_NAME: opencart
+          OPENCART_ARTIFACT_DIR: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
         run: python tools/opencart/2.3.0.2/tests/integration.py
+
+      - name: Upload browser test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: opencart-${{ matrix.opencart-version }}-browser-artifacts
+          path: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
+          if-no-files-found: warn
+          retention-days: 7

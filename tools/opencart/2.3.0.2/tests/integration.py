@@ -35,6 +35,10 @@ FTP_PASSWORD = "opencart-ci-password"
 FTP_PORT = 2121
 
 
+def capture_screenshot(page: Page, artifact_dir: Path, filename: str) -> None:
+    page.screenshot(path=str(artifact_dir / filename), full_page=True, animations="disabled")
+
+
 def prepare_store(workspace: Path) -> Path:
     archive_path = workspace / "opencart.zip"
     urllib.request.urlretrieve(OPENCART_ARCHIVE_URL, archive_path)
@@ -163,7 +167,7 @@ def install_module(page: Page, token: str) -> None:
     page.locator("#default-tabs .appnuno-tab").first.wait_for()
 
 
-def save_and_check_tab(page: Page) -> None:
+def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     default_panel = page.locator("#default-tabs").locator("xpath=../..")
     if not default_panel.locator("#cart-tab-id").count():
         raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
@@ -175,6 +179,7 @@ def save_and_check_tab(page: Page) -> None:
     tab.locator('[data-field="icon"]').fill("home-outline")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
     page.locator("#input-status").select_option("1")
+    capture_screenshot(page, artifact_dir, "02-admin-settings-before-save.png")
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
     page.reload()
@@ -186,9 +191,10 @@ def save_and_check_tab(page: Page) -> None:
         raise AssertionError("The newly added default tab label did not persist after reloading the settings page.")
     if page.locator("#cart-tab-id").input_value() != "ci-added-tab":
         raise AssertionError("The cart badge tab selection did not persist after reloading the settings page.")
+    capture_screenshot(page, artifact_dir, "03-admin-settings-after-save.png")
 
 
-def check_storefront(page: Page) -> None:
+def check_storefront(page: Page, artifact_dir: Path) -> None:
     responses: list[Response] = []
 
     def is_bootstrap_response(response: Response) -> bool:
@@ -213,15 +219,26 @@ def check_storefront(page: Page) -> None:
     sdk_scripts.wait_for(state="attached")
     if page.evaluate("window.AppNunoIntegration.config.cartTabId") != "ci-added-tab":
         raise AssertionError("The storefront bootstrap did not publish the persisted cart badge tab ID.")
+    capture_screenshot(page, artifact_dir, "04-storefront-desktop.png")
+    page.set_viewport_size({"width": 390, "height": 844})
+    page.reload()
+    page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.config && window.AppNunoIntegration.navigation")
+    if page.evaluate("window.AppNunoIntegration.config.cartTabId") != "ci-added-tab":
+        raise AssertionError("The mobile storefront bootstrap did not publish the persisted cart badge tab ID.")
+    capture_screenshot(page, artifact_dir, "05-storefront-mobile.png")
 
 
 def main() -> None:
     if not PACKAGE.is_file():
         raise FileNotFoundError("Build the OCMOD package before running the integration test: " + str(PACKAGE))
+    artifact_dir = Path(os.environ.get("OPENCART_ARTIFACT_DIR", str(REPOSITORY / "artifacts" / "opencart" / OPENCART_VERSION)))
+    if artifact_dir.exists():
+        shutil.rmtree(artifact_dir)
+    (artifact_dir / "video").mkdir(parents=True)
     with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
         workspace = Path(temporary)
         web_root = prepare_store(workspace)
-        log_path = workspace / "php-server.log"
+        log_path = artifact_dir / "php-server.log"
         with log_path.open("w", encoding="utf-8") as server_log:
             process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root)], stdout=server_log, stderr=subprocess.STDOUT)
             ftp_server = None
@@ -229,24 +246,39 @@ def main() -> None:
                 wait_for_store(process, log_path)
                 with sync_playwright() as playwright:
                     browser = playwright.chromium.launch()
-                    page = browser.new_page()
-                    install_store(page)
-                    login_admin(page, web_root)
-                    configure_ftp()
-                    ftp_server = start_ftp_server(web_root)
-                    token = admin_token(page)
-                    upload_extension(page, token)
-                    refresh_modifications(page, admin_token(page))
-                    install_module(page, admin_token(page))
-                    save_and_check_tab(page)
-                    check_storefront(page)
-                    browser.close()
+                    context = browser.new_context(
+                        viewport={"width": 1440, "height": 1000},
+                        record_video_dir=str(artifact_dir / "video"),
+                        record_video_size={"width": 1440, "height": 1000},
+                    )
+                    tracing_started = False
+                    try:
+                        context.tracing.start(screenshots=True, snapshots=True, sources=True)
+                        tracing_started = True
+                        page = context.new_page()
+                        install_store(page)
+                        login_admin(page, web_root)
+                        configure_ftp()
+                        ftp_server = start_ftp_server(web_root)
+                        token = admin_token(page)
+                        upload_extension(page, token)
+                        refresh_modifications(page, admin_token(page))
+                        install_module(page, admin_token(page))
+                        capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
+                        save_and_check_tab(page, artifact_dir)
+                        check_storefront(page, artifact_dir)
+                    finally:
+                        if tracing_started:
+                            context.tracing.stop(path=str(artifact_dir / "playwright-trace.zip"))
+                        context.close()
+                        browser.close()
             finally:
                 if ftp_server:
                     ftp_server.close_all()
                 process.terminate()
                 process.wait(timeout=10)
         print(f"OpenCart {OPENCART_VERSION} installation, OCMOD upload, module settings persistence and storefront bootstrap tests passed.")
+        print(f"Screenshots, video, Playwright trace and PHP log saved to {artifact_dir}.")
 
 
 if __name__ == "__main__":
