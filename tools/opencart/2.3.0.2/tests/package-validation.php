@@ -24,12 +24,16 @@ for ($index = 0; $index < $archive->numFiles; $index++) {
 }
 $view = $archive->getFromName('upload/admin/view/template/extension/module/appnuno.tpl');
 $controller = $archive->getFromName('upload/admin/controller/extension/module/appnuno.php');
+$catalog_controller = $archive->getFromName('upload/catalog/controller/extension/module/appnuno.php');
 $archive->close();
-if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'Custom URL') || !strstr($view, 'Custom route') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
+if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'Custom URL') || !strstr($view, 'Custom route') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
     throw new RuntimeException('OpenCart archive is missing the updated settings controls and defaults.');
 }
 if (!is_string($controller) || !strstr($controller, '$posted_configuration') || !strstr($controller, "['defaultTabs']") || !strstr($controller, "['routes']")) {
     throw new RuntimeException('OpenCart archive is missing safe fallback handling for incomplete posted configuration.');
+}
+if (!is_string($catalog_controller) || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])')) {
+    throw new RuntimeException('OpenCart archive is missing server-side localized URL resolution.');
 }
 $missing = array_diff($required, $entries);
 if (count($missing)) {

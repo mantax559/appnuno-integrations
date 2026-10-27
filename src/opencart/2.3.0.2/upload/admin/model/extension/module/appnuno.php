@@ -91,7 +91,22 @@ class ModelExtensionModuleAppnuno extends Model {
             if (in_array($tab['id'], $ids, true)) {
                 return $tab_path . '.id: Tab IDs must be unique within each tab set.';
             }
-            if (!isset($tab['url']) || !is_string($tab['url']) || !preg_match('/^\/(?!\/)/', $tab['url']) || preg_match('~[[:cntrl:] ]~', $tab['url']) || preg_match('~\\\\~', $tab['url'])) {
+            if (isset($tab['url']) && !$this->validLocalUrl($tab['url'])) {
+                return $tab_path . '.url: Choose a store destination or enter a valid local path beginning with /.';
+            }
+            if (isset($tab['urls'])) {
+                if (!is_array($tab['urls']) || !count($tab['urls']) || count($tab['urls']) > 20) {
+                    return $tab_path . '.urls: Add at least one localized URL.';
+                }
+                foreach ($tab['urls'] as $language_code => $url) {
+                    if (!is_string($language_code) || (!in_array($language_code, array('default'), true) && !preg_match('/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/', $language_code))) {
+                        return $tab_path . '.urls: Use a valid OpenCart language code.';
+                    }
+                    if (!$this->validLocalUrl($url)) {
+                        return $tab_path . '.urls.' . $language_code . ': Enter a valid local URL beginning with /.';
+                    }
+                }
+            } elseif (!isset($tab['url'])) {
                 return $tab_path . '.url: Choose a store destination or enter a valid local path beginning with /.';
             }
             if (!$this->validTabLabels($tab)) {
@@ -163,6 +178,10 @@ class ModelExtensionModuleAppnuno extends Model {
             }
         }
         return '';
+    }
+
+    private function validLocalUrl($url) {
+        return is_string($url) && preg_match('/^\/(?!\/)/', $url) && !preg_match('~[[:cntrl:] ]~', $url) && !preg_match('~\\\\~', $url);
     }
 
     private function validTabLabels($tab) {

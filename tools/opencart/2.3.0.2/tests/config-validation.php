@@ -33,6 +33,20 @@ $localized = json_encode(array(
 if (strlen($model->validateConfig($localized))) {
     throw new RuntimeException('Expected translated tab labels to be valid.');
 }
+$localized_urls = json_encode(array(
+    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog', 'lt-lt' => 'Katalogas'), 'url' => '/en/catalog', 'urls' => array('en-gb' => '/en/catalog', 'lt-lt' => '/lt/katalogas'))),
+    'routes' => array()
+));
+if (strlen($model->validateConfig($localized_urls))) {
+    throw new RuntimeException('Expected custom local URLs to support language-specific paths.');
+}
+$invalid_localized_url = json_encode(array(
+    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://external.example/catalog'))),
+    'routes' => array()
+));
+if (!strstr($model->validateConfig($invalid_localized_url), 'defaultTabs[0].urls.en-gb')) {
+    throw new RuntimeException('Expected external localized URLs to be rejected with the language path.');
+}
 $invalid_labels = json_encode(array(
     'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => ''), 'url' => '/')),
     'routes' => array()

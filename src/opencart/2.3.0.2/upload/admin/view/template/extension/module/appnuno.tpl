@@ -10,6 +10,7 @@
     </div>
   </div>
   <div class="container-fluid">
+    <?php if ($success) { ?><div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?><button type="button" class="close" data-dismiss="alert">&times;</button></div><?php } ?>
     <?php if ($error_warning) { ?><div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?><button type="button" class="close" data-dismiss="alert">&times;</button></div><?php } ?>
     <?php if ($error_config) { ?><div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?><button type="button" class="close" data-dismiss="alert">&times;</button></div><?php } ?>
     <div class="panel panel-default">
@@ -200,6 +201,7 @@
     function createUrlField(tab, path) {
         var group = document.createElement('div');
         group.className = 'form-group';
+        group.setAttribute('data-validation-path', path + '.url');
         var title = document.createElement('label');
         title.className = 'col-sm-2 control-label';
         title.textContent = 'Destination';
@@ -207,32 +209,66 @@
         column.className = 'col-sm-10';
         var select = document.createElement('select');
         select.className = 'form-control';
+        select.setAttribute('data-url-select', 'true');
         select.appendChild(new Option('Choose a store page or custom URL', ''));
         destinations.forEach(function (destination) {
             select.appendChild(new Option(destination.label, destination.url));
         });
         select.appendChild(new Option('Custom URL', '__custom__'));
-        var input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'form-control';
-        input.placeholder = '/index.php?route=checkout/cart';
-        input.setAttribute('data-field', 'url');
-        input.setAttribute('data-validation-path', path + '.url');
-        input.value = tab.url || '';
-        var known = destinations.some(function (destination) { return destination.url === input.value; });
-        select.value = known ? input.value : (input.value ? '__custom__' : '');
-        input.style.display = known ? 'none' : '';
+        var customUrls = document.createElement('div');
+        customUrls.className = 'appnuno-custom-urls';
+        var savedUrls = tab.urls || {};
+        var languageList = languages.length ? languages : [{ code: 'default', name: 'Default', image: '' }];
+        languageList.forEach(function (language) {
+            var inputGroup = document.createElement('div');
+            inputGroup.className = 'input-group';
+            inputGroup.style.marginTop = '8px';
+            var flag = document.createElement('span');
+            flag.className = 'input-group-addon';
+            if (language.code !== 'default' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
+                var image = document.createElement('img');
+                image.src = 'language/' + language.code + '/' + language.code + '.png';
+                image.alt = language.name;
+                image.width = 16;
+                image.height = 11;
+                image.onerror = function () {
+                    var fallback = document.createElement('span');
+                    fallback.textContent = language.code;
+                    if (image.parentNode) {
+                        image.parentNode.replaceChild(fallback, image);
+                    }
+                };
+                flag.appendChild(image);
+            } else {
+                flag.textContent = language.code;
+            }
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'form-control';
+            input.placeholder = 'Local URL for ' + language.name + ', starting with /';
+            input.setAttribute('data-language-url', language.code);
+            input.setAttribute('data-validation-path', path + '.urls.' + language.code);
+            input.value = savedUrls[language.code] || tab.url || '';
+            inputGroup.appendChild(flag);
+            inputGroup.appendChild(input);
+            customUrls.appendChild(inputGroup);
+        });
+        var known = destinations.some(function (destination) { return destination.url === (tab.url || ''); });
+        select.value = known ? tab.url : (tab.url || Object.keys(savedUrls).length ? '__custom__' : '');
+        customUrls.style.display = select.value === '__custom__' ? '' : 'none';
         select.addEventListener('change', function () {
             if (select.value === '__custom__') {
-                input.style.display = '';
-                input.focus();
+                customUrls.style.display = '';
+                var firstInput = customUrls.querySelector('[data-language-url]');
+                if (firstInput) {
+                    firstInput.focus();
+                }
             } else {
-                input.style.display = 'none';
-                input.value = select.value;
+                customUrls.style.display = 'none';
             }
         });
         column.appendChild(select);
-        column.appendChild(input);
+        column.appendChild(customUrls);
         group.appendChild(title);
         group.appendChild(column);
         return group;
@@ -327,6 +363,9 @@
             Array.prototype.forEach.call(tab.querySelectorAll('[data-language-label]'), function (field) {
                 field.setAttribute('data-validation-path', tabPath + '.labels.' + field.getAttribute('data-language-label'));
             });
+            Array.prototype.forEach.call(tab.querySelectorAll('[data-language-url]'), function (field) {
+                field.setAttribute('data-validation-path', tabPath + '.urls.' + field.getAttribute('data-language-url'));
+            });
         });
     }
 
@@ -387,6 +426,20 @@
                 }
             });
             tab.labels = labels;
+            var destination = card.querySelector('[data-url-select]');
+            if (destination && destination.value === '__custom__') {
+                var urls = {};
+                Array.prototype.forEach.call(card.querySelectorAll('[data-language-url]'), function (field) {
+                    if (field.value.trim()) {
+                        urls[field.getAttribute('data-language-url')] = field.value.trim();
+                    }
+                });
+                tab.urls = urls;
+                tab.url = urls[defaultLanguageCode] || urls.default || Object.keys(urls).map(function (languageCode) { return urls[languageCode]; })[0] || '';
+            } else if (destination && destination.value) {
+                tab.url = destination.value;
+                delete tab.urls;
+            }
             return tab;
         });
     }

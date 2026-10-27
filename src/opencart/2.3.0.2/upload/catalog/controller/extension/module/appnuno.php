@@ -56,6 +56,15 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $tabs = isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? $config['routes'][$route] : $config['defaultTabs'];
         $cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
         foreach ($tabs as &$tab) {
+            if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
+                $language_code = $this->config->get('config_language');
+                if (isset($tab['urls'][$language_code])) {
+                    $tab['url'] = $tab['urls'][$language_code];
+                } elseif (!isset($tab['url'])) {
+                    $tab['url'] = reset($tab['urls']);
+                }
+                unset($tab['urls']);
+            }
             if (isset($tab['labels']) && is_array($tab['labels'])) {
                 $language_code = $this->config->get('config_language');
                 if (isset($tab['labels'][$language_code])) {

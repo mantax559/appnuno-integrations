@@ -45,6 +45,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['button_save'] = $this->language->get('button_save');
         $data['button_cancel'] = $this->language->get('button_cancel');
         $data['error_warning'] = isset($this->error['warning']) ? $this->error['warning'] : '';
+        $data['success'] = isset($this->session->data['success']) ? $this->session->data['success'] : '';
+        unset($this->session->data['success']);
         $data['error_config'] = isset($this->error['config']) ? $this->error['config'] : '';
         $data['error_config_path'] = isset($this->error['config_path']) ? $this->error['config_path'] : '';
         $data['breadcrumbs'] = array();
