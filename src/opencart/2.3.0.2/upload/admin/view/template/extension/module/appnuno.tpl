@@ -146,13 +146,19 @@
             inputGroup.style.marginBottom = '8px';
             var flag = document.createElement('span');
             flag.className = 'input-group-addon';
-            var imageName = typeof language.image === 'string' ? language.image.split('/').pop() : '';
-            if (/^[A-Za-z0-9_-]+\.png$/i.test(imageName)) {
+            if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
                 var image = document.createElement('img');
-                image.src = 'view/image/flags/' + imageName;
+                image.src = 'language/' + language.code + '/' + language.code + '.png';
                 image.alt = language.name;
                 image.width = 16;
                 image.height = 11;
+                image.onerror = function () {
+                    var fallback = document.createElement('span');
+                    fallback.textContent = language.code;
+                    if (image.parentNode) {
+                        image.parentNode.replaceChild(fallback, image);
+                    }
+                };
                 flag.appendChild(image);
             } else {
                 flag.textContent = language.code;

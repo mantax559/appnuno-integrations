@@ -102,13 +102,17 @@ class ControllerExtensionModuleAppnuno extends Controller {
         if (!isset($this->request->post['module_appnuno_status']) || !in_array($this->request->post['module_appnuno_status'], array('0', '1', 0, 1), true)) {
             $this->error['warning'] = $this->language->get('error_status');
         }
-        if (!isset($this->request->post['module_appnuno_config']) || !is_string($this->request->post['module_appnuno_config']) || !strlen(trim($this->request->post['module_appnuno_config']))) {
+        $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : '';
+        $posted_configuration = json_decode($posted_config, true);
+        if (!strlen(trim($posted_config)) || (is_array($posted_configuration) && (!isset($posted_configuration['defaultTabs']) || !is_array($posted_configuration['defaultTabs']) || !isset($posted_configuration['routes']) || !is_array($posted_configuration['routes'])))) {
             $stored_config = $this->config->get('module_appnuno_config');
             if (is_string($stored_config) && !strlen($this->model_extension_module_appnuno->validateConfig($stored_config))) {
                 $this->request->post['module_appnuno_config'] = $stored_config;
             } else {
                 $this->request->post['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
             }
+        } else {
+            $this->request->post['module_appnuno_config'] = $posted_config;
         }
         $config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config']);
         if (strlen($config_error)) {
