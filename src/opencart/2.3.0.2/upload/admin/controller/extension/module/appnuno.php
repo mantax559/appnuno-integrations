@@ -104,7 +104,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         }
         $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : '';
         $posted_configuration = json_decode($posted_config, true);
-        if (!strlen(trim($posted_config)) || (is_array($posted_configuration) && (!isset($posted_configuration['defaultTabs']) || !is_array($posted_configuration['defaultTabs']) || !isset($posted_configuration['routes']) || !is_array($posted_configuration['routes'])))) {
+        if (!is_array($posted_configuration) || !isset($posted_configuration['defaultTabs']) || !is_array($posted_configuration['defaultTabs']) || !isset($posted_configuration['routes']) || !is_array($posted_configuration['routes'])) {
             $stored_config = $this->config->get('module_appnuno_config');
             if (is_string($stored_config) && !strlen($this->model_extension_module_appnuno->validateConfig($stored_config))) {
                 $this->request->post['module_appnuno_config'] = $stored_config;
