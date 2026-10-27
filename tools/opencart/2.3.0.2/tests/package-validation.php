@@ -1,6 +1,6 @@
 <?php
 $repository = dirname(__DIR__, 4);
-$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.3.x' . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.3.x.ocmod.zip';
+$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x' . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.x.ocmod.zip';
 $required = array(
     'install.xml',
     'README.md',
@@ -41,8 +41,8 @@ if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateCo
 if (!is_string($modification) || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, "extension/module/appnuno/bootstrap")) {
     throw new RuntimeException('OpenCart archive is missing direct injection through the shared catalog header.');
 }
-if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall')) {
-    throw new RuntimeException('OpenCart archive is missing its installation and upgrade instructions.');
+if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'Access Permission') || !strstr($readme, 'Modify Permission')) {
+    throw new RuntimeException('OpenCart archive is missing its installation, permissions and upgrade instructions.');
 }
 $missing = array_diff($required, $entries);
 if (count($missing)) {

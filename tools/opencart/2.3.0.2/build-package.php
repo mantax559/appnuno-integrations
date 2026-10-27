@@ -1,8 +1,8 @@
 <?php
 $repository = dirname(__DIR__, 3);
 $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.3.0.2';
-$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.3.x';
-$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.3.x.ocmod.zip';
+$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x';
+$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.x.ocmod.zip';
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
     throw new RuntimeException('Unable to create OpenCart release directory.');
