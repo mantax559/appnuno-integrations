@@ -8,7 +8,7 @@ if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
 }
 $archive = new ZipArchive();
 $result = $archive->open($package, ZipArchive::CREATE | ZipArchive::OVERWRITE);
-if (is_int($result)) {
+if (is_int($result) || !is_bool($result) || !$result) {
     throw new RuntimeException('Unable to create OpenCart extension archive.');
 }
 $archive->addFile($source . DIRECTORY_SEPARATOR . 'install.xml', 'install.xml');

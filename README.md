@@ -9,7 +9,7 @@ OpenCart and future platform integrations for the AppNuno native WebView contrac
 - Maintainer tools and checks: `tools/opencart/2.3.0.2`
 - Installation, module settings and compatibility: `docs/opencart-2.3.0.2.md`
 
-The release folder contains only the archive intended for store owners. Source files, package creation scripts and tests live elsewhere in the repository and are not included in that ZIP.
+The release folder contains only the archive intended for store owners. Source files, package creation scripts and tests live elsewhere in the repository and are not included in that ZIP. Store administrators configure tab sets and native-bar appearance through module controls rather than editing raw JSON.
 
 Build and check the release from the repository root:
 

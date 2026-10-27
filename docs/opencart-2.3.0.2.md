@@ -8,7 +8,7 @@ The extension uses OpenCart's pre-view event to add a same-origin bootstrap scri
 
 ## Navigation settings
 
-The module settings accept JSON with a fallback tab set and optional exact OpenCart route overrides. A route such as `checkout/cart` can publish a different full set from `common/home`. Keep tab IDs stable when the same destination occurs in multiple sets; `cartTabId` chooses the tab whose badge displays the confirmed cart quantity.
+The module provides admin controls for the fallback tab set, exact OpenCart route overrides, the cart badge tab, back-button placement, glass appearance and light/dark navigation colors. A route such as `checkout/cart` can publish a different full set from `common/home`. Keep tab IDs stable when the same destination occurs in multiple sets; the selected cart tab receives the confirmed cart quantity. The module stores these choices as validated JSON internally; administrators do not need to edit JSON manually.
 
 ```json
 {

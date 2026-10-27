@@ -22,7 +22,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['text_enabled'] = $this->language->get('text_enabled');
         $data['text_disabled'] = $this->language->get('text_disabled');
         $data['entry_status'] = $this->language->get('entry_status');
-        $data['entry_config'] = $this->language->get('entry_config');
+        $data['text_default_tabs'] = $this->language->get('text_default_tabs');
         $data['help_config'] = $this->language->get('help_config');
         $data['button_save'] = $this->language->get('button_save');
         $data['button_cancel'] = $this->language->get('button_cancel');
@@ -36,6 +36,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', 'SSL');
         $data['module_appnuno_status'] = isset($this->request->post['module_appnuno_status']) ? $this->request->post['module_appnuno_status'] : (in_array($this->config->get('module_appnuno_status'), array('1', 1), true) ? '1' : '0');
         $data['module_appnuno_config'] = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : $this->model_extension_module_appnuno->defaultConfig();
+        $configuration = json_decode($data['module_appnuno_config'], true);
+        if (!is_array($configuration) || json_last_error()) {
+            $configuration = json_decode($this->model_extension_module_appnuno->defaultConfig(), true);
+        }
+        $data['configuration_json'] = json_encode($configuration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
         $data['header'] = $this->load->controller('common/header');
         $data['column_left'] = $this->load->controller('common/column_left');
         $data['footer'] = $this->load->controller('common/footer');
@@ -43,6 +48,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
     }
 
     public function install() {
+        $this->load->model('user/user_group');
+        $this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/module/appnuno');
+        $this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/module/appnuno');
         $this->load->model('extension/event');
         $this->model_extension_event->addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject');
     }
