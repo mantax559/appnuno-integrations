@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 import pymysql
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, sync_playwright
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -17,7 +17,11 @@ from pyftpdlib.servers import FTPServer
 
 REPOSITORY = Path(__file__).resolve().parents[4]
 PACKAGE = REPOSITORY / "downloads" / "opencart" / "2.x" / "appnuno-opencart-2.x.ocmod.zip"
-OPENCART_ARCHIVE_URL = "https://github.com/opencart/opencart/releases/download/2.3.0.2/2.3.0.2-compiled.zip"
+OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
+SUPPORTED_OPENCART_VERSIONS = {"2.3.0.1", "2.3.0.2"}
+if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
+    raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
+OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
 BASE_URL = "http://127.0.0.1:8080"
 DB_HOST = os.environ.get("OPENCART_DB_HOST", "127.0.0.1")
 DB_USER = os.environ.get("OPENCART_DB_USER", "root")
@@ -170,8 +174,27 @@ def save_and_check_tab(page: Page) -> None:
     tab.locator('[data-field="icon"]').fill("home-outline")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
     page.locator("#input-status").select_option("1")
+    submitted_requests = []
+    page.on(
+        "request",
+        lambda request: submitted_requests.append(request.post_data)
+        if request.method == "POST" and "route=extension/module/appnuno" in request.url
+        else None,
+    )
     page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
+    try:
+        page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
+    except PlaywrightTimeoutError as error:
+        alerts = page.locator(".alert-danger").all_inner_texts()
+        invalid_fields = page.locator("form#form-appnuno :invalid").evaluate_all(
+            "fields => fields.map(field => ({name: field.name, id: field.id, value: field.value, validationMessage: field.validationMessage}))"
+        )
+        request_body = submitted_requests[-1] if submitted_requests else "No AppNuno POST request was observed."
+        raise AssertionError(
+            "OpenCart did not confirm saving AppNuno settings. "
+            f"Current URL: {page.url}. Validation alerts: {alerts}. "
+            f"Invalid form controls: {invalid_fields}. Submitted request body: {request_body}"
+        ) from error
     page.reload()
     saved_tab = page.locator("#default-tabs .appnuno-tab").nth(2)
     saved_tab.wait_for()
@@ -231,7 +254,7 @@ def main() -> None:
                     ftp_server.close_all()
                 process.terminate()
                 process.wait(timeout=10)
-        print("OpenCart 2.3.0.2 installation, OCMOD upload, module settings persistence and storefront bootstrap tests passed.")
+        print(f"OpenCart {OPENCART_VERSION} installation, OCMOD upload, module settings persistence and storefront bootstrap tests passed.")
 
 
 if __name__ == "__main__":
