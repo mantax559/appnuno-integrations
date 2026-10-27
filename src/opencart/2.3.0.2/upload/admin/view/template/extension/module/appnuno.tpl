@@ -253,8 +253,9 @@
             inputGroup.appendChild(input);
             customUrls.appendChild(inputGroup);
         });
-        var known = destinations.some(function (destination) { return destination.url === (tab.url || ''); });
-        select.value = known ? tab.url : (tab.url || Object.keys(savedUrls).length ? '__custom__' : '');
+        var hasLocalizedCustomUrls = Object.keys(savedUrls).length > 0;
+        var known = !hasLocalizedCustomUrls && destinations.some(function (destination) { return destination.url === (tab.url || ''); });
+        select.value = known ? tab.url : (tab.url || hasLocalizedCustomUrls ? '__custom__' : '');
         customUrls.style.display = select.value === '__custom__' ? '' : 'none';
         select.addEventListener('change', function () {
             if (select.value === '__custom__') {
@@ -430,9 +431,7 @@
             if (destination && destination.value === '__custom__') {
                 var urls = {};
                 Array.prototype.forEach.call(card.querySelectorAll('[data-language-url]'), function (field) {
-                    if (field.value.trim()) {
-                        urls[field.getAttribute('data-language-url')] = field.value.trim();
-                    }
+                    urls[field.getAttribute('data-language-url')] = field.value.trim();
                 });
                 tab.urls = urls;
                 tab.url = urls[defaultLanguageCode] || urls.default || Object.keys(urls).map(function (languageCode) { return urls[languageCode]; })[0] || '';

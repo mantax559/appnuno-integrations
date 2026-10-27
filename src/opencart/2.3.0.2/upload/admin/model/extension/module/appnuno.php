@@ -41,7 +41,7 @@ class ModelExtensionModuleAppnuno extends Model {
         return $destinations;
     }
 
-    public function validateConfig($json) {
+    public function validateConfig($json, $language_codes = array()) {
         if (!is_string($json) || strlen($json) > 65535) {
             return 'module_appnuno_config: Configuration must be valid JSON smaller than 64 KB.';
         }
@@ -52,7 +52,7 @@ class ModelExtensionModuleAppnuno extends Model {
         if (count($config['routes']) > 30) {
             return 'routes: A maximum of 30 route-specific tab sets is allowed.';
         }
-        $error = $this->validateTabs($config['defaultTabs'], 'defaultTabs');
+        $error = $this->validateTabs($config['defaultTabs'], 'defaultTabs', $language_codes);
         if (strlen($error)) {
             return $error;
         }
@@ -60,7 +60,7 @@ class ModelExtensionModuleAppnuno extends Model {
             if (!is_string($route) || !preg_match('/^[A-Za-z0-9_\/.]+$/', $route)) {
                 return 'routes.' . $route . '.route: Each route must be a valid OpenCart route such as checkout/cart.';
             }
-            $error = $this->validateTabs($tabs, 'routes.' . $route);
+            $error = $this->validateTabs($tabs, 'routes.' . $route, $language_codes);
             if (strlen($error)) {
                 return $error;
             }
@@ -78,7 +78,7 @@ class ModelExtensionModuleAppnuno extends Model {
         return '';
     }
 
-    private function validateTabs($tabs, $path) {
+    private function validateTabs($tabs, $path, $language_codes) {
         if (!is_array($tabs) || count($tabs) > 8) {
             return $path . ': A tab set must contain no more than 8 tabs.';
         }
@@ -104,6 +104,11 @@ class ModelExtensionModuleAppnuno extends Model {
                     }
                     if (!$this->validLocalUrl($url)) {
                         return $tab_path . '.urls.' . $language_code . ': Enter a valid local URL beginning with /.';
+                    }
+                }
+                foreach ($language_codes as $language_code) {
+                    if (!isset($tab['urls'][$language_code])) {
+                        return $tab_path . '.urls.' . $language_code . ': Enter a local URL for this language, even if the language is disabled.';
                     }
                 }
             } elseif (!isset($tab['url'])) {

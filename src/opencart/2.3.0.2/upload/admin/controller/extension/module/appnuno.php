@@ -1,6 +1,7 @@
 <?php
 class ControllerExtensionModuleAppnuno extends Controller {
     private $error = array();
+    private $available_languages = array();
 
     public function index() {
         $this->load->language('extension/module/appnuno');
@@ -8,6 +9,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $this->load->model('setting/setting');
         $this->load->model('extension/module/appnuno');
         $this->load->model('localisation/language');
+        $this->available_languages = array_values($this->model_localisation_language->getLanguages());
 
         if (isset($this->request->server['REQUEST_METHOD']) && in_array($this->request->server['REQUEST_METHOD'], array('POST'), true) && $this->validate()) {
             $this->model_setting_setting->editSetting('module_appnuno', array(
@@ -24,7 +26,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['text_disabled'] = $this->language->get('text_disabled');
         $data['entry_status'] = $this->language->get('entry_status');
         $data['text_default_tabs'] = $this->language->get('text_default_tabs');
-        $data['languages'] = array_values($this->model_localisation_language->getLanguages());
+        $data['languages'] = $this->available_languages;
         $data['destinations'] = $this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id'));
         $data['route_options'] = array(
             array('label' => 'Home', 'route' => 'common/home'),
@@ -116,7 +118,13 @@ class ControllerExtensionModuleAppnuno extends Controller {
         } else {
             $this->request->post['module_appnuno_config'] = $posted_config;
         }
-        $config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config']);
+        $language_codes = array();
+        foreach ($this->available_languages as $language) {
+            if (isset($language['code']) && is_string($language['code'])) {
+                $language_codes[] = $language['code'];
+            }
+        }
+        $config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config'], $language_codes);
         if (strlen($config_error)) {
             $this->error['config'] = $config_error;
             $error_separator = strrpos($config_error, ':');

@@ -37,8 +37,11 @@ $localized_urls = json_encode(array(
     'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog', 'lt-lt' => 'Katalogas'), 'url' => '/en/catalog', 'urls' => array('en-gb' => '/en/catalog', 'lt-lt' => '/lt/katalogas'))),
     'routes' => array()
 ));
-if (strlen($model->validateConfig($localized_urls))) {
-    throw new RuntimeException('Expected custom local URLs to support language-specific paths.');
+if (strlen($model->validateConfig($localized_urls, array('en-gb', 'lt-lt')))) {
+    throw new RuntimeException('Expected custom local URLs for every configured language.');
+}
+if (!strstr($model->validateConfig($localized_urls, array('en-gb', 'lt-lt', 'de-de')), 'defaultTabs[0].urls.de-de')) {
+    throw new RuntimeException('Expected a custom URL to be required even for a disabled installed language.');
 }
 $invalid_localized_url = json_encode(array(
     'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://external.example/catalog'))),

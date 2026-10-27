@@ -32,8 +32,8 @@ if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + lan
 if (!is_string($controller) || !strstr($controller, '$posted_configuration') || !strstr($controller, "['defaultTabs']") || !strstr($controller, "['routes']")) {
     throw new RuntimeException('OpenCart archive is missing safe fallback handling for incomplete posted configuration.');
 }
-if (!is_string($catalog_controller) || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])')) {
-    throw new RuntimeException('OpenCart archive is missing server-side localized URL resolution.');
+if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {
+    throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');
 }
 $missing = array_diff($required, $entries);
 if (count($missing)) {

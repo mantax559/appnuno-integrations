@@ -47,10 +47,13 @@ class ControllerExtensionModuleAppnuno extends Controller {
     private function getIntegrationJson() {
         $this->load->model('extension/module/appnuno');
         $config_json = $this->config->get('module_appnuno_config');
-        if (!is_string($config_json) || $this->model_extension_module_appnuno->validateConfig($config_json)) {
+        if (!is_string($config_json) || strlen($config_json) > 65535) {
             return '';
         }
         $config = json_decode($config_json, true);
+        if (!is_array($config) || json_last_error() || !isset($config['defaultTabs']) || !is_array($config['defaultTabs']) || !isset($config['routes']) || !is_array($config['routes'])) {
+            return '';
+        }
         $state = $this->model_extension_module_appnuno->getState();
         $route = isset($this->request->get['page_route']) && is_string($this->request->get['page_route']) ? $this->request->get['page_route'] : 'common/home';
         $tabs = isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? $config['routes'][$route] : $config['defaultTabs'];
