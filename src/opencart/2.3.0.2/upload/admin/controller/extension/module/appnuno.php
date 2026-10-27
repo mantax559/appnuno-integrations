@@ -110,17 +110,12 @@ class ControllerExtensionModuleAppnuno extends Controller {
             $this->error['warning'] = $this->language->get('error_status');
         }
         $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : '';
-        $posted_configuration = json_decode($posted_config, true);
-        if (!is_array($posted_configuration) || !isset($posted_configuration['defaultTabs']) || !is_array($posted_configuration['defaultTabs']) || !isset($posted_configuration['routes']) || !is_array($posted_configuration['routes'])) {
-            $stored_config = $this->config->get('module_appnuno_config');
-            if (is_string($stored_config) && !strlen($this->model_extension_module_appnuno->validateConfig($stored_config))) {
-                $this->request->post['module_appnuno_config'] = $stored_config;
-            } else {
-                $this->request->post['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
-            }
-        } else {
-            $this->request->post['module_appnuno_config'] = $posted_config;
+        if (!strlen(trim($posted_config))) {
+            $this->error['config'] = 'Settings data was not submitted. Reload the page and try saving again.';
+            $this->error['config_path'] = 'module_appnuno_config';
+            return false;
         }
+        $this->request->post['module_appnuno_config'] = $posted_config;
         $language_codes = array();
         foreach ($this->available_languages as $language) {
             if (isset($language['code']) && is_string($language['code'])) {

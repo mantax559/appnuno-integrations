@@ -21,13 +21,18 @@
             <label class="col-sm-2 control-label" for="input-status"><?php echo $entry_status; ?></label>
             <div class="col-sm-10"><select name="module_appnuno_status" id="input-status" class="form-control"><option value="1"<?php echo in_array($module_appnuno_status, array('1', 1), true) ? ' selected="selected"' : ''; ?>><?php echo $text_enabled; ?></option><option value="0"<?php echo in_array($module_appnuno_status, array('0', 0), true) ? ' selected="selected"' : ''; ?>><?php echo $text_disabled; ?></option></select></div>
           </div>
-          <input type="hidden" name="module_appnuno_config" id="input-config-json" value="<?php echo htmlspecialchars($module_appnuno_config, ENT_QUOTES, 'UTF-8'); ?>">
+          <input type="hidden" name="module_appnuno_config" id="input-config-json" value="">
           <div class="panel panel-default">
             <div class="panel-heading"><h3 class="panel-title"><?php echo $text_default_tabs; ?></h3></div>
             <div class="panel-body">
               <div class="alert alert-info">Shown on routes without a matching route-specific tab set. Tab URLs must be paths on this store, beginning with /.</div>
               <div id="default-tabs"></div>
               <button type="button" class="btn btn-default" data-add-tab="default-tabs"><i class="fa fa-plus"></i> Add default tab</button>
+              <hr>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="cart-tab-id">Cart badge tab</label>
+                <div class="col-sm-10"><select id="cart-tab-id" class="form-control"></select><p class="help-block">The selected tab receives the confirmed quantity of products in the cart.</p></div>
+              </div>
             </div>
           </div>
           <div class="panel panel-default">
@@ -37,15 +42,6 @@
               <div id="client-validation-error" class="alert alert-danger" role="alert" style="display:none"></div>
               <div id="route-sets"></div>
               <button type="button" class="btn btn-default" id="add-route"><i class="fa fa-plus"></i> Add route tab set</button>
-            </div>
-          </div>
-          <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Cart badge</h3></div>
-            <div class="panel-body">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="cart-tab-id">Cart tab</label>
-                <div class="col-sm-10"><select id="cart-tab-id" class="form-control"></select><p class="help-block">The selected tab receives the confirmed quantity of products in the cart.</p></div>
-              </div>
             </div>
           </div>
           <div class="panel panel-default">
