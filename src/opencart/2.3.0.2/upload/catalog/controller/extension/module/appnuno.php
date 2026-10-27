@@ -8,7 +8,10 @@ class ControllerExtensionModuleAppnuno extends Controller {
             $data['scripts'] = array();
         }
         $page_route = isset($this->request->get['route']) && is_string($this->request->get['route']) ? $this->request->get['route'] : 'common/home';
-        $data['scripts'][] = html_entity_decode($this->url->link('extension/module/appnuno/bootstrap', 'page_route=' . rawurlencode($page_route), 'SSL'), ENT_QUOTES, 'UTF-8');
+        $script_url = html_entity_decode($this->url->link('extension/module/appnuno/bootstrap', 'page_route=' . rawurlencode($page_route), 'SSL'), ENT_QUOTES, 'UTF-8');
+        if (!in_array($script_url, $data['scripts'], true)) {
+            $data['scripts'][] = $script_url;
+        }
     }
 
     public function bootstrap() {
