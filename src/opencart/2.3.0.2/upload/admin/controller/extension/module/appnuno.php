@@ -109,7 +109,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         if (!isset($this->request->post['module_appnuno_status']) || !in_array($this->request->post['module_appnuno_status'], array('0', '1', 0, 1), true)) {
             $this->error['warning'] = $this->language->get('error_status');
         }
-        $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? $this->request->post['module_appnuno_config'] : '';
+        $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? htmlspecialchars_decode($this->request->post['module_appnuno_config'], ENT_COMPAT) : '';
         if (!strlen(trim($posted_config))) {
             $this->error['config'] = 'Settings data was not submitted. Reload the page and try saving again.';
             $this->error['config_path'] = 'module_appnuno_config';

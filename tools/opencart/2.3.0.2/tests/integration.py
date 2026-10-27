@@ -9,7 +9,7 @@ import zipfile
 from pathlib import Path
 
 import pymysql
-from playwright.sync_api import Page, TimeoutError as PlaywrightTimeoutError, sync_playwright
+from playwright.sync_api import Page, sync_playwright
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -174,27 +174,8 @@ def save_and_check_tab(page: Page) -> None:
     tab.locator('[data-field="icon"]').fill("home-outline")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
     page.locator("#input-status").select_option("1")
-    submitted_requests = []
-    page.on(
-        "request",
-        lambda request: submitted_requests.append(request.post_data)
-        if request.method == "POST" and "route=extension/module/appnuno" in request.url
-        else None,
-    )
     page.locator('button[form="form-appnuno"]').click()
-    try:
-        page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
-    except PlaywrightTimeoutError as error:
-        alerts = page.locator(".alert-danger").all_inner_texts()
-        invalid_fields = page.locator("form#form-appnuno :invalid").evaluate_all(
-            "fields => fields.map(field => ({name: field.name, id: field.id, value: field.value, validationMessage: field.validationMessage}))"
-        )
-        request_body = submitted_requests[-1] if submitted_requests else "No AppNuno POST request was observed."
-        raise AssertionError(
-            "OpenCart did not confirm saving AppNuno settings. "
-            f"Current URL: {page.url}. Validation alerts: {alerts}. "
-            f"Invalid form controls: {invalid_fields}. Submitted request body: {request_body}"
-        ) from error
+    page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
     page.reload()
     saved_tab = page.locator("#default-tabs .appnuno-tab").nth(2)
     saved_tab.wait_for()

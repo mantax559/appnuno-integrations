@@ -26,6 +26,15 @@ $valid = json_encode(array(
 if (strlen($model->validateConfig($valid))) {
     throw new RuntimeException('Expected valid multilingual tabs, local destinations, routes and visuals.');
 }
+$form_config = json_encode(array(
+    'defaultTabs' => array(array('id' => 'ci-added-tab', 'labels' => array('en-gb' => 'CI "Added" & Tab'), 'url' => '/index.php?route=information/contact')),
+    'routes' => (object)array()
+));
+$request_cleaned_config = htmlspecialchars($form_config, ENT_COMPAT, 'UTF-8');
+$restored_form_config = htmlspecialchars_decode($request_cleaned_config, ENT_COMPAT);
+if (strcmp($restored_form_config, $form_config) || strlen($model->validateConfig($restored_form_config))) {
+    throw new RuntimeException('Expected OpenCart-cleaned JSON form data to be restored and validated.');
+}
 $localized = json_encode(array(
     'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/')),
     'routes' => array()
