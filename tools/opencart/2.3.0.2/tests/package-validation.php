@@ -41,8 +41,8 @@ if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateCo
 if (!is_string($modification) || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, "extension/module/appnuno/bootstrap")) {
     throw new RuntimeException('OpenCart archive is missing direct injection through the shared catalog header.');
 }
-if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, '2.3.0.2')) {
-    throw new RuntimeException('OpenCart archive is missing its installation and compatibility guide.');
+if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall')) {
+    throw new RuntimeException('OpenCart archive is missing its installation and upgrade instructions.');
 }
 $missing = array_diff($required, $entries);
 if (count($missing)) {
