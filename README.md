@@ -1,17 +1,23 @@
 # AppNuno Integrations
 
-OpenCart and future platform integrations for the AppNuno native WebView contract. The hosted browser SDK is maintained in `appnuno-web` at `public/sdk/v1/appnuno.js` and served from `https://appnuno.com/sdk/v1/appnuno.js`.
+Installable integrations for adding AppNuno's native navigation to commerce platforms.
 
-## OpenCart 2.3.0.2
+## Available downloads
 
-- Installable release archive: `opencart/2.3.0.2/appnuno-2.3.0.2.ocmod.zip`
-- Module source: `src/opencart/2.3.0.2`
-- Maintainer tools and checks: `tools/opencart/2.3.0.2`
-- Installation, module settings and compatibility: `docs/opencart-2.3.0.2.md`
+- [OpenCart 2.3.x — download OCMOD](downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip) · [installation and compatibility](downloads/opencart/2.3.x/README.md)
+- PrestaShop — coming soon.
 
-The release folder contains only the archive intended for store owners. Source files, package creation scripts and tests live elsewhere in the repository and are not included in that ZIP. Store administrators configure tab sets, per-language labels, store destinations and native-bar appearance through module controls rather than editing raw JSON.
+The OpenCart package is currently verified against OpenCart 2.3.0.2; the `2.3.x` label groups the release by its compatible series and does not claim testing against every 2.3.x build. The module release version is maintained separately from the OpenCart version.
 
-Build and check the release from the repository root:
+## Maintainers
+
+The platform source and build tools are kept outside `downloads/`:
+
+- OpenCart source: `src/opencart/2.3.0.2`
+- OpenCart build and validation tools: `tools/opencart/2.3.0.2`
+- Hosted browser SDK: maintained separately in `appnuno-web/public/sdk/v1/appnuno.js` and served from `https://appnuno.com/sdk/v1/appnuno.js`
+
+Build and validate the OpenCart release from the repository root:
 
 ```text
 php tools/opencart/2.3.0.2/tests/config-validation.php
@@ -19,4 +25,4 @@ php tools/opencart/2.3.0.2/build-package.php
 php tools/opencart/2.3.0.2/tests/package-validation.php
 ```
 
-The package tools require PHP's `ZipArchive` extension. The module itself does not require Python. The repository does not include OpenCart core, so test against a real OpenCart 2.3.0.2 fixture before production release.
+The package tools require PHP's `ZipArchive` extension. The repository does not include OpenCart core, so installation, theme, and event behavior must be tested against a real OpenCart 2.3.0.2 store before production use.
