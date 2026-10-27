@@ -12,6 +12,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $this->available_languages = array_values($this->model_localisation_language->getLanguages());
 
         if (isset($this->request->server['REQUEST_METHOD']) && in_array($this->request->server['REQUEST_METHOD'], array('POST'), true) && $this->validate()) {
+            $this->load->model('extension/event');
+            $this->model_extension_event->deleteEvent('appnuno');
+            $this->model_extension_event->addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject');
             $this->model_setting_setting->editSetting('module_appnuno', array(
                 'module_appnuno_status' => $this->request->post['module_appnuno_status'],
                 'module_appnuno_config' => $this->request->post['module_appnuno_config']
