@@ -6,10 +6,11 @@ import threading
 import time
 import urllib.request
 import zipfile
+from urllib.parse import parse_qs, urlparse
 from pathlib import Path
 
 import pymysql
-from playwright.sync_api import Page, sync_playwright
+from playwright.sync_api import Page, Response, sync_playwright
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
@@ -188,16 +189,26 @@ def save_and_check_tab(page: Page) -> None:
 
 
 def check_storefront(page: Page) -> None:
-    responses = []
-    page.on("response", lambda response: responses.append(response) if "/extension/module/appnuno/bootstrap" in response.url else None)
+    responses: list[Response] = []
+
+    def is_bootstrap_response(response: Response) -> bool:
+        route = parse_qs(urlparse(response.url).query).get("route", [])
+        return "extension/module/appnuno/bootstrap" in route
+
+    page.on("response", lambda response: responses.append(response))
     page.goto(BASE_URL + "/")
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.config && window.AppNunoIntegration.navigation")
-    bootstrap = next((response for response in responses if "/extension/module/appnuno/bootstrap" in response.url), None)
-    if bootstrap is None or bootstrap.status != 200:
-        raise AssertionError("The storefront did not successfully request the AppNuno bootstrap endpoint.")
-    bootstrap_scripts = page.locator('script[src*="/extension/module/appnuno/bootstrap"]')
+    bootstrap_scripts = page.locator('script[src*="appnuno"][src*="bootstrap"]')
     if bootstrap_scripts.count() != 1:
         raise AssertionError("The storefront must include exactly one AppNuno bootstrap script.")
+    bootstrap_url = bootstrap_scripts.first.evaluate("script => script.src")
+    bootstrap_responses = [response for response in responses if is_bootstrap_response(response)]
+    if not bootstrap_responses or bootstrap_responses[-1].status != 200:
+        related_responses = [(response.url, response.status) for response in responses if "appnuno" in response.url or "bootstrap" in response.url]
+        raise AssertionError(
+            "The storefront did not successfully request the AppNuno bootstrap endpoint. "
+            f"Script URL: {bootstrap_url}. Related responses: {related_responses}"
+        )
     sdk_scripts = page.locator('script[src="https://appnuno.com/sdk/v1/appnuno.js"]')
     sdk_scripts.wait_for()
     if page.evaluate("window.AppNunoIntegration.config.cartTabId") != "ci-added-tab":
