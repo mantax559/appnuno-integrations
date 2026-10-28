@@ -494,8 +494,8 @@ def check_cart_and_customer_state(page: Page) -> None:
     logged_out = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
     if logged_out.get("identity") != {"identifier": identity["identifier"], "guard": "customer", "is_logged_in": False}:
         raise AssertionError(f"The storefront did not preserve an explicit customer logout identity: {logged_out}.")
-    if logged_out.get("cartCount") != 2:
-        raise AssertionError(f"Customer logout unexpectedly changed the cart quantity: {logged_out}.")
+    if logged_out.get("cartCount") != 0:
+        raise AssertionError(f"Customer logout left the guest cart with the account items: {logged_out}.")
 
 
 def save_module_status(page: Page, enabled: bool) -> None:
