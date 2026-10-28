@@ -1,8 +1,12 @@
 <?php
+$line = isset($argv[1]) ? $argv[1] : '2.3';
+if (!in_array($line, array('2.2', '2.3'), true)) {
+    throw new RuntimeException('Unsupported OpenCart package line.');
+}
 $repository = dirname(__DIR__, 3);
 $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.3.0.2';
-$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x';
-$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.x.ocmod.zip';
+$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $line;
+$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $line . '.ocmod.zip';
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
     throw new RuntimeException('Unable to create OpenCart release directory.');
@@ -18,36 +22,19 @@ foreach ($iterator as $file) {
         $entries[str_replace(DIRECTORY_SEPARATOR, '/', $path)] = $file->getPathname();
     }
 }
-$shared_controller = file_get_contents($source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'controller' . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.php');
-$legacy_controller = str_replace(
-    array(
-        'class ControllerExtensionModuleAppnuno',
-        "url->link('extension/module/appnuno'",
-        "url->link('extension/extension', 'token=' . \$this->session->data['token'] . '&type=module', true)",
-        "addPermission(\$this->user->getGroupId(), 'access', 'extension/module/appnuno')",
-        "addPermission(\$this->user->getGroupId(), 'modify', 'extension/module/appnuno')",
-        "hasPermission('modify', 'extension/module/appnuno')"
-    ),
-    array(
-        'class ControllerModuleAppnuno',
-        "url->link('module/appnuno'",
-        "url->link('extension/module', 'token=' . \$this->session->data['token'], true)",
-        "addPermission(\$this->user->getGroupId(), 'access', 'module/appnuno')",
-        "addPermission(\$this->user->getGroupId(), 'modify', 'module/appnuno')",
-        "hasPermission('modify', 'module/appnuno')"
-    ),
-    $shared_controller
-);
-$legacy_controller_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'appnuno-legacy-controller-' . bin2hex(random_bytes(8)) . '.php';
-if ($legacy_controller === $shared_controller || file_put_contents($legacy_controller_file, $legacy_controller) === false) {
-    throw new RuntimeException('Unable to prepare the OpenCart 2.2 module controller.');
+$prepared = array();
+foreach ($entries as $name => $path) {
+    $body = file_get_contents($path);
+    if ($body === false) {
+        throw new RuntimeException('Unable to read an OpenCart package file.');
+    }
+    if ($line === '2.2' && $name !== 'README.md') {
+        $name = str_replace('/extension/module/', '/module/', $name);
+        $body = opencart22($name, $body);
+    }
+    $prepared[$name] = $body;
 }
-$entries['upload/admin/controller/module/appnuno.php'] = $legacy_controller_file;
-foreach (array('en-gb', 'lt-lt', 'de-de') as $language_code) {
-    $language_file = $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'language' . DIRECTORY_SEPARATOR . $language_code . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.php';
-    $entries['upload/admin/language/' . $language_code . '/module/appnuno.php'] = $language_file;
-}
-ksort($entries, SORT_STRING);
+ksort($prepared, SORT_STRING);
 $staging = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'appnuno-opencart-package-' . bin2hex(random_bytes(12));
 if (!mkdir($staging, 0700)) {
     throw new RuntimeException('Unable to create OpenCart package staging directory.');
@@ -55,13 +42,13 @@ if (!mkdir($staging, 0700)) {
 $archive = new ZipArchive();
 $archive_open = false;
 try {
-    foreach ($entries as $name => $path) {
+    foreach ($prepared as $name => $body) {
         $staged = $staging . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $name);
         $directory = dirname($staged);
         if (!is_dir($directory) && !mkdir($directory, 0700, true)) {
             throw new RuntimeException('Unable to create OpenCart package staging path.');
         }
-        if (!copy($path, $staged) || !chmod($staged, 0644) || !touch($staged, 946684800)) {
+        if (file_put_contents($staged, $body) === false || !chmod($staged, 0644) || !touch($staged, 946684800)) {
             throw new RuntimeException('Unable to normalize an OpenCart package file.');
         }
     }
@@ -70,7 +57,7 @@ try {
         throw new RuntimeException('Unable to create OpenCart extension archive.');
     }
     $archive_open = true;
-    foreach ($entries as $name => $path) {
+    foreach ($prepared as $name => $body) {
         $staged = $staging . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $name);
         if (!$archive->addFile($staged, $name)
             || !$archive->setCompressionName($name, ZipArchive::CM_DEFLATE, 9)
@@ -95,8 +82,46 @@ try {
         }
     }
     rmdir($staging);
-    if (is_file($legacy_controller_file)) {
-        unlink($legacy_controller_file);
-    }
 }
 echo $package . PHP_EOL;
+
+function opencart22($name, $content) {
+    $newline = strpos($content, "\r\n") !== false ? "\r\n" : "\n";
+    if (substr($name, -4) === '.php' || $name === 'install.xml') {
+        $content = str_replace(
+            array(
+                'ControllerExtensionModuleAppnuno',
+                'ModelExtensionModuleAppnuno',
+                'model_extension_module_appnuno',
+                'extension/module/appnuno',
+                "url->link('extension/extension', 'token=' . \$this->session->data['token'] . '&type=module', true)",
+                "language->get('text_extension')"
+            ),
+            array(
+                'ControllerModuleAppnuno',
+                'ModelModuleAppnuno',
+                'model_module_appnuno',
+                'module/appnuno',
+                "url->link('extension/module', 'token=' . \$this->session->data['token'], true)",
+                "language->get('text_module')"
+            ),
+            $content
+        );
+    }
+    if ($name === 'install.xml') {
+        $content = str_replace(
+            array('AppNuno OpenCart 2.3', 'appnuno_opencart_2302', ", 'SSL')"),
+            array('AppNuno OpenCart 2.2', 'appnuno_opencart_2200', ', true)'),
+            $content
+        );
+    }
+    $labels = array(
+        'en-gb' => 'Modules',
+        'lt-lt' => 'Moduliai',
+        'de-de' => 'Module'
+    );
+    if (preg_match('#language/([a-z]{2}-[a-z]{2})/module/appnuno\\.php$#', $name, $match) && isset($labels[$match[1]])) {
+        $content = str_replace("\$_['text_extension']", "\$_['text_module']                 = '" . $labels[$match[1]] . "';" . $newline . "\$_['text_extension']", $content);
+    }
+    return $content;
+}

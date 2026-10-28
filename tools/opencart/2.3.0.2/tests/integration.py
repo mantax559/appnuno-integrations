@@ -18,13 +18,14 @@ from pyftpdlib.servers import FTPServer
 
 
 REPOSITORY = Path(__file__).resolve().parents[4]
-PACKAGE = REPOSITORY / "downloads" / "opencart" / "2.x" / "appnuno-opencart-2.x.ocmod.zip"
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
 SUPPORTED_OPENCART_VERSIONS = {"2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
+OPENCART_LINE = "2.2" if OPENCART_VERSION.startswith("2.2.") else "2.3"
+PACKAGE = REPOSITORY / "downloads" / "opencart" / OPENCART_LINE / f"appnuno-opencart-{OPENCART_LINE}.ocmod.zip"
 OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
 BASE_URL = "http://127.0.0.1:8080"
 DB_HOST = os.environ.get("OPENCART_DB_HOST", "127.0.0.1")
@@ -89,12 +90,8 @@ def configure_ftp() -> None:
         connection.close()
 
 
-def legacy_admin_modules() -> bool:
-    return OPENCART_VERSION.startswith("2.2.")
-
-
 def admin_module_route() -> str:
-    if legacy_admin_modules():
+    if OPENCART_LINE == "2.2":
         return "module/appnuno"
     return "extension/module/appnuno"
 
@@ -104,13 +101,13 @@ def open_module_editor(page: Page, token: str) -> None:
 
 
 def module_list_row(page: Page, token: str):
-    if legacy_admin_modules():
+    if OPENCART_LINE == "2.2":
         page.goto(BASE_URL + "/admin/index.php?route=extension/module&token=" + token)
         return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
     page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
     module_filter = page.locator('select[name="type"]')
     module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
-    return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+    return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
 
 
 def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
@@ -121,9 +118,8 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
     page.locator('input[name="name"]').fill(name)
     page.locator('select[name="code"]').select_option(code)
-    locale_field = page.locator('input[name="locale"]')
-    if locale_field.count():
-        locale_field.fill(locale)
+    if OPENCART_LINE != "2.2":
+        page.locator('input[name="locale"]').fill(locale)
     page.locator('select[name="status"]').select_option("1")
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
@@ -238,11 +234,11 @@ def refresh_modifications(page: Page, token: str) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=extension/modification&token=" + token)
     with page.expect_navigation():
         page.locator(".page-header .btn-info").click()
-    page.get_by_text("AppNuno OpenCart 2.x", exact=True).wait_for()
+    page.get_by_text(f"AppNuno OpenCart {OPENCART_LINE}", exact=True).wait_for()
 
 
 def click_module_list_button(page: Page, row, selector: str) -> None:
-    if legacy_admin_modules():
+    if OPENCART_LINE == "2.2":
         with page.expect_navigation():
             row.locator(selector).click()
         return
@@ -420,7 +416,7 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
     bootstrap_responses = [
         response
         for response in responses
-        if parse_qs(urlparse(response.url).query).get("route", []) == ["extension/module/appnuno/bootstrap"]
+        if parse_qs(urlparse(response.url).query).get("route", []) == [admin_module_route() + "/bootstrap"]
         and parse_qs(urlparse(response.url).query).get("page_route", []) == [expected_route]
     ]
     if not bootstrap_responses or bootstrap_responses[-1].status != 200:
@@ -436,7 +432,7 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
         raise AssertionError(f"The storefront SDK did not publish its initialization event: {sdk_signal}.")
     if payload["route"] != expected_route:
         raise AssertionError(f"Expected bootstrap route {expected_route}, got {payload['route']}.")
-    if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != ["extension/module/appnuno/state"]:
+    if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != [admin_module_route() + "/state"]:
         raise AssertionError("The bootstrap state URL does not target the AppNuno state endpoint.")
     if payload["state"] != {"cartCount": 0, "identity": None}:
         raise AssertionError(f"Unexpected unauthenticated storefront state: {payload['state']}.")
@@ -550,7 +546,7 @@ def check_cart_and_customer_state(page: Page) -> None:
     page.wait_for_timeout(500)
     page.locator("#button-cart").click()
     page.wait_for_timeout(500)
-    state_url = BASE_URL + "/index.php?route=extension/module/appnuno/state"
+    state_url = BASE_URL + "/index.php?route=" + admin_module_route() + "/state"
     cart_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
     if cart_state.get("cartCount") != 2 or cart_state.get("identity") is not None:
         raise AssertionError(f"The storefront state did not report the real cart quantity: {cart_state}.")
@@ -638,7 +634,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     page.goto(BASE_URL + "/")
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
         raise AssertionError("The disabled module still injected its bootstrap script.")
-    disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=extension/module/appnuno/state")
+    disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=" + admin_module_route() + "/state")
     if disabled != 404:
         raise AssertionError(f"The disabled module state endpoint returned HTTP {disabled} instead of 404.")
     open_module_editor(page, token)

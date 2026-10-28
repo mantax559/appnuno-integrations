@@ -1,21 +1,23 @@
 <?php
+$line = isset($argv[1]) ? $argv[1] : '2.3';
+if (!in_array($line, array('2.2', '2.3'), true)) {
+    throw new RuntimeException('Unsupported OpenCart package line.');
+}
+$module_path = $line === '2.2' ? 'module' : 'extension/module';
+$controller_class = $line === '2.2' ? 'class ControllerModuleAppnuno' : 'class ControllerExtensionModuleAppnuno';
 $repository = dirname(__DIR__, 4);
-$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x' . DIRECTORY_SEPARATOR . 'appnuno-opencart-2.x.ocmod.zip';
+$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $line . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $line . '.ocmod.zip';
 $required = array(
     'install.xml',
     'README.md',
-    'upload/admin/controller/extension/module/appnuno.php',
-    'upload/admin/language/en-gb/extension/module/appnuno.php',
-    'upload/admin/language/lt-lt/extension/module/appnuno.php',
-    'upload/admin/language/de-de/extension/module/appnuno.php',
-    'upload/admin/model/extension/module/appnuno.php',
-    'upload/admin/view/template/extension/module/appnuno.tpl',
-    'upload/catalog/controller/extension/module/appnuno.php',
-    'upload/catalog/model/extension/module/appnuno.php',
-    'upload/admin/controller/module/appnuno.php',
-    'upload/admin/language/en-gb/module/appnuno.php',
-    'upload/admin/language/lt-lt/module/appnuno.php',
-    'upload/admin/language/de-de/module/appnuno.php'
+    'upload/admin/controller/' . $module_path . '/appnuno.php',
+    'upload/admin/language/en-gb/' . $module_path . '/appnuno.php',
+    'upload/admin/language/lt-lt/' . $module_path . '/appnuno.php',
+    'upload/admin/language/de-de/' . $module_path . '/appnuno.php',
+    'upload/admin/model/' . $module_path . '/appnuno.php',
+    'upload/admin/view/template/' . $module_path . '/appnuno.tpl',
+    'upload/catalog/controller/' . $module_path . '/appnuno.php',
+    'upload/catalog/model/' . $module_path . '/appnuno.php'
 );
 $archive = new ZipArchive();
 if (!$archive->open($package)) {
@@ -38,14 +40,12 @@ sort($sorted_entries, SORT_STRING);
 if (!in_array($entries, array($sorted_entries), true)) {
     throw new RuntimeException('OpenCart package entries must be sorted deterministically.');
 }
-$view = $archive->getFromName('upload/admin/view/template/extension/module/appnuno.tpl');
-$controller = $archive->getFromName('upload/admin/controller/extension/module/appnuno.php');
-$english = $archive->getFromName('upload/admin/language/en-gb/extension/module/appnuno.php');
-$lithuanian = $archive->getFromName('upload/admin/language/lt-lt/extension/module/appnuno.php');
-$german = $archive->getFromName('upload/admin/language/de-de/extension/module/appnuno.php');
-$catalog_controller = $archive->getFromName('upload/catalog/controller/extension/module/appnuno.php');
-$legacy_controller = $archive->getFromName('upload/admin/controller/module/appnuno.php');
-$legacy_english = $archive->getFromName('upload/admin/language/en-gb/module/appnuno.php');
+$view = $archive->getFromName('upload/admin/view/template/' . $module_path . '/appnuno.tpl');
+$controller = $archive->getFromName('upload/admin/controller/' . $module_path . '/appnuno.php');
+$english = $archive->getFromName('upload/admin/language/en-gb/' . $module_path . '/appnuno.php');
+$lithuanian = $archive->getFromName('upload/admin/language/lt-lt/' . $module_path . '/appnuno.php');
+$german = $archive->getFromName('upload/admin/language/de-de/' . $module_path . '/appnuno.php');
+$catalog_controller = $archive->getFromName('upload/catalog/controller/' . $module_path . '/appnuno.php');
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
@@ -58,16 +58,16 @@ if (!strstr($view, 'id="default-tabs"') || !strstr($view, "\$text['entry_cart_ta
 if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !strstr($english, 'Cart badge tab') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !strstr($lithuanian, 'Numatytieji skirtukai') || !is_string($german) || !strstr($german, 'AppNuno native Navigation') || !strstr($german, 'Standard-Tabs')) {
     throw new RuntimeException('OpenCart archive is missing the English, Lithuanian or German module language.');
 }
-if (!is_string($controller) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')")) {
-    throw new RuntimeException('OpenCart archive is missing strict submitted settings handling or catalog event repair on save.');
+if ($line === '2.2' && (!is_string($english) || !strstr($english, "\$_['text_module']"))) {
+    throw new RuntimeException('OpenCart 2.2 archive is missing the modules breadcrumb label.');
 }
-if (!is_string($legacy_controller) || !strstr($legacy_controller, 'class ControllerModuleAppnuno') || !strstr($legacy_controller, "hasPermission('modify', 'module/appnuno')") || !strstr($legacy_controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')") || !strstr($legacy_controller, "load->language('extension/module/appnuno')") || !is_string($legacy_english) || !strstr($legacy_english, 'AppNuno Native Navigation')) {
-    throw new RuntimeException('OpenCart archive is missing the OpenCart 2.2 module entry that reuses the shared settings.');
+if (!is_string($controller) || !strstr($controller, $controller_class) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', '" . $module_path . "/appnuno/inject')")) {
+    throw new RuntimeException('OpenCart archive is missing strict submitted settings handling or catalog event repair on save.');
 }
 if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {
     throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');
 }
-if (!is_string($modification) || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, "extension/module/appnuno/bootstrap")) {
+if (!is_string($modification) || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
     throw new RuntimeException('OpenCart archive is missing direct injection through the shared catalog header.');
 }
 if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'Access Permission') || !strstr($readme, 'Modify Permission')) {

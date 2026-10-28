@@ -1,4 +1,4 @@
-name: OpenCart 2.2 and 2.3 compatibility
+name: OpenCart 2.3 compatibility
 
 on:
   push:
@@ -11,7 +11,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        opencart-version: ['2.2.0.0', '2.3.0.0', '2.3.0.1', '2.3.0.2']
+        opencart-version: ['2.3.0.0', '2.3.0.1', '2.3.0.2']
     services:
       mysql:
         image: mysql:5.7
@@ -57,12 +57,12 @@ jobs:
         env:
           TZ: UTC
         run: |
-          php tools/opencart/2.3.0.2/build-package.php
-          first_hash=$(sha256sum downloads/opencart/2.x/appnuno-opencart-2.x.ocmod.zip | cut -d ' ' -f 1)
-          php tools/opencart/2.3.0.2/build-package.php
-          second_hash=$(sha256sum downloads/opencart/2.x/appnuno-opencart-2.x.ocmod.zip | cut -d ' ' -f 1)
+          php tools/opencart/2.3.0.2/build-package.php 2.3
+          first_hash=$(sha256sum downloads/opencart/2.3/appnuno-opencart-2.3.ocmod.zip | cut -d ' ' -f 1)
+          php tools/opencart/2.3.0.2/build-package.php 2.3
+          second_hash=$(sha256sum downloads/opencart/2.3/appnuno-opencart-2.3.ocmod.zip | cut -d ' ' -f 1)
           test "$first_hash" = "$second_hash"
-          php tools/opencart/2.3.0.2/tests/package-validation.php
+          php tools/opencart/2.3.0.2/tests/package-validation.php 2.3
           php tools/opencart/2.3.0.2/tests/config-validation.php
 
       - name: Install OpenCart ${{ matrix.opencart-version }} and run browser integration test
