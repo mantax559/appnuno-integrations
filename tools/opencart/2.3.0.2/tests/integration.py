@@ -22,7 +22,7 @@ PACKAGE = REPOSITORY / "downloads" / "opencart" / "2.x" / "appnuno-opencart-2.x.
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.3.0.1", "2.3.0.2"}
+SUPPORTED_OPENCART_VERSIONS = {"2.3.0.0", "2.3.0.1", "2.3.0.2"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
@@ -89,14 +89,21 @@ def configure_ftp() -> None:
         connection.close()
 
 
-def configure_secondary_language() -> None:
+def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
-        cursor.execute(
-            "INSERT INTO oc_language (name, code, locale, image, directory, sort_order, status) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            ("Lithuanian", "lt-lt", "lt-LT,lt_LT.UTF-8,lt_LT,lt-lt,lithuanian", "lt-lt.png", "lt-lt", 2, 1),
-        )
+        cursor.execute("SET GLOBAL sql_mode = 'NO_ENGINE_SUBSTITUTION'")
     connection.close()
+    page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
+    page.locator('input[name="name"]').fill(name)
+    page.locator('select[name="code"]').select_option(code)
+    page.locator('input[name="locale"]').fill(locale)
+    page.locator('select[name="status"]').select_option("1")
+    with page.expect_navigation():
+        page.locator('button[form="form-language"]').click()
+    page.locator(".alert-success").wait_for()
+    if code not in page.locator("#content").inner_text():
+        raise AssertionError(f"OpenCart did not list the added {name} language.")
 
 
 def setting_value(key: str) -> str | None:
@@ -225,18 +232,21 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     default_panel = page.locator("#default-tabs").locator("xpath=../..")
     if not default_panel.locator("#cart-tab-id").count():
         raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
-    for index, labels in enumerate((("Home", "Pradžia"), ("Cart", "Krepšelis"))):
+    for index, labels in enumerate((("Home", "Pradžia", "Start"), ("Cart", "Krepšelis", "Warenkorb"))):
         tab = page.locator("#default-tabs .appnuno-tab").nth(index)
         tab.locator('[data-language-label="en-gb"]').fill(labels[0])
         tab.locator('[data-language-label="lt-lt"]').fill(labels[1])
+        tab.locator('[data-language-label="de-de"]').fill(labels[2])
     page.locator('button[data-add-tab="default-tabs"]').click()
     tab = page.locator("#default-tabs .appnuno-tab").last
     tab.locator('[data-field="id"]').fill("ci-added-tab")
     tab.locator('[data-language-label="en-gb"]').fill("CI Added Tab")
     tab.locator('[data-language-label="lt-lt"]').fill("CI pridėtas skirtukas")
+    tab.locator('[data-language-label="de-de"]').fill("CI hinzugefügter Tab")
     tab.locator('[data-url-select]').select_option("__custom__")
     tab.locator('[data-language-url="en-gb"]').fill("/en/contact")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/kontaktai")
+    tab.locator('[data-language-url="de-de"]').fill("/de/kontakt")
     tab.locator('[data-field="icon"]').fill("home-outline")
     tab.locator('[data-field="activeIcon"]').fill("home")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
@@ -263,9 +273,11 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     route_tab.locator('[data-field="id"]').fill("ci-cart-route-tab")
     route_tab.locator('[data-language-label="en-gb"]').fill("Cart route tab")
     route_tab.locator('[data-language-label="lt-lt"]').fill("Krepšelio skirtukas")
+    route_tab.locator('[data-language-label="de-de"]').fill("Warenkorb-Route")
     route_tab.locator('[data-url-select]').select_option("__custom__")
     route_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
     route_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
+    route_tab.locator('[data-language-url="de-de"]').fill("/de/warenkorb")
     route_tab.locator('[data-field="icon"]').fill("cart-outline")
     route_tab.locator('[data-field="activeIcon"]').fill("cart")
     capture_screenshot(page, artifact_dir, "02-admin-settings-before-save.png")
@@ -295,35 +307,71 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     capture_screenshot(page, artifact_dir, "03-admin-settings-after-save.png")
 
 
-def set_admin_language(code: str) -> None:
-    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
-    with connection.cursor() as cursor:
-        cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND `key` = 'config_admin_language'", (code,))
-    connection.close()
+def switch_admin_language(page: Page, code: str) -> None:
+    page.goto(BASE_URL + "/admin/index.php?route=setting/setting&token=" + admin_token(page))
+    page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
+    page.locator('a[href="#tab-local"]').click()
+    page.locator("#input-admin-language").select_option(code)
+    with page.expect_navigation():
+        page.locator("#button-save").click()
+    page.locator(".alert-success").wait_for()
 
 
-def expect_module_language(page: Page, heading: str, tabs_heading: str, label_caption: str) -> None:
-    page.reload()
-    heading_text = page.locator("#content h1").inner_text()
-    if heading not in heading_text:
-        raise AssertionError(f"The module heading did not follow the admin language. Expected {heading}, got {heading_text}.")
-    tabs_title = page.locator("#content .panel-title").filter(has_text=tabs_heading)
-    tabs_title.first.wait_for()
-    if tabs_title.count() != 1:
-        raise AssertionError(f"The module panel title did not change to {tabs_heading}.")
-    label = page.locator("#default-tabs .control-label").filter(has_text=label_caption)
-    label.first.wait_for()
-    if not label.count():
-        raise AssertionError(f"The module label caption did not change to {label_caption}.")
+def expect_module_language(page: Page, phrases: tuple[str, ...]) -> None:
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + admin_token(page))
+    page.locator("#default-tabs .appnuno-tab").first.wait_for()
+    content = page.locator("#content").inner_text()
+    missing = [phrase for phrase in phrases if phrase not in content]
+    if missing:
+        raise AssertionError("The AppNuno extension did not show these translated names: " + ", ".join(missing) + ".")
 
 
 def check_admin_module_languages(page: Page) -> None:
-    set_admin_language("lt-lt")
-    expect_module_language(page, "AppNuno vietinė navigacija", "Numatytieji skirtukai", "Skirtukų pavadinimai pagal kalbą")
-    set_admin_language("de-de")
-    expect_module_language(page, "AppNuno native Navigation", "Standard-Tabs", "Tab-Beschriftungen nach Sprache")
-    set_admin_language("en-gb")
-    expect_module_language(page, "AppNuno Native Navigation", "Default tabs", "Tab labels by language")
+    switch_admin_language(page, "lt-lt")
+    expect_module_language(page, (
+        "AppNuno vietinė navigacija",
+        "Redaguoti AppNuno vietinę navigaciją",
+        "Numatytieji skirtukai",
+        "Krepšelio ženkliuko skirtukas",
+        "Maršrutų skirtukų rinkiniai",
+        "Pridėti maršruto skirtukų rinkinį",
+        "Grįžimo mygtukas",
+        "Stiklinė mygtukų juosta",
+        "Navigacijos spalvos",
+        "Šviesus režimas",
+        "Skirtukų pavadinimai pagal kalbą",
+        "Įjungta",
+    ))
+    switch_admin_language(page, "de-de")
+    expect_module_language(page, (
+        "AppNuno native Navigation",
+        "AppNuno native Navigation bearbeiten",
+        "Standard-Tabs",
+        "Tab für das Warenkorbsymbol",
+        "Routenspezifische Tab-Sätze",
+        "Routen-Tab-Satz hinzufügen",
+        "Zurück-Schaltfläche",
+        "Glas-Schaltflächenleiste",
+        "Navigationsfarben",
+        "Heller Modus",
+        "Tab-Beschriftungen nach Sprache",
+        "Aktiviert",
+    ))
+    switch_admin_language(page, "en-gb")
+    expect_module_language(page, (
+        "AppNuno Native Navigation",
+        "Edit AppNuno Native Navigation",
+        "Default tabs",
+        "Cart badge tab",
+        "Route-specific tab sets",
+        "Add route tab set",
+        "Back button",
+        "Glass button bar",
+        "Navigation colors",
+        "Light mode",
+        "Tab labels by language",
+        "Enabled",
+    ))
 
 
 def get_bootstrap_payload(page: Page, responses: list[Response], expected_route: str) -> dict:
@@ -627,12 +675,13 @@ def main() -> None:
                         page = context.new_page()
                         install_store(page)
                         login_admin(page, web_root)
-                        configure_secondary_language()
                         configure_ftp()
                         ftp_server = start_ftp_server(web_root)
                         token = admin_token(page)
                         upload_extension(page, token)
                         refresh_modifications(page, admin_token(page))
+                        add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
+                        add_store_language(page, "German", "de-de", "de_DE.UTF-8,de_DE,de-de,german")
                         install_module(page, admin_token(page))
                         capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
                         save_and_check_tab(page, artifact_dir)
