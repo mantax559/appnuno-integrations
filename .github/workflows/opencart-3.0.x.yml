@@ -31,6 +31,17 @@ jobs:
           - '3.0.4.1'
           - '3.0.5.0'
           - '3.0.5.1'
+        php-version: ['7.3']
+        exclude:
+          - opencart-version: '3.0.5.0'
+            php-version: '7.3'
+          - opencart-version: '3.0.5.1'
+            php-version: '7.3'
+        include:
+          - opencart-version: '3.0.5.0'
+            php-version: '8.1'
+          - opencart-version: '3.0.5.1'
+            php-version: '8.1'
     services:
       mysql:
         image: mysql:5.7
@@ -58,8 +69,8 @@ jobs:
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '7.3'
-          extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, ftp, gd, mysqli, zip, mbstring, xml${{ matrix.php-version == '7.3' && ', mcrypt' || '' }}
           coverage: none
 
       - name: Set up Python

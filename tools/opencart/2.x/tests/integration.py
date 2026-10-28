@@ -710,15 +710,18 @@ def check_cart_and_customer_state(page: Page) -> None:
     page.locator('input[name="telephone"]').fill("5550100")
     page.locator('input[name="password"]').fill("ci-customer-password")
     page.locator('input[name="confirm"]').fill("ci-customer-password")
-    page.locator('input[name="address_1"]').fill("1 CI Street")
-    page.locator('input[name="city"]').fill("Vilnius")
-    page.locator('input[name="postcode"]').fill("01100")
-    country = page.locator('select[name="country_id"]')
-    if not country.input_value():
-        country.select_option(index=1)
-    zone = page.locator('select[name="zone_id"]')
-    zone.locator('option[value]:not([value=""])').first.wait_for(state="attached")
-    zone.select_option(zone.locator('option[value]:not([value=""])').first.get_attribute("value"))
+    # OpenCart 3 collects the address at checkout, so the account form has no address fields.
+    address = page.locator('input[name="address_1"]')
+    if address.count():
+        address.fill("1 CI Street")
+        page.locator('input[name="city"]').fill("Vilnius")
+        page.locator('input[name="postcode"]').fill("01100")
+        country = page.locator('select[name="country_id"]')
+        if not country.input_value():
+            country.select_option(index=1)
+        zone = page.locator('select[name="zone_id"]')
+        zone.locator('option[value]:not([value=""])').first.wait_for(state="attached")
+        zone.select_option(zone.locator('option[value]:not([value=""])').first.get_attribute("value"))
     agreement = page.locator('input[name="agree"]')
     if agreement.count():
         agreement.check()
