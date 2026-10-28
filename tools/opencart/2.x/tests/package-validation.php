@@ -6,7 +6,8 @@ if (!in_array($line, array('2.0', '2.1', '2.2', '2.3'), true)) {
 $module_path = $line === '2.3' ? 'extension/module' : 'module';
 $controller_class = $line === '2.3' ? 'class ControllerExtensionModuleAppnuno' : 'class ControllerModuleAppnuno';
 $repository = dirname(__DIR__, 4);
-$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $line . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $line . '.ocmod.zip';
+$release_line = $line . '.x';
+$package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $required = array(
     'install.xml',
     'README.md',
@@ -86,7 +87,7 @@ if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateCo
     throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');
 }
 $modification_code = array('2.0' => 'appnuno_opencart_2000', '2.1' => 'appnuno_opencart_2100', '2.2' => 'appnuno_opencart_2200', '2.3' => 'appnuno_opencart_2302');
-if (!is_string($modification) || !strstr($modification, 'AppNuno OpenCart ' . $line) || !strstr($modification, '<code>' . $modification_code[$line] . '</code>') || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
+if (!is_string($modification) || !strstr($modification, 'AppNuno OpenCart ' . $line . '.x') || !strstr($modification, '<code>' . $modification_code[$line] . '</code>') || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
     throw new RuntimeException('OpenCart archive is missing its version-specific modification or direct catalog header injection.');
 }
 if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'Access Permission') || !strstr($readme, 'Modify Permission')) {

@@ -25,7 +25,7 @@ SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_LINE = OPENCART_VERSION[:3]
-PACKAGE = REPOSITORY / "downloads" / "opencart" / OPENCART_LINE / f"appnuno-opencart-{OPENCART_LINE}.ocmod.zip"
+PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_LINE}.x" / f"appnuno-opencart-{OPENCART_LINE}.x.ocmod.zip"
 if OPENCART_LINE in ("2.0", "2.1"):
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
 else:
@@ -321,7 +321,7 @@ def refresh_modifications(page: Page, token: str) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=extension/modification&token=" + token)
     with page.expect_navigation():
         page.locator(".page-header .btn-info").click()
-    page.get_by_text(f"AppNuno OpenCart {OPENCART_LINE}", exact=True).wait_for()
+    page.get_by_text(f"AppNuno OpenCart {OPENCART_LINE}.x", exact=True).wait_for()
 
 
 def click_module_list_button(page: Page, row, selector: str) -> None:
@@ -596,6 +596,11 @@ def check_default_bootstrap(payload: dict) -> None:
         raise AssertionError(f"Page visibility replaced route-specific tab sets: {configuration['routes']}.")
     if any(tab["id"] == "ci-cart-route-tab" for tab in payload["navigation"]["tabs"]):
         raise AssertionError(f"A tab limited to the cart page was published on {payload['route']}: {payload['navigation']['tabs']}.")
+    active_ids = [tab["id"] for tab in payload["navigation"]["tabs"] if tab.get("active") is True]
+    if payload["route"] == "common/home" and active_ids != ["home"]:
+        raise AssertionError(f"The home page did not keep the Home tab active: {payload['navigation']['tabs']}.")
+    if payload["route"] != "common/home" and active_ids:
+        raise AssertionError(f"A tab stayed active on {payload['route']} without a matching destination: {payload['navigation']['tabs']}.")
     tab = next(tab for tab in payload["navigation"]["tabs"] if tab["id"] == "ci-added-tab")
     if "labels" in tab or "urls" in tab:
         raise AssertionError("The resolved navigation tab still contains untranslated labels or URLs.")
@@ -648,6 +653,9 @@ def check_route_bootstrap(payload: dict) -> None:
         raise AssertionError(f"The cart page tab icons were not preserved: {tab}.")
     if "labels" in tab or "urls" in tab or "pages" in tab:
         raise AssertionError("The resolved cart page tab still contains stored translations or page limits.")
+    active_ids = [tab["id"] for tab in tabs if tab.get("active") is True]
+    if active_ids != ["cart"]:
+        raise AssertionError(f"The cart page did not keep the Cart tab active: {tabs}.")
 
 
 def check_cart_and_customer_state(page: Page) -> None:

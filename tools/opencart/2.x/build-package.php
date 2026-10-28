@@ -4,9 +4,10 @@ if (!in_array($line, array('2.0', '2.1', '2.2', '2.3'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 $repository = dirname(__DIR__, 3);
-$source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.3.0.2';
-$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $line;
-$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $line . '.ocmod.zip';
+$source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x';
+$release_line = $line . '.x';
+$release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line;
+$package = $release . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
     throw new RuntimeException('Unable to create OpenCart release directory.');
@@ -127,11 +128,11 @@ function opencart_module_layout($line, $name, $content) {
     }
     if ($name === 'install.xml') {
         $replacements = array(
-            '2.0' => array('AppNuno OpenCart 2.0', 'appnuno_opencart_2000'),
-            '2.1' => array('AppNuno OpenCart 2.1', 'appnuno_opencart_2100'),
-            '2.2' => array('AppNuno OpenCart 2.2', 'appnuno_opencart_2200')
+            '2.0' => array('AppNuno OpenCart 2.0.x', 'appnuno_opencart_2000'),
+            '2.1' => array('AppNuno OpenCart 2.1.x', 'appnuno_opencart_2100'),
+            '2.2' => array('AppNuno OpenCart 2.2.x', 'appnuno_opencart_2200')
         );
-        $content = str_replace(array('AppNuno OpenCart 2.3', 'appnuno_opencart_2302'), $replacements[$line], $content);
+        $content = str_replace(array('AppNuno OpenCart 2.3.x', 'appnuno_opencart_2302'), $replacements[$line], $content);
         if ($line === '2.2') {
             $content = str_replace(", 'SSL')", ', true)', $content);
         }

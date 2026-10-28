@@ -1,6 +1,6 @@
 <?php
 class Model {}
-require dirname(__DIR__, 4) . '/src/opencart/2.3.0.2/upload/admin/model/extension/module/appnuno.php';
+require dirname(__DIR__, 4) . '/src/opencart/2.x/upload/admin/model/extension/module/appnuno.php';
 $model = new ModelExtensionModuleAppnuno();
 $default = $model->defaultConfig();
 if (strlen($model->validateConfig($default))) {
