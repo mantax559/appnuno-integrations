@@ -251,35 +251,41 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     tab.locator('[data-field="activeIcon"]').fill("home")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
     page.locator("#input-status").select_option("1")
-    page.locator("#back-enabled").uncheck()
+    page.locator('a[href="#tab-back"]').click()
+    page.locator("#tab-back").wait_for(state="visible")
+    page.locator("#back-enabled").select_option("0")
     page.locator("#back-placement").select_option("bar")
-    page.locator("#glass-enabled").check()
+    page.locator('a[href="#tab-glass"]').click()
+    page.locator("#tab-glass").wait_for(state="visible")
+    page.locator("#glass-enabled").select_option("1")
     page.locator("#glass-color-scheme").select_option("dark")
     page.locator("#glass-style").select_option("clear")
-    page.locator("#glass-animate").uncheck()
+    page.locator("#glass-animate").select_option("0")
     page.locator("#glass-duration").fill("0.7")
-    page.locator("#glass-interactive").uncheck()
+    page.locator("#glass-interactive").select_option("0")
     page.locator("#glass-tint-color").fill("#123456")
     page.locator("#glass-tint-alpha").fill("0.4")
+    page.locator('a[href="#tab-colors"]').click()
+    page.locator("#tab-colors").wait_for(state="visible")
     page.locator("#light-background").fill("#112233")
     page.locator("#light-content").fill("#223344")
     page.locator("#dark-background").fill("#334455")
     page.locator("#dark-content").fill("#445566")
-    page.locator("#add-route").click()
-    route = page.locator(".appnuno-route").last
-    route.locator("select").select_option("checkout/cart")
-    route.locator('button:has-text("Add tab to this route")').click()
-    route_tab = route.locator(".appnuno-tab").last
-    route_tab.locator('[data-field="id"]').fill("ci-cart-route-tab")
-    route_tab.locator('[data-language-label="en-gb"]').fill("Cart route tab")
-    route_tab.locator('[data-language-label="lt-lt"]').fill("Krepšelio skirtukas")
-    route_tab.locator('[data-language-label="de-de"]').fill("Warenkorb-Route")
-    route_tab.locator('[data-url-select]').select_option("__custom__")
-    route_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
-    route_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
-    route_tab.locator('[data-language-url="de-de"]').fill("/de/warenkorb")
-    route_tab.locator('[data-field="icon"]').fill("cart-outline")
-    route_tab.locator('[data-field="activeIcon"]').fill("cart")
+    page.locator('a[href="#tab-navigation"]').click()
+    page.locator("#tab-navigation").wait_for(state="visible")
+    page.locator('button[data-add-tab="default-tabs"]').click()
+    page_tab = page.locator("#default-tabs .appnuno-tab").last
+    page_tab.locator('[data-field="id"]').fill("ci-cart-route-tab")
+    page_tab.locator('[data-language-label="en-gb"]').fill("Cart route tab")
+    page_tab.locator('[data-language-label="lt-lt"]').fill("Krepšelio skirtukas")
+    page_tab.locator('[data-language-label="de-de"]').fill("Warenkorb-Route")
+    page_tab.locator('[data-url-select]').select_option("__custom__")
+    page_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
+    page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
+    page_tab.locator('[data-language-url="de-de"]').fill("/de/warenkorb")
+    page_tab.locator('[data-field="icon"]').fill("cart-outline")
+    page_tab.locator('[data-field="activeIcon"]').fill("cart")
+    page_tab.locator("[data-pages]").select_option(["checkout/cart"])
     capture_screenshot(page, artifact_dir, "02-admin-settings-before-save.png")
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
@@ -296,14 +302,14 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
         raise AssertionError("The newly added Lithuanian tab URL did not persist after reloading the settings page.")
     if page.locator("#cart-tab-id").input_value() != "ci-added-tab":
         raise AssertionError("The cart badge tab selection did not persist after reloading the settings page.")
-    route = page.locator(".appnuno-route").first
-    if route.locator('[data-field="route"]').input_value() != "checkout/cart":
-        raise AssertionError("The route-specific tab set did not persist after reloading the settings page.")
-    saved_route_tab = route.locator(".appnuno-tab").first
-    if saved_route_tab.locator('[data-language-label="lt-lt"]').input_value() != "Krepšelio skirtukas":
-        raise AssertionError("The localized route tab label did not persist after reloading the settings page.")
-    if saved_route_tab.locator('[data-language-url="lt-lt"]').input_value() != "/lt/krepselis":
-        raise AssertionError("The localized route tab URL did not persist after reloading the settings page.")
+    saved_page_tab = page.locator("#default-tabs .appnuno-tab").nth(3)
+    if saved_page_tab.locator('[data-language-label="lt-lt"]').input_value() != "Krepšelio skirtukas":
+        raise AssertionError("The cart page tab label did not persist after reloading the settings page.")
+    if saved_page_tab.locator('[data-language-url="lt-lt"]').input_value() != "/lt/krepselis":
+        raise AssertionError("The cart page tab URL did not persist after reloading the settings page.")
+    selected_pages = saved_page_tab.locator("[data-pages]").evaluate("select => Array.from(select.selectedOptions).map(option => option.value)")
+    if selected_pages != ["checkout/cart"]:
+        raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
     capture_screenshot(page, artifact_dir, "03-admin-settings-after-save.png")
 
 
@@ -321,6 +327,10 @@ def expect_module_language(page: Page, phrases: tuple[str, ...]) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + admin_token(page))
     page.locator("#default-tabs .appnuno-tab").first.wait_for()
     content = page.locator("#content").inner_text()
+    for href in ("#tab-back", "#tab-glass", "#tab-colors"):
+        page.locator(f'a[href="{href}"]').click()
+        page.locator(href).wait_for(state="visible")
+        content += "\n" + page.locator(href).inner_text()
     missing = [phrase for phrase in phrases if phrase not in content]
     if missing:
         raise AssertionError("The AppNuno extension did not show these translated names: " + ", ".join(missing) + ".")
@@ -333,8 +343,7 @@ def check_admin_module_languages(page: Page) -> None:
         "Redaguoti AppNuno vietinę navigaciją",
         "Numatytieji skirtukai",
         "Krepšelio ženkliuko skirtukas",
-        "Maršrutų skirtukų rinkiniai",
-        "Pridėti maršruto skirtukų rinkinį",
+        "Rodoma puslapiuose",
         "Grįžimo mygtukas",
         "Stiklinė mygtukų juosta",
         "Navigacijos spalvos",
@@ -348,8 +357,7 @@ def check_admin_module_languages(page: Page) -> None:
         "AppNuno native Navigation bearbeiten",
         "Standard-Tabs",
         "Tab für das Warenkorbsymbol",
-        "Routenspezifische Tab-Sätze",
-        "Routen-Tab-Satz hinzufügen",
+        "Angezeigt auf Seiten",
         "Zurück-Schaltfläche",
         "Glas-Schaltflächenleiste",
         "Navigationsfarben",
@@ -363,8 +371,7 @@ def check_admin_module_languages(page: Page) -> None:
         "Edit AppNuno Native Navigation",
         "Default tabs",
         "Cart badge tab",
-        "Route-specific tab sets",
-        "Add route tab set",
+        "Shown on pages",
         "Back button",
         "Glass button bar",
         "Navigation colors",
@@ -416,7 +423,7 @@ def check_default_bootstrap(payload: dict) -> None:
     configuration = payload["config"]
     if configuration["cartTabId"] != "ci-added-tab":
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
-    if len(configuration["defaultTabs"]) != 3:
+    if len(configuration["defaultTabs"]) != 4:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {configuration['defaultTabs']}.")
     for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia", "de-de": "Start"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis", "de-de": "Warenkorb"})):
         configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == tab_id)
@@ -442,9 +449,15 @@ def check_default_bootstrap(payload: dict) -> None:
             raise AssertionError(f"A default tab URL is wrong: {navigation_tab}.")
         if navigation_tab.get("icon") != icon or navigation_tab.get("activeIcon") != active_icon:
             raise AssertionError(f"A default tab icon is wrong: {navigation_tab}.")
-    route_tabs = configuration["routes"].get("checkout/cart")
-    if not route_tabs or route_tabs[0].get("id") != "ci-cart-route-tab":
-        raise AssertionError("The bootstrap configuration did not include the saved checkout/cart tab set.")
+    page_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
+    if page_tab.get("pages") != ["checkout/cart"]:
+        raise AssertionError(f"The cart-only tab was not limited to the cart page: {page_tab}.")
+    if page_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
+        raise AssertionError(f"The cart-only tab translations were not retained: {page_tab}.")
+    if configuration.get("routes"):
+        raise AssertionError(f"Page visibility replaced route-specific tab sets: {configuration['routes']}.")
+    if any(tab["id"] == "ci-cart-route-tab" for tab in payload["navigation"]["tabs"]):
+        raise AssertionError(f"A tab limited to the cart page was published on {payload['route']}: {payload['navigation']['tabs']}.")
     tab = next(tab for tab in payload["navigation"]["tabs"] if tab["id"] == "ci-added-tab")
     if "labels" in tab or "urls" in tab:
         raise AssertionError("The resolved navigation tab still contains untranslated labels or URLs.")
@@ -481,21 +494,22 @@ def check_default_bootstrap(payload: dict) -> None:
 def check_route_bootstrap(payload: dict) -> None:
     if payload["route"] != "checkout/cart":
         raise AssertionError(f"Expected the checkout/cart bootstrap route, got {payload['route']}.")
-    configured_tabs = payload["config"]["routes"]["checkout/cart"]
-    if len(configured_tabs) != 1 or configured_tabs[0].get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
-        raise AssertionError(f"The saved checkout/cart route translations are incorrect: {configured_tabs}.")
-    if configured_tabs[0].get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis", "de-de": "/de/warenkorb"}:
-        raise AssertionError(f"The saved checkout/cart localized URLs are incorrect: {configured_tabs}.")
+    configured_tab = next(tab for tab in payload["config"]["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
+    if configured_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
+        raise AssertionError(f"The saved cart page tab translations are incorrect: {configured_tab}.")
+    if configured_tab.get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis", "de-de": "/de/warenkorb"}:
+        raise AssertionError(f"The saved cart page tab URLs are incorrect: {configured_tab}.")
     tabs = payload["navigation"]["tabs"]
-    if len(tabs) != 1:
-        raise AssertionError(f"The route-specific tab set did not replace the defaults: {tabs}.")
-    tab = tabs[0]
-    if tab.get("id") != "ci-cart-route-tab" or tab.get("label") != "Cart route tab" or tab.get("url") != "/en/cart":
+    published_ids = [tab.get("id") for tab in tabs]
+    if published_ids != ["home", "cart", "ci-added-tab", "ci-cart-route-tab"]:
+        raise AssertionError(f"The cart page did not show the shared tabs together with the cart-only tab: {tabs}.")
+    tab = tabs[-1]
+    if tab.get("label") != "Cart route tab" or tab.get("url") != "/en/cart":
         raise AssertionError(f"The checkout/cart tab was not resolved correctly: {tab}.")
     if tab.get("icon") != "cart-outline" or tab.get("activeIcon") != "cart":
-        raise AssertionError(f"The route-specific tab icons were not preserved: {tab}.")
-    if "labels" in tab or "urls" in tab:
-        raise AssertionError("The resolved route tab still contains untranslated labels or URLs.")
+        raise AssertionError(f"The cart page tab icons were not preserved: {tab}.")
+    if "labels" in tab or "urls" in tab or "pages" in tab:
+        raise AssertionError("The resolved cart page tab still contains stored translations or page limits.")
 
 
 def check_cart_and_customer_state(page: Page) -> None:
@@ -662,9 +676,12 @@ def check_storefront_label_languages(page: Page, responses: list[Response]) -> N
     set_storefront_language(page, "lt-lt")
     expect_resolved_storefront_language(page, responses, "Pradžia", "Krepšelis", "CI pridėtas skirtukas", "/lt/kontaktai")
     page.goto(BASE_URL + "/index.php?route=checkout/cart")
-    route_tab = get_bootstrap_payload(page, responses, "checkout/cart")["navigation"]["tabs"][0]
-    if route_tab.get("label") != "Krepšelio skirtukas" or route_tab.get("url") != "/lt/krepselis":
+    published = {tab["id"]: tab for tab in get_bootstrap_payload(page, responses, "checkout/cart")["navigation"]["tabs"]}
+    route_tab = published.get("ci-cart-route-tab")
+    if not route_tab or route_tab.get("label") != "Krepšelio skirtukas" or route_tab.get("url") != "/lt/krepselis":
         raise AssertionError(f"The storefront published the wrong checkout/cart language: {route_tab}.")
+    if published.get("home", {}).get("label") != "Pradžia":
+        raise AssertionError(f"The shared home tab was not published in Lithuanian on the cart page: {published.get('home')}.")
     set_storefront_language(page, "de-de")
     expect_resolved_storefront_language(page, responses, "Start", "Warenkorb", "CI hinzugefügter Tab", "/de/kontakt")
     set_storefront_language(page, "en-gb")

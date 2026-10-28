@@ -76,7 +76,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$state = $this->model_extension_module_appnuno->getState();
 		$route = isset($this->request->get['page_route']) && is_string($this->request->get['page_route']) ? $this->request->get['page_route'] : 'common/home';
-		$tabs = isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? $config['routes'][$route] : $config['defaultTabs'];
+		$tabs = $this->tabsForRoute($config, $route);
 		$cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
 
 		foreach ($tabs as &$tab) {
@@ -90,6 +90,10 @@ class ControllerExtensionModuleAppnuno extends Controller {
 				}
 
 				unset($tab['urls']);
+			}
+
+			if (isset($tab['pages'])) {
+				unset($tab['pages']);
 			}
 
 			if (isset($tab['labels']) && is_array($tab['labels'])) {
@@ -128,6 +132,34 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		);
 
 		return json_encode($integration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+	}
+
+	private function tabsForRoute($config, $route) {
+		if (isset($config['routes'][$route]) && is_array($config['routes'][$route]) && count($config['routes'][$route])) {
+			return $config['routes'][$route];
+		}
+
+		$tabs = array();
+
+		foreach ($config['defaultTabs'] as $tab) {
+			if (!is_array($tab)) {
+				continue;
+			}
+
+			if ($this->tabShownOnRoute($tab, $route)) {
+				$tabs[] = $tab;
+			}
+		}
+
+		return $tabs;
+	}
+
+	private function tabShownOnRoute($tab, $route) {
+		if (!isset($tab['pages']) || !is_array($tab['pages']) || !count($tab['pages'])) {
+			return true;
+		}
+
+		return in_array($route, $tab['pages'], true);
 	}
 
 	private function languageCode() {

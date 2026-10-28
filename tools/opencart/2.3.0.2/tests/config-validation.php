@@ -116,4 +116,12 @@ $invalid_back = json_encode(array('defaultTabs' => array(), 'routes' => array(),
 if (!strlen($model->validateConfig($invalid_back))) {
     throw new RuntimeException('Expected non-boolean back setting to be rejected.');
 }
+$visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart'))), 'routes' => array()));
+if (strlen($model->validateConfig($visible_pages))) {
+    throw new RuntimeException('Expected a tab limited to a store page to be valid.');
+}
+$invalid_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart?redirect=home'))), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_pages), 'defaultTabs[0].pages')) {
+    throw new RuntimeException('Expected an invalid store page selection to be rejected.');
+}
 echo "OpenCart navigation configuration tests passed.\n";

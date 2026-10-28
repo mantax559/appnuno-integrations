@@ -51,11 +51,14 @@
             </div>
           </div>
           <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title"><?php echo $text_default_tabs; ?></h3>
-            </div>
-            <div class="panel-body">
+          <ul class="nav nav-tabs">
+            <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
+            <li><a href="#tab-back" data-toggle="tab"><?php echo $text['text_back_button']; ?></a></li>
+            <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
+            <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
+          </ul>
+          <div class="tab-content">
+            <div class="tab-pane active" id="tab-navigation">
               <div class="alert alert-info"><?php echo $text['text_default_tabs_help']; ?></div>
               <div id="default-tabs"></div>
               <button type="button" class="btn btn-default" data-add-tab="default-tabs"><i class="fa fa-plus"></i> <?php echo $text['button_add_default_tab']; ?></button>
@@ -68,27 +71,14 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title"><?php echo $text['text_route_sets']; ?></h3>
-            </div>
-            <div class="panel-body">
-              <div class="alert alert-info"><?php echo $text['text_route_sets_help']; ?></div>
-              <div id="client-validation-error" class="alert alert-danger" role="alert" style="display:none"></div>
-              <div id="route-sets"></div>
-              <button type="button" class="btn btn-default" id="add-route"><i class="fa fa-plus"></i> <?php echo $text['button_add_route']; ?></button>
-            </div>
-          </div>
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title"><?php echo $text['text_back_button']; ?></h3>
-            </div>
-            <div class="panel-body">
+            <div class="tab-pane" id="tab-back">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10">
-                  <input type="checkbox" id="back-enabled" />
+                  <select id="back-enabled" class="form-control">
+                    <option value="1"><?php echo $text_enabled; ?></option>
+                    <option value="0"><?php echo $text_disabled; ?></option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
@@ -101,16 +91,14 @@
                 </div>
               </div>
             </div>
-          </div>
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title"><?php echo $text['text_glass']; ?></h3>
-            </div>
-            <div class="panel-body">
+            <div class="tab-pane" id="tab-glass">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
                 <div class="col-sm-10">
-                  <input type="checkbox" id="glass-enabled" />
+                  <select id="glass-enabled" class="form-control">
+                    <option value="1"><?php echo $text_enabled; ?></option>
+                    <option value="0"><?php echo $text_disabled; ?></option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
@@ -136,7 +124,10 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-animate"><?php echo $text['entry_glass_animate']; ?></label>
                 <div class="col-sm-10">
-                  <input type="checkbox" id="glass-animate" />
+                  <select id="glass-animate" class="form-control">
+                    <option value="1"><?php echo $text_enabled; ?></option>
+                    <option value="0"><?php echo $text_disabled; ?></option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
@@ -148,56 +139,50 @@
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-interactive"><?php echo $text['entry_glass_interactive']; ?></label>
                 <div class="col-sm-10">
-                  <input type="checkbox" id="glass-interactive" />
+                  <select id="glass-interactive" class="form-control">
+                    <option value="1"><?php echo $text_enabled; ?></option>
+                    <option value="0"><?php echo $text_disabled; ?></option>
+                  </select>
                 </div>
               </div>
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-tint-color"><?php echo $text['entry_glass_tint']; ?></label>
-                <div class="col-sm-7">
+                <div class="col-sm-10">
                   <input type="color" id="glass-tint-color" class="form-control" value="#000000" />
                 </div>
-                <div class="col-sm-3">
-                  <label for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
+                <div class="col-sm-10">
                   <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control" value="0.02" required="required" />
                 </div>
               </div>
             </div>
-          </div>
-          <div class="panel panel-default">
-            <div class="panel-heading">
-              <h3 class="panel-title"><?php echo $text['text_navigation_colors']; ?></h3>
-            </div>
-            <div class="panel-body">
-              <div class="row">
-                <div class="col-sm-6">
-                  <h4><?php echo $text['text_light_mode']; ?></h4>
-                  <div class="form-group">
-                    <label class="col-sm-4 control-label" for="light-background"><?php echo $text['entry_background']; ?></label>
-                    <div class="col-sm-8">
-                      <input type="color" id="light-background" class="form-control" value="#FFFFFF" />
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-sm-4 control-label" for="light-content"><?php echo $text['entry_content']; ?></label>
-                    <div class="col-sm-8">
-                      <input type="color" id="light-content" class="form-control" value="#2C3136" />
-                    </div>
-                  </div>
+            <div class="tab-pane" id="tab-colors">
+              <h4><?php echo $text['text_light_mode']; ?></h4>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="light-background"><?php echo $text['entry_background']; ?></label>
+                <div class="col-sm-10">
+                  <input type="color" id="light-background" class="form-control" value="#FFFFFF" />
                 </div>
-                <div class="col-sm-6">
-                  <h4><?php echo $text['text_dark_mode']; ?></h4>
-                  <div class="form-group">
-                    <label class="col-sm-4 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
-                    <div class="col-sm-8">
-                      <input type="color" id="dark-background" class="form-control" value="#2C3136" />
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label class="col-sm-4 control-label" for="dark-content"><?php echo $text['entry_content']; ?></label>
-                    <div class="col-sm-8">
-                      <input type="color" id="dark-content" class="form-control" value="#FFFFFF" />
-                    </div>
-                  </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="light-content"><?php echo $text['entry_content']; ?></label>
+                <div class="col-sm-10">
+                  <input type="color" id="light-content" class="form-control" value="#2C3136" />
+                </div>
+              </div>
+              <h4><?php echo $text['text_dark_mode']; ?></h4>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
+                <div class="col-sm-10">
+                  <input type="color" id="dark-background" class="form-control" value="#2C3136" />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="col-sm-2 control-label" for="dark-content"><?php echo $text['entry_content']; ?></label>
+                <div class="col-sm-10">
+                  <input type="color" id="dark-content" class="form-control" value="#FFFFFF" />
                 </div>
               </div>
             </div>
@@ -217,10 +202,8 @@
 	var validationPath = <?php echo $error_config_path_json; ?>;
 	var defaultLanguageCode = <?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 	var defaultContainer = document.getElementById('default-tabs');
-	var routesContainer = document.getElementById('route-sets');
 	var cartSelect = document.getElementById('cart-tab-id');
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
-	routesContainer.setAttribute('data-validation-path', 'routes');
 
 	function createField(label, value, key, type, path) {
 		var group = document.createElement('div');
@@ -388,6 +371,48 @@
 		return group;
 	}
 
+	function createPagesField(tab, path) {
+		var group = document.createElement('div');
+		group.className = 'form-group';
+		var title = document.createElement('label');
+		title.className = 'col-sm-2 control-label';
+		title.textContent = text.text_shown_on_pages;
+		var column = document.createElement('div');
+		column.className = 'col-sm-10';
+		var select = document.createElement('select');
+		select.multiple = true;
+		select.size = routeOptions.length > 8 ? 8 : (routeOptions.length || 1);
+		select.className = 'form-control';
+		select.setAttribute('data-pages', 'true');
+		select.setAttribute('data-validation-path', path + '.pages');
+		var selected = {};
+		(tab.pages || []).forEach(function (page) {
+			selected[page] = true;
+		});
+		var known = {};
+		routeOptions.forEach(function (option) {
+			known[option.route] = true;
+			var choice = new Option(option.label, option.route);
+			choice.selected = !!selected[option.route];
+			select.appendChild(choice);
+		});
+		(tab.pages || []).forEach(function (page) {
+			if (!known[page]) {
+				var extra = new Option(page, page);
+				extra.selected = true;
+				select.appendChild(extra);
+			}
+		});
+		var help = document.createElement('p');
+		help.className = 'help-block';
+		help.textContent = text.help_shown_on_pages;
+		column.appendChild(select);
+		column.appendChild(help);
+		group.appendChild(title);
+		group.appendChild(column);
+		return group;
+	}
+
 	function createTab(tab, path) {
 		var card = document.createElement('div');
 		card.className = 'well appnuno-tab';
@@ -397,6 +422,7 @@
 		card.appendChild(createUrlField(tab, path));
 		card.appendChild(createField(text.text_icon, tab.icon, 'icon', 'text', path + '.icon'));
 		card.appendChild(createField(text.text_active_icon, tab.activeIcon, 'activeIcon', 'text', path + '.activeIcon'));
+		card.appendChild(createPagesField(tab, path));
 		var remove = document.createElement('button');
 		remove.type = 'button';
 		remove.className = 'btn btn-danger btn-sm';
@@ -414,115 +440,6 @@
 		var path = pathRoot + '[' + container.querySelectorAll('.appnuno-tab').length + ']';
 		container.appendChild(createTab(tab || {}, path));
 		refreshCartOptions();
-	}
-
-	function createRouteField(route) {
-		var group = document.createElement('div');
-		group.className = 'form-group';
-		var title = document.createElement('label');
-		title.className = 'col-sm-2 control-label';
-		title.textContent = text.text_opencart_route;
-		var column = document.createElement('div');
-		column.className = 'col-sm-10';
-		var select = document.createElement('select');
-		select.className = 'form-control';
-		select.appendChild(new Option(text.text_choose_route, ''));
-		routeOptions.forEach(function (option) {
-			select.appendChild(new Option(option.label + ' (' + option.route + ')', option.route));
-		});
-		select.appendChild(new Option(text.text_custom_route, '__custom__'));
-		var input = document.createElement('input');
-		input.type = 'text';
-		input.className = 'form-control';
-		input.placeholder = 'checkout/cart';
-		input.setAttribute('data-field', 'route');
-		input.setAttribute('data-validation-path', 'routes.' + (route || 'route') + '.route');
-		input.value = route || '';
-		var known = routeOptions.some(function (option) { return option.route === input.value; });
-		select.value = known ? input.value : (input.value ? '__custom__' : '');
-		input.style.display = known ? 'none' : '';
-		select.addEventListener('change', function () {
-			if (select.value === '__custom__') {
-				input.style.display = '';
-				input.focus();
-			} else {
-				input.style.display = 'none';
-				input.value = select.value;
-			}
-		});
-		column.appendChild(select);
-		column.appendChild(input);
-		group.appendChild(title);
-		group.appendChild(column);
-		return group;
-	}
-
-	function refreshRouteValidationPaths(card) {
-		var routeField = card.querySelector('[data-field="route"]');
-		var pathRoot = 'routes.' + (routeField && routeField.value ? routeField.value.trim() : 'route');
-		if (routeField) {
-			routeField.setAttribute('data-validation-path', pathRoot + '.route');
-		}
-		card.setAttribute('data-validation-path', pathRoot);
-		Array.prototype.forEach.call(card.querySelectorAll('.appnuno-tab'), function (tab, index) {
-			var tabPath = pathRoot + '[' + index + ']';
-			tab.setAttribute('data-validation-path', tabPath);
-			Array.prototype.forEach.call(tab.querySelectorAll('[data-field]'), function (field) {
-				field.setAttribute('data-validation-path', tabPath + '.' + field.getAttribute('data-field'));
-			});
-			var labels = tab.querySelector('[data-validation-path$=".labels"]');
-			if (labels) {
-				labels.setAttribute('data-validation-path', tabPath + '.labels');
-			}
-			Array.prototype.forEach.call(tab.querySelectorAll('[data-language-label]'), function (field) {
-				field.setAttribute('data-validation-path', tabPath + '.labels.' + field.getAttribute('data-language-label'));
-			});
-			Array.prototype.forEach.call(tab.querySelectorAll('[data-language-url]'), function (field) {
-				field.setAttribute('data-validation-path', tabPath + '.urls.' + field.getAttribute('data-language-url'));
-			});
-		});
-	}
-
-	function createRoute(route, tabs) {
-		var card = document.createElement('div');
-		card.className = 'panel panel-info appnuno-route';
-		var heading = document.createElement('div');
-		heading.className = 'panel-heading';
-		heading.textContent = text.text_route_tab_set;
-		var body = document.createElement('div');
-		body.className = 'panel-body';
-		body.appendChild(createRouteField(route));
-		var tabContainer = document.createElement('div');
-		tabContainer.className = 'route-tabs';
-		(tabs || []).forEach(function (tab) { addTab(tabContainer, tab, 'routes.' + route); });
-		var routeField = body.querySelector('[data-field="route"]');
-		var routeSelect = body.querySelector('select');
-		routeField.addEventListener('input', function () { refreshRouteValidationPaths(card); });
-		routeSelect.addEventListener('change', function () { refreshRouteValidationPaths(card); });
-		var add = document.createElement('button');
-		add.type = 'button';
-		add.className = 'btn btn-default';
-		add.textContent = text.button_add_route_tab;
-		add.addEventListener('click', function () {
-			var routeField = card.querySelector('[data-field="route"]');
-			addTab(tabContainer, {}, 'routes.' + (routeField && routeField.value ? routeField.value : 'route'));
-		});
-		var remove = document.createElement('button');
-		remove.type = 'button';
-		remove.className = 'btn btn-danger pull-right';
-		remove.textContent = text.button_remove_route;
-		remove.addEventListener('click', function () {
-			routesContainer.removeChild(card);
-			refreshCartOptions();
-		});
-		body.appendChild(tabContainer);
-		body.appendChild(add);
-		body.appendChild(remove);
-		card.appendChild(heading);
-		card.appendChild(body);
-		card.addEventListener('input', refreshCartOptions);
-		refreshRouteValidationPaths(card);
-		routesContainer.appendChild(card);
 	}
 
 	function readTabs(container) {
@@ -552,6 +469,18 @@
 				tab.url = destination.value;
 				delete tab.urls;
 			}
+			var pagesField = card.querySelector('[data-pages]');
+			if (pagesField) {
+				var pages = [];
+				Array.prototype.forEach.call(pagesField.options, function (option) {
+					if (option.selected) {
+						pages.push(option.value);
+					}
+				});
+				if (pages.length) {
+					tab.pages = pages;
+				}
+			}
 			return tab;
 		});
 	}
@@ -559,9 +488,7 @@
 	function refreshCartOptions() {
 		var current = cartSelect.value || configuration.cartTabId || 'cart';
 		var ids = {};
-		readTabs(defaultContainer).concat(Array.prototype.reduce.call(routesContainer.querySelectorAll('.route-tabs'), function (all, container) {
-			return all.concat(readTabs(container));
-		}, [])).forEach(function (tab) {
+		readTabs(defaultContainer).forEach(function (tab) {
 			if (tab.id) {
 				ids[tab.id] = true;
 			}
@@ -589,32 +516,38 @@
 		}
 	}
 
-	function setChecked(id, value) {
-		var element = document.getElementById(id);
-		if (element) {
-			element.checked = Boolean(value);
-		}
+	function setEnabled(id, enabled) {
+		setValue(id, enabled ? '1' : '0');
 	}
 
 	(configuration.defaultTabs || []).forEach(function (tab) { addTab(defaultContainer, tab, 'defaultTabs'); });
-	Object.keys(configuration.routes || {}).forEach(function (route) { createRoute(route, configuration.routes[route]); });
-	if (!defaultContainer.children.length) {
+	Object.keys(configuration.routes || {}).forEach(function (route) {
+		(configuration.routes[route] || []).forEach(function (tab) {
+			var imported = JSON.parse(JSON.stringify(tab || {}));
+			var pages = Array.isArray(imported.pages) ? imported.pages.slice() : [];
+			if (pages.indexOf(route) === -1) {
+				pages.push(route);
+			}
+			imported.pages = pages;
+			addTab(defaultContainer, imported, 'defaultTabs');
+		});
+	});
+	if (!defaultContainer.querySelector('.appnuno-tab')) {
 		addTab(defaultContainer, {}, 'defaultTabs');
 	}
 	document.querySelectorAll('[data-add-tab]').forEach(function (button) {
 		button.addEventListener('click', function () { addTab(document.getElementById(button.getAttribute('data-add-tab')), {}, 'defaultTabs'); });
 	});
-	document.getElementById('add-route').addEventListener('click', function () { createRoute('', []); });
 
-	setChecked('back-enabled', !configuration.back || configuration.back.enabled !== false);
+	setEnabled('back-enabled', !configuration.back || configuration.back.enabled !== false);
 	setValue('back-placement', configuration.back && configuration.back.placement || 'separate');
 	var glass = configuration.glass || {};
-	setChecked('glass-enabled', glass.enabled !== false);
+	setEnabled('glass-enabled', glass.enabled !== false);
 	setValue('glass-color-scheme', glass.colorScheme || 'auto');
 	setValue('glass-style', glass.style || 'regular');
-	setChecked('glass-animate', glass.animate !== false);
+	setEnabled('glass-animate', glass.animate !== false);
 	setValue('glass-duration', typeof glass.animationDuration === 'number' ? glass.animationDuration : 0.3);
-	setChecked('glass-interactive', glass.isInteractive !== false);
+	setEnabled('glass-interactive', glass.isInteractive !== false);
 	var tintColor = glass.tintColor || 'rgba(0, 0, 0, 0.02)';
 	var tintHex = '#000000';
 	var tintAlpha = 0.02;
@@ -675,12 +608,8 @@
 		if (!matched && path.indexOf('glass.') === 0) {
 			matched = document.getElementById('glass-enabled');
 		}
-		if (!matched && path.indexOf('routes.') === 0) {
-			var routeCard = routesContainer.querySelector('.appnuno-route');
-			matched = routeCard ? routeCard.querySelector('[data-field="route"]') : null;
-		}
 		if (!matched && path === 'routes') {
-			matched = routesContainer;
+			matched = defaultContainer;
 		}
 		if (!matched && path === 'defaultTabs') {
 			matched = defaultContainer;
@@ -690,7 +619,7 @@
 		}
 		if (matched) {
 			var group = matched;
-			while (group && !(' ' + group.className + ' ').match(/ form-group | appnuno-route /) && group.id !== 'default-tabs' && group.id !== 'route-sets') {
+			while (group && !(' ' + group.className + ' ').match(/ form-group /) && group.id !== 'default-tabs') {
 				group = group.parentNode;
 			}
 			group = group || matched;
@@ -706,54 +635,25 @@
 
 	markValidationError(validationPath);
 
-	document.getElementById('form-appnuno').addEventListener('submit', function (event) {
-		var clientError = document.getElementById('client-validation-error');
-		clientError.style.display = 'none';
-		var routes = Object.create(null);
-		var routeError = '';
-		Array.prototype.forEach.call(routesContainer.querySelectorAll('.appnuno-route'), function (card) {
-			var routeField = card.querySelector('[data-field="route"]');
-			var route = routeField ? routeField.value.trim() : '';
-			if (!route) {
-				routeError = text.error_route_required;
-				if (routeField) {
-					routeField.parentNode.parentNode.className += ' has-error';
-					routeField.focus();
-				}
-				return;
-			}
-			if (Object.prototype.hasOwnProperty.call(routes, route)) {
-				routeError = text.error_route_duplicate;
-				if (routeField) {
-					routeField.parentNode.parentNode.className += ' has-error';
-					routeField.focus();
-				}
-				return;
-			}
-			routes[route] = readTabs(card.querySelector('.route-tabs'));
-		});
-		if (routeError) {
-			event.preventDefault();
-			clientError.textContent = routeError;
-			clientError.style.display = '';
-			clientError.scrollIntoView({ block: 'center' });
-			return;
+	document.getElementById('form-appnuno').addEventListener('submit', function () {
+		function enabledValue(id) {
+			return document.getElementById(id).value === '1';
 		}
 		var result = {
 			cartTabId: cartSelect.value || 'cart',
 			defaultTabs: readTabs(defaultContainer),
-			routes: routes,
+			routes: {},
 			back: {
-				enabled: document.getElementById('back-enabled').checked,
+				enabled: enabledValue('back-enabled'),
 				placement: document.getElementById('back-placement').value
 			},
 			glass: {
-				enabled: document.getElementById('glass-enabled').checked,
+				enabled: enabledValue('glass-enabled'),
 				colorScheme: document.getElementById('glass-color-scheme').value,
 				style: document.getElementById('glass-style').value,
-				animate: document.getElementById('glass-animate').checked,
+				animate: enabledValue('glass-animate'),
 				animationDuration: Number(document.getElementById('glass-duration').value),
-				isInteractive: document.getElementById('glass-interactive').checked
+				isInteractive: enabledValue('glass-interactive')
 			},
 			colors: { light: {}, dark: {} }
 		};

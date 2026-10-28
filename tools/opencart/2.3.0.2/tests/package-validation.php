@@ -43,7 +43,7 @@ $catalog_controller = $archive->getFromName('upload/catalog/controller/extension
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
-if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_custom_route') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
+if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
     throw new RuntimeException('OpenCart archive is missing the updated settings controls and defaults.');
 }
 if (!strstr($view, 'id="default-tabs"') || !strstr($view, "\$text['entry_cart_tab']") || strstr($view, 'Cart badge</h3>') || !strstr($view, 'id="input-config-json" value=""')) {

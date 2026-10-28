@@ -223,6 +223,18 @@ class ModelExtensionModuleAppnuno extends Model {
 				return $tab_path . '.badge: The badge count must be zero or a positive integer.';
 			}
 
+			if (isset($tab['pages'])) {
+				if (!is_array($tab['pages']) || count($tab['pages']) > 30) {
+					return $tab_path . '.pages: Choose no more than 30 store pages.';
+				}
+
+				foreach ($tab['pages'] as $page_route) {
+					if (!is_string($page_route) || !preg_match('/^[A-Za-z0-9_\/.]+$/', $page_route)) {
+						return $tab_path . '.pages: Choose a valid store page.';
+					}
+				}
+			}
+
 			$ids[] = $tab['id'];
 		}
 
