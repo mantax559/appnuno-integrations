@@ -21,13 +21,37 @@ REPOSITORY = Path(__file__).resolve().parents[4]
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
+SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2", "3.0.0.0", "3.0.0.2", "3.0.1.1", "3.0.1.2", "3.0.2.0", "3.0.3.0", "3.0.3.1", "3.0.3.2", "3.0.3.3", "3.0.3.4", "3.0.3.5", "3.0.3.6", "3.0.3.7", "3.0.3.8", "3.0.3.9", "3.0.4.0", "3.0.4.1", "3.0.5.0", "3.0.5.1"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_LINE = OPENCART_VERSION[:3]
 PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_LINE}.x" / f"appnuno-opencart-{OPENCART_LINE}.x.ocmod.zip"
-if OPENCART_LINE in ("2.0", "2.1"):
+# OpenCart 3.0 release assets do not share one filename, and 3.0.0.2 has a tag but no GitHub release.
+OPENCART_30_ASSETS = {
+    "3.0.0.0": "3.0.0.0-compiled.zip",
+    "3.0.0.2": "",
+    "3.0.1.1": "3.0.1.1-compiled.zip",
+    "3.0.1.2": "3.0.1.2-opencart.zip",
+    "3.0.2.0": "3.0.2.0-OpenCart.zip",
+    "3.0.3.0": "opencart-3.0.3.0.zip",
+    "3.0.3.1": "opencart-3.0.3.1.zip",
+    "3.0.3.2": "opencart-3.0.3.2.zip",
+    "3.0.3.3": "opencart-3.0.3.3.zip",
+    "3.0.3.4": "opencart-3.0.3.4-core-pre.zip",
+    "3.0.3.5": "opencart-3.0.3.5.zip",
+    "3.0.3.6": "opencart-3.0.3.6.zip",
+    "3.0.3.7": "opencart-3.0.3.7.zip",
+    "3.0.3.8": "opencart-3.0.3.8.zip",
+    "3.0.3.9": "opencart-3.0.3.9.zip",
+    "3.0.4.0": "opencart-3.0.4.0.zip",
+    "3.0.4.1": "3.0.4.1.zip",
+    "3.0.5.0": "opencart-3.0.5.0.zip",
+    "3.0.5.1": "opencart-3.0.5.1.zip",
+}
+if OPENCART_LINE in ("2.0", "2.1") or (OPENCART_LINE == "3.0" and OPENCART_30_ASSETS[OPENCART_VERSION] == ""):
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
+elif OPENCART_LINE == "3.0":
+    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_30_ASSETS[OPENCART_VERSION]}"
 else:
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
 BASE_URL = "http://127.0.0.1:8080"
@@ -122,7 +146,17 @@ def configure_ftp() -> None:
 
 
 def legacy_module_layout() -> bool:
-    return OPENCART_LINE != "2.3"
+    # OpenCart 2.3 and 3.0 list modules under extension/module. 2.0–2.2 still use the older module list.
+    return OPENCART_LINE not in ("2.3", "3.0")
+
+
+def admin_token_name() -> str:
+    # OpenCart 3 renamed the admin session query key from token to user_token.
+    return "user_token" if OPENCART_LINE == "3.0" else "token"
+
+
+def admin_page(route: str, token: str) -> str:
+    return BASE_URL + "/admin/index.php?route=" + route + "&" + admin_token_name() + "=" + token
 
 
 def admin_module_route() -> str:
@@ -132,14 +166,15 @@ def admin_module_route() -> str:
 
 
 def open_module_editor(page: Page, token: str) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=" + admin_module_route() + "&token=" + token)
+    page.goto(admin_page(admin_module_route(), token))
 
 
 def module_list_row(page: Page, token: str):
     if legacy_module_layout():
-        page.goto(BASE_URL + "/admin/index.php?route=extension/module&token=" + token)
+        page.goto(admin_page("extension/module", token))
         return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
-    page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
+    # OpenCart 3 moved the extension type list from extension/extension to marketplace/extension.
+    page.goto(admin_page("marketplace/extension" if OPENCART_LINE == "3.0" else "extension/extension", token))
     module_filter = page.locator('select[name="type"]')
     module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
     return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
@@ -150,7 +185,7 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     with connection.cursor() as cursor:
         cursor.execute("SET GLOBAL sql_mode = 'NO_ENGINE_SUBSTITUTION'")
     connection.close()
-    page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
+    page.goto(admin_page("localisation/language/add", admin_token(page)))
     page.locator('input[name="name"]').fill(name)
     if OPENCART_LINE in ("2.0", "2.1"):
         page.locator('input[name="code"]').fill(code)
@@ -289,14 +324,15 @@ def login_admin(page: Page, web_root: Path) -> None:
 def admin_token(page: Page) -> str:
     from urllib.parse import parse_qs, urlparse
 
-    token = parse_qs(urlparse(page.url).query).get("token", [])
+    token = parse_qs(urlparse(page.url).query).get(admin_token_name(), [])
     if not token:
         raise AssertionError("OpenCart admin token was not present after login.")
     return token[0]
 
 
 def upload_extension(page: Page, token: str) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=extension/installer&token=" + token)
+    # OpenCart 3 installs extensions from marketplace/installer and marks success before the bar reaches 100%.
+    page.goto(admin_page("marketplace/installer" if OPENCART_LINE == "3.0" else "extension/installer", token))
     with page.expect_file_chooser() as chooser:
         page.locator("#button-upload").click()
     chooser.value.set_files(str(PACKAGE))
@@ -306,10 +342,7 @@ def upload_extension(page: Page, token: str) -> None:
             if (!bar) {
                 return false;
             }
-            if (bar.classList.contains('progress-bar-danger')) {
-                return true;
-            }
-            return bar.style.width === '100%' && bar.classList.contains('progress-bar-success');
+            return bar.classList.contains('progress-bar-danger') || bar.classList.contains('progress-bar-success');
         }""",
         timeout=90000,
     )
@@ -318,7 +351,7 @@ def upload_extension(page: Page, token: str) -> None:
 
 
 def refresh_modifications(page: Page, token: str) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=extension/modification&token=" + token)
+    page.goto(admin_page("marketplace/modification" if OPENCART_LINE == "3.0" else "extension/modification", token))
     with page.expect_navigation():
         page.locator(".page-header .btn-info").click()
     page.get_by_text(f"AppNuno OpenCart {OPENCART_LINE}.x", exact=True).wait_for()
@@ -427,7 +460,7 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
 
 
 def use_en_gb_language_code(page: Page) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=localisation/language&token=" + admin_token(page))
+    page.goto(admin_page("localisation/language", admin_token(page)))
     page.locator('a[href*="route=localisation/language/edit"]').first.click()
     page.locator('input[name="code"]').fill("en-gb")
     update_english_language_code()
@@ -438,7 +471,7 @@ def use_en_gb_language_code(page: Page) -> None:
 
 
 def switch_admin_language(page: Page, code: str, update_storefront: bool = False) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=setting/setting&token=" + admin_token(page))
+    page.goto(admin_page("setting/setting", admin_token(page)))
     page.locator('a[href="#tab-local"]').click()
     if OPENCART_LINE in ("2.0", "2.1"):
         if update_storefront:

@@ -1,6 +1,6 @@
 <?php
 $line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.0', '2.1', '2.2', '2.3'), true)) {
+if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 $repository = dirname(__DIR__, 3);
@@ -32,6 +32,12 @@ foreach ($entries as $name => $path) {
     if (in_array($line, array('2.0', '2.1', '2.2'), true) && $name !== 'README.md') {
         $name = str_replace('/extension/module/', '/module/', $name);
         $body = opencart_module_layout($line, $name, $body);
+    }
+    if ($line === '3.0' && $name !== 'README.md') {
+        $body = opencart_30_layout($name, $body);
+        if (substr($name, -4) === '.tpl') {
+            $name = substr($name, 0, -4) . '.twig';
+        }
     }
     $prepared[$name] = $body;
 }
@@ -146,4 +152,81 @@ function opencart_module_layout($line, $name, $content) {
         $content = str_replace("\$_['text_extension']", "\$_['text_module']                 = '" . $labels[$match[1]] . "';" . $newline . "\$_['text_extension']", $content);
     }
     return $content;
+}
+
+function opencart_30_layout($name, $content) {
+    // OpenCart 3 keeps the extension/module layout, but its admin uses Twig, user_token, and setting/event with a view/ trigger.
+    if (substr($name, -4) === '.php' || $name === 'install.xml') {
+        $content = str_replace(
+            array(
+                "\$this->load->model('extension/event');",
+                "\$this->model_extension_event->deleteEvent('appnuno');",
+                "\$this->model_extension_event->addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject');",
+                "token=' . \$this->session->data['token']"
+            ),
+            array(
+                "\$this->load->model('setting/event');",
+                "\$this->model_setting_event->deleteEventByCode('appnuno');",
+                "\$this->model_setting_event->addEvent('appnuno', 'view/common/header/before', 'extension/module/appnuno/inject');",
+                "user_token=' . \$this->session->data['user_token']"
+            ),
+            $content
+        );
+    }
+    if ($name === 'install.xml') {
+        $content = str_replace(
+            array('AppNuno OpenCart 2.3.x', 'appnuno_opencart_2302', "\$data['scripts'] = \$this->document->getScripts();"),
+            array('AppNuno OpenCart 3.0.x', 'appnuno_opencart_3000', "\$data['scripts'] = \$this->document->getScripts('header');"),
+            $content
+        );
+    }
+    if (substr($name, -4) === '.tpl') {
+        $content = opencart_twig_template($content);
+    }
+    return $content;
+}
+
+function opencart_twig_template($content) {
+    $stack = array();
+    $converted = preg_replace_callback('/<\?php\s*(.*?)\s*\?>/s', function ($match) use (&$stack) {
+        $code = trim($match[1]);
+        if (preg_match('/^echo\s+htmlspecialchars\(\$([A-Za-z_][A-Za-z0-9_]*)\s*,/', $code, $variable)) {
+            return '{{ ' . $variable[1] . ' }}';
+        }
+        if (preg_match('/^echo\s+json_encode\(\$([A-Za-z_][A-Za-z0-9_]*)\s*,/', $code, $variable)) {
+            return '{{ ' . $variable[1] . '|json_encode|raw }}';
+        }
+        if (preg_match('/^echo\s+\$([A-Za-z_][A-Za-z0-9_]*)\[\'([A-Za-z0-9_]+)\'\];$/', $code, $variable)) {
+            return '{{ ' . $variable[1] . '.' . $variable[2] . ' }}';
+        }
+        if (preg_match('/^echo\s+\$([A-Za-z_][A-Za-z0-9_]*);$/', $code, $variable)) {
+            if (substr($variable[1], -5) === '_json') {
+                return '{{ ' . $variable[1] . '|raw }}';
+            }
+            return '{{ ' . $variable[1] . ' }}';
+        }
+        if (preg_match('/^foreach\s+\(\$([A-Za-z_][A-Za-z0-9_]*)\s+as\s+\$([A-Za-z_][A-Za-z0-9_]*)\)\s*\{$/', $code, $variable)) {
+            $stack[] = 'for';
+            return '{% for ' . $variable[2] . ' in ' . $variable[1] . ' %}';
+        }
+        if (preg_match('/^if\s+\(\$([A-Za-z_][A-Za-z0-9_]*)\)\s*\{$/', $code, $variable)) {
+            $stack[] = 'if';
+            return '{% if ' . $variable[1] . ' %}';
+        }
+        if ($code === '} else {') {
+            return '{% else %}';
+        }
+        if ($code === '}') {
+            $kind = array_pop($stack);
+            if ($kind === 'for') {
+                return '{% endfor %}';
+            }
+            return '{% endif %}';
+        }
+        throw new RuntimeException('Unsupported OpenCart template tag: ' . $code);
+    }, $content);
+    if (!is_string($converted) || count($stack) || strpos($converted, '<?php') !== false) {
+        throw new RuntimeException('OpenCart 3 template was not converted to Twig.');
+    }
+    return $converted;
 }

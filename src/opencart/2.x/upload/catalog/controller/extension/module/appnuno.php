@@ -1,6 +1,7 @@
 <?php
 class ControllerExtensionModuleAppnuno extends Controller {
-	public function inject(&$route, &$data) {
+	// OpenCart 3.0.3+ passes the template source as a third view-event argument. PHP 8 rejects that call when the method only declares two parameters.
+	public function inject(&$route, &$data, &$code = null) {
 		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
 			return;
 		}
