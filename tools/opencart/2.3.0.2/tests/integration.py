@@ -193,14 +193,20 @@ def start_ftp_server(web_root: Path) -> FTPServer:
     return server
 
 
+def install_route(route: str) -> str:
+    if OPENCART_LINE == "2.1":
+        return "**route=" + route + "**"
+    return "**route=install/" + route + "**"
+
+
 def install_store(page: Page) -> None:
     page.goto(BASE_URL)
     page.locator('input[type="submit"]').click()
-    page.wait_for_url("**route=install/step_2**")
+    page.wait_for_url(install_route("step_2"))
     if page.locator(".alert-danger").count():
         raise AssertionError("OpenCart pre-installation checks reported an error: " + page.locator(".alert-danger").inner_text())
     page.locator('input[type="submit"]').click()
-    page.wait_for_url("**route=install/step_3**")
+    page.wait_for_url(install_route("step_3"))
     page.locator('select[name="db_driver"]').select_option("mysqli")
     page.locator('input[name="db_hostname"]').fill(DB_HOST)
     page.locator('input[name="db_username"]').fill(DB_USER)
@@ -212,7 +218,7 @@ def install_store(page: Page) -> None:
     page.locator('input[name="password"]').fill(ADMIN_PASSWORD)
     page.locator('input[name="email"]').fill("opencart-ci@example.test")
     page.locator('input[type="submit"]').click()
-    page.wait_for_url("**route=install/step_4**", timeout=30000)
+    page.wait_for_url(install_route("step_4"), timeout=30000)
 
 
 def login_admin(page: Page, web_root: Path) -> None:
