@@ -19,9 +19,18 @@ $entries = array();
 for ($index = 0; $index < $archive->numFiles; $index++) {
     $name = $archive->getNameIndex($index);
     $entries[] = $name;
+    $stat = $archive->statIndex($index);
     if (preg_match('~^/|(^|/)\.\.(/|$)|(^|/)tests(/|$)~', $name)) {
         throw new RuntimeException('Unsafe or non-installable archive entry: ' . $name);
     }
+    if (!is_array($stat) || !in_array($stat['mtime'], array(946684800), true)) {
+        throw new RuntimeException('OpenCart package entries must use the normalized timestamp.');
+    }
+}
+$sorted_entries = $entries;
+sort($sorted_entries, SORT_STRING);
+if (!in_array($entries, array($sorted_entries), true)) {
+    throw new RuntimeException('OpenCart package entries must be sorted deterministically.');
 }
 $view = $archive->getFromName('upload/admin/view/template/extension/module/appnuno.tpl');
 $controller = $archive->getFromName('upload/admin/controller/extension/module/appnuno.php');

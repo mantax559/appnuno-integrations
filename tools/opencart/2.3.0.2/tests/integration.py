@@ -18,6 +18,8 @@ from pyftpdlib.servers import FTPServer
 
 REPOSITORY = Path(__file__).resolve().parents[4]
 PACKAGE = REPOSITORY / "downloads" / "opencart" / "2.x" / "appnuno-opencart-2.x.ocmod.zip"
+SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
+SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
 SUPPORTED_OPENCART_VERSIONS = {"2.3.0.1", "2.3.0.2"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
@@ -94,6 +96,50 @@ def configure_secondary_language() -> None:
             ("Lithuanian", "lt-lt", "lt-LT,lt_LT.UTF-8,lt_LT,lt-lt,lithuanian", "lt-lt.png", "lt-lt", 2, 1),
         )
     connection.close()
+
+
+def setting_value(key: str) -> str | None:
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT value FROM oc_setting WHERE store_id = 0 AND code = 'module_appnuno' AND `key` = %s", (key,))
+        row = cursor.fetchone()
+    connection.close()
+    return row[0] if row else None
+
+
+def update_setting(key: str, value: str) -> None:
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND code = 'module_appnuno' AND `key` = %s", (value, key))
+    connection.close()
+
+
+def appnuno_event_count() -> int:
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM oc_event WHERE code = 'appnuno'")
+        count = cursor.fetchone()[0]
+    connection.close()
+    return count
+
+
+def create_cart_product() -> int:
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT stock_status_id FROM oc_stock_status ORDER BY stock_status_id LIMIT 1")
+        stock_status_id = cursor.fetchone()[0]
+        cursor.execute(
+            "INSERT INTO oc_product (model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id, image, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, viewed, date_added, date_modified) VALUES (%s, '', '', '', '', '', '', '', 50, %s, '', 0, 1, 1.00, 0, 0, CURDATE(), 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, NOW(), NOW())",
+            ("APPNUNO-CI-PRODUCT", stock_status_id),
+        )
+        product_id = cursor.lastrowid
+        cursor.execute(
+            "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES (%s, 1, 'AppNuno CI Product', 'Cart integration fixture', '', 'AppNuno CI Product', '', '')",
+            (product_id,),
+        )
+        cursor.execute("INSERT INTO oc_product_to_store (product_id, store_id) VALUES (%s, 0)", (product_id,))
+    connection.close()
+    return product_id
 
 
 def start_ftp_server(web_root: Path) -> FTPServer:
@@ -252,7 +298,7 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
 
 
 def get_bootstrap_payload(page: Page, responses: list[Response], expected_route: str) -> dict:
-    page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.config && window.AppNunoIntegration.navigation")
+    page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.config && window.AppNunoIntegration.navigation && window.AppNuno && window.AppNuno.ready === true && window.__appnunoReadyEvents && window.__appnunoReadyEvents.length")
     bootstrap_scripts = page.locator('script[src*="appnuno"][src*="bootstrap"]')
     if bootstrap_scripts.count() != 1:
         raise AssertionError("The storefront must include exactly one AppNuno bootstrap script.")
@@ -271,6 +317,9 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
         )
     page.locator('script[src="https://appnuno.com/sdk/v1/appnuno.js"]').wait_for(state="attached")
     payload = page.evaluate("window.AppNunoIntegration")
+    sdk_signal = page.evaluate("window.__appnunoReadyEvents[0]")
+    if sdk_signal.get("type") != "appnuno:ready" or not sdk_signal.get("navigation", {}).get("tabs"):
+        raise AssertionError(f"The storefront SDK did not publish its initialization event: {sdk_signal}.")
     if payload["route"] != expected_route:
         raise AssertionError(f"Expected bootstrap route {expected_route}, got {payload['route']}.")
     if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != ["extension/module/appnuno/state"]:
@@ -380,6 +429,147 @@ def switch_storefront_language(page: Page, language_code: str) -> None:
         page.locator(f'#form-language .language-select[name="{language_code}"]').click()
 
 
+def check_localization_and_route_fallback(page: Page) -> None:
+    page.goto(BASE_URL + "/")
+    switch_storefront_language(page, "lt-lt")
+    responses: list[Response] = []
+    page.on("response", lambda response: responses.append(response))
+    page.goto(BASE_URL + "/index.php?route=product/special")
+    fallback_payload = get_bootstrap_payload(page, responses, "product/special")
+    if fallback_payload["navigation"]["tabs"][0].get("label") != "Pradžia":
+        raise AssertionError("An unmatched OpenCart route did not use the localized default tabs.")
+    original_config = setting_value("module_appnuno_config")
+    if not original_config:
+        raise AssertionError("The AppNuno module configuration was not persisted.")
+    configuration = json.loads(original_config)
+    fallback_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "home")
+    fallback_tab.pop("url", None)
+    fallback_tab["labels"] = {"en-gb": "English fallback"}
+    fallback_tab["urls"] = {"en-gb": "/fallback-home"}
+    update_setting("module_appnuno_config", json.dumps(configuration))
+    try:
+        page.goto(BASE_URL + "/")
+        payload = get_bootstrap_payload(page, responses, "common/home")
+        home = next(tab for tab in payload["navigation"]["tabs"] if tab["id"] == "home")
+        if home.get("label") != "English fallback" or home.get("url") != "/fallback-home":
+            raise AssertionError(f"Missing-language labels and URLs did not fall back to their first configured values: {home}.")
+    finally:
+        update_setting("module_appnuno_config", original_config)
+        page.goto(BASE_URL + "/")
+
+
+def check_cart_and_customer_state(page: Page) -> None:
+    product_id = create_cart_product()
+    page.goto(BASE_URL + "/index.php?route=product/product&product_id=" + str(product_id))
+    page.locator("#button-cart").wait_for()
+    page.locator("#button-cart").click()
+    page.wait_for_timeout(500)
+    page.locator("#button-cart").click()
+    page.wait_for_timeout(500)
+    state_url = BASE_URL + "/index.php?route=extension/module/appnuno/state"
+    cart_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
+    if cart_state.get("cartCount") != 2 or cart_state.get("identity") is not None:
+        raise AssertionError(f"The storefront state did not report the real cart quantity: {cart_state}.")
+    page.goto(BASE_URL + "/index.php?route=account/register")
+    page.locator('input[name="firstname"]').fill("AppNuno")
+    page.locator('input[name="lastname"]').fill("CI Customer")
+    page.locator('input[name="email"]').fill("appnuno-ci-customer@example.test")
+    page.locator('input[name="telephone"]').fill("5550100")
+    page.locator('input[name="password"]').fill("ci-customer-password")
+    page.locator('input[name="confirm"]').fill("ci-customer-password")
+    agreement = page.locator('input[name="agree"]')
+    if agreement.count():
+        agreement.check()
+    page.locator('#content input[type="submit"], #content button[type="submit"]').last.click()
+    page.wait_for_load_state("domcontentloaded")
+    customer_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
+    identity = customer_state.get("identity")
+    if customer_state.get("cartCount") != 2 or not isinstance(identity, dict) or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not identity.get("identifier"):
+        raise AssertionError(f"The customer registration did not publish the authenticated storefront identity: {customer_state}.")
+    page.goto(BASE_URL + "/index.php?route=account/logout")
+    logged_out = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
+    if logged_out.get("identity") != {"identifier": identity["identifier"], "guard": "customer", "is_logged_in": False}:
+        raise AssertionError(f"The storefront did not preserve an explicit customer logout identity: {logged_out}.")
+    if logged_out.get("cartCount") != 2:
+        raise AssertionError(f"Customer logout unexpectedly changed the cart quantity: {logged_out}.")
+
+
+def save_module_status(page: Page, enabled: bool) -> None:
+    page.locator("#input-status").select_option("1" if enabled else "0")
+    with page.expect_navigation():
+        page.locator('button[form="form-appnuno"]').click()
+    page.locator(".alert-success").wait_for()
+
+
+def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    original_config = setting_value("module_appnuno_config")
+    if not original_config:
+        raise AssertionError("The AppNuno module configuration was not persisted.")
+    page.locator('#default-tabs .appnuno-tab').first.locator('[data-field="id"]').fill("")
+    page.locator('button[form="form-appnuno"]').click()
+    page.locator(".alert-danger").wait_for()
+    if setting_value("module_appnuno_config") != original_config:
+        raise AssertionError("Invalid AppNuno settings changed the stored module configuration.")
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT user_group_id FROM oc_user WHERE username = %s", (ADMIN_USER,))
+        group_id = cursor.fetchone()[0]
+        cursor.execute("SELECT permission FROM oc_user_group WHERE user_group_id = %s", (group_id,))
+        original_permissions = json.loads(cursor.fetchone()[0])
+        restricted_permissions = json.loads(json.dumps(original_permissions))
+        restricted_permissions["modify"] = [route for route in restricted_permissions.get("modify", []) if route != "extension/module/appnuno"]
+        cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(restricted_permissions), group_id))
+    connection.close()
+    try:
+        page.locator("#input-status").select_option("0")
+        page.locator('button[form="form-appnuno"]').click()
+        page.locator(".alert-danger").wait_for()
+        if "permission" not in page.locator(".alert-danger").inner_text().lower():
+            raise AssertionError("The module settings controller did not reject a user without modify permission.")
+        if setting_value("module_appnuno_status") != "1":
+            raise AssertionError("A user without modify permission changed the module status.")
+    finally:
+        connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(original_permissions), group_id))
+        connection.close()
+    token = admin_token(page)
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    save_module_status(page, False)
+    page.goto(BASE_URL + "/")
+    if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
+        raise AssertionError("The disabled module still injected its bootstrap script.")
+    disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=extension/module/appnuno/state")
+    if disabled != 404:
+        raise AssertionError(f"The disabled module state endpoint returned HTTP {disabled} instead of 404.")
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    save_module_status(page, True)
+    token = admin_token(page)
+    page.goto(BASE_URL + "/")
+    page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")
+    if page.locator('script[src*="appnuno"][src*="bootstrap"]').count() != 1:
+        raise AssertionError("The re-enabled module did not restore exactly one bootstrap script.")
+    page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
+    page.locator('select[name="type"]').select_option("module")
+    module_row = page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+    page.once("dialog", lambda dialog: dialog.accept())
+    module_row.locator("a.btn-danger").click()
+    module_row.locator("a.btn-success").wait_for()
+    if setting_value("module_appnuno_status") is not None or appnuno_event_count():
+        raise AssertionError("Uninstalling the module did not remove its settings and catalog event.")
+    module_row.locator("a.btn-success").click()
+    module_row.locator("a.btn-danger").wait_for()
+    if appnuno_event_count() != 1:
+        raise AssertionError("Reinstalling the module did not restore exactly one catalog event.")
+    token = admin_token(page)
+    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    save_module_status(page, True)
+    page.goto(BASE_URL + "/")
+    page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")
+
+
 def check_storefront(page: Page, artifact_dir: Path) -> None:
     responses: list[Response] = []
     page.on("response", lambda response: responses.append(response))
@@ -428,6 +618,8 @@ def main() -> None:
                         record_video_dir=str(artifact_dir / "video"),
                         record_video_size={"width": 1440, "height": 1000},
                     )
+                    context.route("https://appnuno.com/sdk/v1/appnuno.js", lambda route: route.fulfill(status=200, content_type="application/javascript", body=SDK_SOURCE))
+                    context.add_init_script("window.__appnunoReadyEvents = []; window.addEventListener('appnuno:ready', event => window.__appnunoReadyEvents.push({ type: event.type, navigation: event.detail.navigation, identity: event.detail.identity }));")
                     tracing_started = False
                     try:
                         context.tracing.start(screenshots=True, snapshots=True, sources=True)
@@ -444,7 +636,11 @@ def main() -> None:
                         install_module(page, admin_token(page))
                         capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
                         save_and_check_tab(page, artifact_dir)
+                        token = admin_token(page)
                         check_storefront(page, artifact_dir)
+                        check_localization_and_route_fallback(page)
+                        check_cart_and_customer_state(page)
+                        check_module_lifecycle_and_admin_validation(page, token)
                     finally:
                         if tracing_started:
                             context.tracing.stop(path=str(artifact_dir / "playwright-trace.zip"))

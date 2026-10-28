@@ -1,0 +1,7 @@
+greenlet==3.3.1
+playwright==1.64.1
+pyee==14.0.0
+PyMySQL==1.2.3
+pyasyncore==1.0.5
+pyasynchat==1.0.5
+pyftpdlib==2.2.0
