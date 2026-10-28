@@ -34,7 +34,7 @@ jobs:
           repository: mantax559/appnuno-web
           ref: production
           path: appnuno-web
-          token: ${{ secrets.APPNUNO_WEB_READ_TOKEN || github.token }}
+          token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
