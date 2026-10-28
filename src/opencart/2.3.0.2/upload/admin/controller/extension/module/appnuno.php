@@ -29,22 +29,23 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $data['text_disabled'] = $this->language->get('text_disabled');
         $data['entry_status'] = $this->language->get('entry_status');
         $data['text_default_tabs'] = $this->language->get('text_default_tabs');
+        $data['text'] = $this->interfaceText();
         $data['languages'] = $this->available_languages;
-        $data['destinations'] = $this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id'));
+        $data['destinations'] = $this->translatedDestinations($this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id')));
         $data['route_options'] = array(
-            array('label' => 'Home', 'route' => 'common/home'),
-            array('label' => 'Category page', 'route' => 'product/category'),
-            array('label' => 'Product page', 'route' => 'product/product'),
-            array('label' => 'Special offers', 'route' => 'product/special'),
-            array('label' => 'Search', 'route' => 'product/search'),
-            array('label' => 'Manufacturer', 'route' => 'product/manufacturer'),
-            array('label' => 'Information page', 'route' => 'information/information'),
-            array('label' => 'Contact', 'route' => 'information/contact'),
-            array('label' => 'Account', 'route' => 'account/account'),
-            array('label' => 'Login', 'route' => 'account/login'),
-            array('label' => 'Register', 'route' => 'account/register'),
-            array('label' => 'Cart', 'route' => 'checkout/cart'),
-            array('label' => 'Checkout', 'route' => 'checkout/checkout')
+            array('label' => $this->language->get('text_route_home'), 'route' => 'common/home'),
+            array('label' => $this->language->get('text_route_category'), 'route' => 'product/category'),
+            array('label' => $this->language->get('text_route_product'), 'route' => 'product/product'),
+            array('label' => $this->language->get('text_route_special'), 'route' => 'product/special'),
+            array('label' => $this->language->get('text_route_search'), 'route' => 'product/search'),
+            array('label' => $this->language->get('text_route_manufacturer'), 'route' => 'product/manufacturer'),
+            array('label' => $this->language->get('text_route_information'), 'route' => 'information/information'),
+            array('label' => $this->language->get('text_route_contact'), 'route' => 'information/contact'),
+            array('label' => $this->language->get('text_route_account'), 'route' => 'account/account'),
+            array('label' => $this->language->get('text_route_login'), 'route' => 'account/login'),
+            array('label' => $this->language->get('text_route_register'), 'route' => 'account/register'),
+            array('label' => $this->language->get('text_route_cart'), 'route' => 'checkout/cart'),
+            array('label' => $this->language->get('text_route_checkout'), 'route' => 'checkout/checkout')
         );
         $data['help_config'] = $this->language->get('help_config');
         $data['button_save'] = $this->language->get('button_save');
@@ -76,6 +77,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
             $configuration = json_decode($this->model_extension_module_appnuno->defaultConfig(), true);
         }
         $data['configuration_json'] = json_encode($configuration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+        $data['text_json'] = json_encode($data['text'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
         $data['languages_json'] = json_encode($data['languages'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
         $data['destinations_json'] = json_encode($data['destinations'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
         $data['route_options_json'] = json_encode($data['route_options'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
@@ -111,7 +113,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         }
         $posted_config = isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config']) ? htmlspecialchars_decode($this->request->post['module_appnuno_config'], ENT_COMPAT) : '';
         if (!strlen(trim($posted_config))) {
-            $this->error['config'] = 'Settings data was not submitted. Reload the page and try saving again.';
+            $this->error['config'] = $this->language->get('error_config_missing');
             $this->error['config_path'] = 'module_appnuno_config';
             return false;
         }
@@ -129,5 +131,43 @@ class ControllerExtensionModuleAppnuno extends Controller {
             $this->error['config_path'] = is_int($error_separator) ? substr($config_error, 0, $error_separator) : '';
         }
         return !$this->error;
+    }
+
+    private function interfaceText(): array {
+        $text = array();
+        foreach (array('text_default_tabs_help', 'button_add_default_tab', 'entry_cart_tab', 'help_cart_tab', 'text_route_sets', 'text_route_sets_help', 'button_add_route', 'text_back_button', 'entry_back_enabled', 'entry_back_placement', 'text_placement_separate', 'text_placement_bar', 'text_glass', 'entry_glass_enabled', 'entry_glass_color_scheme', 'text_color_auto', 'text_color_light', 'text_color_dark', 'entry_glass_style', 'text_style_regular', 'text_style_clear', 'text_style_none', 'entry_glass_animate', 'entry_glass_duration', 'entry_glass_interactive', 'entry_glass_tint', 'entry_glass_opacity', 'text_navigation_colors', 'text_light_mode', 'text_dark_mode', 'entry_background', 'entry_content', 'text_language_labels', 'text_label', 'text_default_language', 'text_destination', 'text_choose_destination', 'text_custom_url', 'text_url_placeholder', 'text_tab_id', 'text_icon', 'text_active_icon', 'button_remove_tab', 'text_opencart_route', 'text_choose_route', 'text_custom_route', 'text_route_tab_set', 'button_add_route_tab', 'button_remove_route', 'text_tab_missing', 'error_route_required', 'error_route_duplicate') as $key) {
+            $text[$key] = $this->language->get($key);
+        }
+        return $text;
+    }
+
+    private function translatedDestinations(array $destinations): array {
+        $labels = array(
+            'Home' => 'text_destination_home',
+            'Special offers' => 'text_destination_special',
+            'Search' => 'text_destination_search',
+            'Account' => 'text_destination_account',
+            'Login' => 'text_destination_login',
+            'Register' => 'text_destination_register',
+            'Cart' => 'text_destination_cart',
+            'Checkout' => 'text_destination_checkout',
+            'Contact' => 'text_destination_contact'
+        );
+        foreach ($destinations as $index => $destination) {
+            if (!isset($destination['label']) || !is_string($destination['label'])) {
+                continue;
+            }
+            if (isset($labels[$destination['label']])) {
+                $destinations[$index]['label'] = $this->language->get($labels[$destination['label']]);
+                continue;
+            }
+            foreach (array('Information: ' => 'text_destination_information', 'Category: ' => 'text_destination_category') as $prefix => $key) {
+                if (strncmp($destination['label'], $prefix, strlen($prefix)) === 0) {
+                    $destinations[$index]['label'] = $this->language->get($key) . substr($destination['label'], strlen($prefix));
+                    break;
+                }
+            }
+        }
+        return $destinations;
     }
 }

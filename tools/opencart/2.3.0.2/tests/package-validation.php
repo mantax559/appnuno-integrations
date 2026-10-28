@@ -5,7 +5,9 @@ $required = array(
     'install.xml',
     'README.md',
     'upload/admin/controller/extension/module/appnuno.php',
-    'upload/admin/language/english/extension/module/appnuno.php',
+    'upload/admin/language/en-gb/extension/module/appnuno.php',
+    'upload/admin/language/lt-lt/extension/module/appnuno.php',
+    'upload/admin/language/de-de/extension/module/appnuno.php',
     'upload/admin/model/extension/module/appnuno.php',
     'upload/admin/view/template/extension/module/appnuno.tpl',
     'upload/catalog/controller/extension/module/appnuno.php',
@@ -34,17 +36,23 @@ if (!in_array($entries, array($sorted_entries), true)) {
 }
 $view = $archive->getFromName('upload/admin/view/template/extension/module/appnuno.tpl');
 $controller = $archive->getFromName('upload/admin/controller/extension/module/appnuno.php');
+$english = $archive->getFromName('upload/admin/language/en-gb/extension/module/appnuno.php');
+$lithuanian = $archive->getFromName('upload/admin/language/lt-lt/extension/module/appnuno.php');
+$german = $archive->getFromName('upload/admin/language/de-de/extension/module/appnuno.php');
 $catalog_controller = $archive->getFromName('upload/catalog/controller/extension/module/appnuno.php');
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
-if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'Custom URL') || !strstr($view, 'Custom route') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
+if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_custom_route') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)')) {
     throw new RuntimeException('OpenCart archive is missing the updated settings controls and defaults.');
 }
-if (!strstr($view, 'id="default-tabs"') || !strstr($view, 'Cart badge tab') || strstr($view, 'Cart badge</h3>') || !strstr($view, 'id="input-config-json" value=""')) {
+if (!strstr($view, 'id="default-tabs"') || !strstr($view, "\$text['entry_cart_tab']") || strstr($view, 'Cart badge</h3>') || !strstr($view, 'id="input-config-json" value=""')) {
     throw new RuntimeException('OpenCart archive is missing the integrated cart badge setting or the empty serialized config field.');
 }
-if (!is_string($controller) || !strstr($controller, 'Settings data was not submitted') || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')")) {
+if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !strstr($english, 'Cart badge tab') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !strstr($lithuanian, 'Numatytieji skirtukai') || !is_string($german) || !strstr($german, 'AppNuno native Navigation') || !strstr($german, 'Standard-Tabs')) {
+    throw new RuntimeException('OpenCart archive is missing the English, Lithuanian or German module language.');
+}
+if (!is_string($controller) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')")) {
     throw new RuntimeException('OpenCart archive is missing strict submitted settings handling or catalog event repair on save.');
 }
 if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {

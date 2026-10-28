@@ -25,63 +25,63 @@
           <div class="panel panel-default">
             <div class="panel-heading"><h3 class="panel-title"><?php echo $text_default_tabs; ?></h3></div>
             <div class="panel-body">
-              <div class="alert alert-info">Shown on routes without a matching route-specific tab set. Tab URLs must be paths on this store, beginning with /.</div>
+              <div class="alert alert-info"><?php echo $text['text_default_tabs_help']; ?></div>
               <div id="default-tabs"></div>
-              <button type="button" class="btn btn-default" data-add-tab="default-tabs"><i class="fa fa-plus"></i> Add default tab</button>
+              <button type="button" class="btn btn-default" data-add-tab="default-tabs"><i class="fa fa-plus"></i> <?php echo $text['button_add_default_tab']; ?></button>
               <hr>
               <div class="form-group">
-                <label class="col-sm-2 control-label" for="cart-tab-id">Cart badge tab</label>
-                <div class="col-sm-10"><select id="cart-tab-id" class="form-control"></select><p class="help-block">The selected tab receives the confirmed quantity of products in the cart.</p></div>
+                <label class="col-sm-2 control-label" for="cart-tab-id"><?php echo $text['entry_cart_tab']; ?></label>
+                <div class="col-sm-10"><select id="cart-tab-id" class="form-control"></select><p class="help-block"><?php echo $text['help_cart_tab']; ?></p></div>
               </div>
             </div>
           </div>
           <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Route-specific tab sets</h3></div>
+            <div class="panel-heading"><h3 class="panel-title"><?php echo $text['text_route_sets']; ?></h3></div>
             <div class="panel-body">
-              <div class="alert alert-info">Add an exact OpenCart route, for example checkout/cart or product/product. Its complete tab set replaces the defaults on that route.</div>
+              <div class="alert alert-info"><?php echo $text['text_route_sets_help']; ?></div>
               <div id="client-validation-error" class="alert alert-danger" role="alert" style="display:none"></div>
               <div id="route-sets"></div>
-              <button type="button" class="btn btn-default" id="add-route"><i class="fa fa-plus"></i> Add route tab set</button>
+              <button type="button" class="btn btn-default" id="add-route"><i class="fa fa-plus"></i> <?php echo $text['button_add_route']; ?></button>
             </div>
           </div>
           <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Back button</h3></div>
+            <div class="panel-heading"><h3 class="panel-title"><?php echo $text['text_back_button']; ?></h3></div>
             <div class="panel-body">
               <div class="form-group">
-                <label class="col-sm-2 control-label" for="back-enabled">Enabled</label>
+                <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10"><input type="checkbox" id="back-enabled"></div>
               </div>
               <div class="form-group">
-                <label class="col-sm-2 control-label" for="back-placement">Placement</label>
-                <div class="col-sm-10"><select id="back-placement" class="form-control"><option value="separate">Separate</option><option value="bar">In tab bar</option></select></div>
+                <label class="col-sm-2 control-label" for="back-placement"><?php echo $text['entry_back_placement']; ?></label>
+                <div class="col-sm-10"><select id="back-placement" class="form-control"><option value="separate"><?php echo $text['text_placement_separate']; ?></option><option value="bar"><?php echo $text['text_placement_bar']; ?></option></select></div>
               </div>
             </div>
           </div>
           <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Glass button bar</h3></div>
+            <div class="panel-heading"><h3 class="panel-title"><?php echo $text['text_glass']; ?></h3></div>
             <div class="panel-body">
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-enabled">Glass enabled</label><div class="col-sm-10"><input type="checkbox" id="glass-enabled"></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-color-scheme">Color scheme</label><div class="col-sm-10"><select id="glass-color-scheme" class="form-control"><option value="auto">Automatic</option><option value="light">Light</option><option value="dark">Dark</option></select></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-style">Style</label><div class="col-sm-10"><select id="glass-style" class="form-control"><option value="regular">Regular</option><option value="clear">Clear</option><option value="none">None</option></select></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-animate">Animate changes</label><div class="col-sm-10"><input type="checkbox" id="glass-animate"></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-duration">Animation duration (seconds)</label><div class="col-sm-10"><input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control" required="required"></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-interactive">Interactive glass</label><div class="col-sm-10"><input type="checkbox" id="glass-interactive"></div></div>
-              <div class="form-group"><label class="col-sm-2 control-label" for="glass-tint-color">Tint color</label><div class="col-sm-7"><input type="color" id="glass-tint-color" class="form-control" value="#000000"></div><div class="col-sm-3"><label for="glass-tint-alpha">Opacity</label><input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control" value="0.02" required="required"></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label><div class="col-sm-10"><input type="checkbox" id="glass-enabled"></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-color-scheme"><?php echo $text['entry_glass_color_scheme']; ?></label><div class="col-sm-10"><select id="glass-color-scheme" class="form-control"><option value="auto"><?php echo $text['text_color_auto']; ?></option><option value="light"><?php echo $text['text_color_light']; ?></option><option value="dark"><?php echo $text['text_color_dark']; ?></option></select></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-style"><?php echo $text['entry_glass_style']; ?></label><div class="col-sm-10"><select id="glass-style" class="form-control"><option value="regular"><?php echo $text['text_style_regular']; ?></option><option value="clear"><?php echo $text['text_style_clear']; ?></option><option value="none"><?php echo $text['text_style_none']; ?></option></select></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-animate"><?php echo $text['entry_glass_animate']; ?></label><div class="col-sm-10"><input type="checkbox" id="glass-animate"></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label><div class="col-sm-10"><input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control" required="required"></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-interactive"><?php echo $text['entry_glass_interactive']; ?></label><div class="col-sm-10"><input type="checkbox" id="glass-interactive"></div></div>
+              <div class="form-group"><label class="col-sm-2 control-label" for="glass-tint-color"><?php echo $text['entry_glass_tint']; ?></label><div class="col-sm-7"><input type="color" id="glass-tint-color" class="form-control" value="#000000"></div><div class="col-sm-3"><label for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label><input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control" value="0.02" required="required"></div></div>
             </div>
           </div>
           <div class="panel panel-default">
-            <div class="panel-heading"><h3 class="panel-title">Navigation colors</h3></div>
+            <div class="panel-heading"><h3 class="panel-title"><?php echo $text['text_navigation_colors']; ?></h3></div>
             <div class="panel-body">
               <div class="row">
                 <div class="col-sm-6">
-                  <h4>Light mode</h4>
-                  <div class="form-group"><label class="col-sm-4 control-label" for="light-background">Background</label><div class="col-sm-8"><input type="color" id="light-background" class="form-control" value="#FFFFFF"></div></div>
-                  <div class="form-group"><label class="col-sm-4 control-label" for="light-content">Content</label><div class="col-sm-8"><input type="color" id="light-content" class="form-control" value="#2C3136"></div></div>
+                  <h4><?php echo $text['text_light_mode']; ?></h4>
+                  <div class="form-group"><label class="col-sm-4 control-label" for="light-background"><?php echo $text['entry_background']; ?></label><div class="col-sm-8"><input type="color" id="light-background" class="form-control" value="#FFFFFF"></div></div>
+                  <div class="form-group"><label class="col-sm-4 control-label" for="light-content"><?php echo $text['entry_content']; ?></label><div class="col-sm-8"><input type="color" id="light-content" class="form-control" value="#2C3136"></div></div>
                 </div>
                 <div class="col-sm-6">
-                  <h4>Dark mode</h4>
-                  <div class="form-group"><label class="col-sm-4 control-label" for="dark-background">Background</label><div class="col-sm-8"><input type="color" id="dark-background" class="form-control" value="#2C3136"></div></div>
-                  <div class="form-group"><label class="col-sm-4 control-label" for="dark-content">Content</label><div class="col-sm-8"><input type="color" id="dark-content" class="form-control" value="#FFFFFF"></div></div>
+                  <h4><?php echo $text['text_dark_mode']; ?></h4>
+                  <div class="form-group"><label class="col-sm-4 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label><div class="col-sm-8"><input type="color" id="dark-background" class="form-control" value="#2C3136"></div></div>
+                  <div class="form-group"><label class="col-sm-4 control-label" for="dark-content"><?php echo $text['entry_content']; ?></label><div class="col-sm-8"><input type="color" id="dark-content" class="form-control" value="#FFFFFF"></div></div>
                 </div>
               </div>
             </div>
@@ -94,6 +94,7 @@
 <script type="text/javascript">
 (function () {
     var configuration = <?php echo $configuration_json; ?> || {};
+    var text = <?php echo $text_json; ?> || {};
     var languages = <?php echo $languages_json; ?> || [];
     var destinations = <?php echo $destinations_json; ?> || [];
     var routeOptions = <?php echo $route_options_json; ?> || [];
@@ -131,7 +132,7 @@
         group.setAttribute('data-validation-path', path + '.labels');
         var title = document.createElement('label');
         title.className = 'col-sm-2 control-label';
-        title.textContent = 'Label translations';
+        title.textContent = text.text_language_labels;
         var column = document.createElement('div');
         column.className = 'col-sm-10';
         var labels = tab.labels || {};
@@ -183,7 +184,7 @@
             fallback.type = 'text';
             fallback.className = 'form-control';
             fallback.maxLength = 80;
-            fallback.placeholder = 'Label';
+            fallback.placeholder = text.text_label;
             fallback.value = legacyLabel;
             fallback.setAttribute('data-language-label', 'default');
             fallback.setAttribute('data-validation-path', path + '.labels.default');
@@ -200,21 +201,21 @@
         group.setAttribute('data-validation-path', path + '.url');
         var title = document.createElement('label');
         title.className = 'col-sm-2 control-label';
-        title.textContent = 'Destination';
+        title.textContent = text.text_destination;
         var column = document.createElement('div');
         column.className = 'col-sm-10';
         var select = document.createElement('select');
         select.className = 'form-control';
         select.setAttribute('data-url-select', 'true');
-        select.appendChild(new Option('Choose a store page or custom URL', ''));
+        select.appendChild(new Option(text.text_choose_destination, ''));
         destinations.forEach(function (destination) {
             select.appendChild(new Option(destination.label, destination.url));
         });
-        select.appendChild(new Option('Custom URL', '__custom__'));
+        select.appendChild(new Option(text.text_custom_url, '__custom__'));
         var customUrls = document.createElement('div');
         customUrls.className = 'appnuno-custom-urls';
         var savedUrls = tab.urls || {};
-        var languageList = languages.length ? languages : [{ code: 'default', name: 'Default', image: '' }];
+        var languageList = languages.length ? languages : [{ code: 'default', name: text.text_default_language, image: '' }];
         languageList.forEach(function (language) {
             var inputGroup = document.createElement('div');
             inputGroup.className = 'input-group';
@@ -241,7 +242,7 @@
             var input = document.createElement('input');
             input.type = 'text';
             input.className = 'form-control';
-            input.placeholder = 'Local URL for ' + language.name + ', starting with /';
+            input.placeholder = text.text_url_placeholder.replace('%s', language.name);
             input.setAttribute('data-language-url', language.code);
             input.setAttribute('data-validation-path', path + '.urls.' + language.code);
             input.value = savedUrls[language.code] || tab.url || '';
@@ -275,15 +276,15 @@
         var card = document.createElement('div');
         card.className = 'well appnuno-tab';
         card.setAttribute('data-validation-path', path);
-        card.appendChild(createField('Tab ID', tab.id, 'id', 'text', path + '.id'));
+        card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
         card.appendChild(createLabelFields(tab, path));
         card.appendChild(createUrlField(tab, path));
-        card.appendChild(createField('Icon', tab.icon, 'icon', 'text', path + '.icon'));
-        card.appendChild(createField('Active icon', tab.activeIcon, 'activeIcon', 'text', path + '.activeIcon'));
+        card.appendChild(createField(text.text_icon, tab.icon, 'icon', 'text', path + '.icon'));
+        card.appendChild(createField(text.text_active_icon, tab.activeIcon, 'activeIcon', 'text', path + '.activeIcon'));
         var remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn btn-danger btn-sm';
-        remove.textContent = 'Remove tab';
+        remove.textContent = text.button_remove_tab;
         remove.addEventListener('click', function () {
             card.parentNode.removeChild(card);
             refreshCartOptions();
@@ -304,16 +305,16 @@
         group.className = 'form-group';
         var title = document.createElement('label');
         title.className = 'col-sm-2 control-label';
-        title.textContent = 'OpenCart route';
+        title.textContent = text.text_opencart_route;
         var column = document.createElement('div');
         column.className = 'col-sm-10';
         var select = document.createElement('select');
         select.className = 'form-control';
-        select.appendChild(new Option('Choose a common route or custom route', ''));
+        select.appendChild(new Option(text.text_choose_route, ''));
         routeOptions.forEach(function (option) {
             select.appendChild(new Option(option.label + ' (' + option.route + ')', option.route));
         });
-        select.appendChild(new Option('Custom route', '__custom__'));
+        select.appendChild(new Option(text.text_custom_route, '__custom__'));
         var input = document.createElement('input');
         input.type = 'text';
         input.className = 'form-control';
@@ -371,7 +372,7 @@
         card.className = 'panel panel-info appnuno-route';
         var heading = document.createElement('div');
         heading.className = 'panel-heading';
-        heading.textContent = 'Route tab set';
+        heading.textContent = text.text_route_tab_set;
         var body = document.createElement('div');
         body.className = 'panel-body';
         body.appendChild(createRouteField(route));
@@ -385,7 +386,7 @@
         var add = document.createElement('button');
         add.type = 'button';
         add.className = 'btn btn-default';
-        add.textContent = 'Add tab to this route';
+        add.textContent = text.button_add_route_tab;
         add.addEventListener('click', function () {
             var routeField = card.querySelector('[data-field="route"]');
             addTab(tabContainer, {}, 'routes.' + (routeField && routeField.value ? routeField.value : 'route'));
@@ -393,7 +394,7 @@
         var remove = document.createElement('button');
         remove.type = 'button';
         remove.className = 'btn btn-danger pull-right';
-        remove.textContent = 'Remove route set';
+        remove.textContent = text.button_remove_route;
         remove.addEventListener('click', function () {
             routesContainer.removeChild(card);
             refreshCartOptions();
@@ -459,7 +460,7 @@
         if (!ids[current]) {
             var fallback = document.createElement('option');
             fallback.value = current;
-            fallback.textContent = current + ' (not currently in a tab set)';
+            fallback.textContent = text.text_tab_missing.replace('%s', current);
             cartSelect.appendChild(fallback);
         }
         cartSelect.value = current;
@@ -598,7 +599,7 @@
             var routeField = card.querySelector('[data-field="route"]');
             var route = routeField ? routeField.value.trim() : '';
             if (!route) {
-                routeError = 'Choose a route for each route-specific tab set.';
+                routeError = text.error_route_required;
                 if (routeField) {
                     routeField.parentNode.parentNode.className += ' has-error';
                     routeField.focus();
@@ -606,7 +607,7 @@
                 return;
             }
             if (Object.prototype.hasOwnProperty.call(routes, route)) {
-                routeError = 'Each OpenCart route can have only one route-specific tab set.';
+                routeError = text.error_route_duplicate;
                 if (routeField) {
                     routeField.parentNode.parentNode.className += ' has-error';
                     routeField.focus();
