@@ -625,6 +625,52 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")
 
 
+def set_storefront_language(page: Page, code: str) -> None:
+    status = page.evaluate(
+        """async code => {
+            const body = new URLSearchParams();
+            body.set("code", code);
+            body.set("redirect", location.origin + "/");
+            const response = await fetch("index.php?route=common/language/language", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body
+            });
+            return response.status;
+        }""",
+        code,
+    )
+    if status != 200:
+        raise AssertionError(f"OpenCart did not accept storefront language {code}: HTTP {status}.")
+
+
+def expect_resolved_storefront_language(page: Page, responses: list[Response], home_label: str, cart_label: str, added_label: str, added_url: str) -> None:
+    page.goto(BASE_URL + "/")
+    payload = get_bootstrap_payload(page, responses, "common/home")
+    labels = {tab["id"]: (tab.get("label"), tab.get("url")) for tab in payload["navigation"]["tabs"]}
+    expected = {
+        "home": (home_label, "/"),
+        "cart": (cart_label, "/index.php?route=checkout/cart"),
+        "ci-added-tab": (added_label, added_url),
+    }
+    if labels != expected:
+        raise AssertionError(f"The storefront published the wrong language labels: {labels}.")
+
+
+def check_storefront_label_languages(page: Page, responses: list[Response]) -> None:
+    set_storefront_language(page, "lt-lt")
+    expect_resolved_storefront_language(page, responses, "Pradžia", "Krepšelis", "CI pridėtas skirtukas", "/lt/kontaktai")
+    page.goto(BASE_URL + "/index.php?route=checkout/cart")
+    route_tab = get_bootstrap_payload(page, responses, "checkout/cart")["navigation"]["tabs"][0]
+    if route_tab.get("label") != "Krepšelio skirtukas" or route_tab.get("url") != "/lt/krepselis":
+        raise AssertionError(f"The storefront published the wrong checkout/cart language: {route_tab}.")
+    set_storefront_language(page, "de-de")
+    expect_resolved_storefront_language(page, responses, "Start", "Warenkorb", "CI hinzugefügter Tab", "/de/kontakt")
+    set_storefront_language(page, "en-gb")
+    expect_resolved_storefront_language(page, responses, "Home", "Cart", "CI Added Tab", "/en/contact")
+
+
 def check_storefront(page: Page, artifact_dir: Path) -> None:
     responses: list[Response] = []
     page.on("response", lambda response: responses.append(response))
@@ -641,6 +687,7 @@ def check_storefront(page: Page, artifact_dir: Path) -> None:
     page.goto(BASE_URL + "/index.php?route=checkout/cart")
     check_route_bootstrap(get_bootstrap_payload(page, responses, "checkout/cart"))
     capture_screenshot(page, artifact_dir, "06-storefront-cart-route.png")
+    check_storefront_label_languages(page, responses)
 
 
 def main() -> None:
