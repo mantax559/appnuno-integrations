@@ -418,14 +418,14 @@ def check_default_bootstrap(payload: dict) -> None:
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
     if len(configuration["defaultTabs"]) != 3:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {configuration['defaultTabs']}.")
-    for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis"})):
+    for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia", "de-de": "Start"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis", "de-de": "Warenkorb"})):
         configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == tab_id)
         if configured_tab.get("labels") != labels:
             raise AssertionError(f"The bootstrap configuration did not retain translations for {tab_id}: {configured_tab}.")
     configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "ci-added-tab")
-    if configured_tab.get("labels") != {"en-gb": "CI Added Tab", "lt-lt": "CI pridėtas skirtukas"}:
+    if configured_tab.get("labels") != {"en-gb": "CI Added Tab", "lt-lt": "CI pridėtas skirtukas", "de-de": "CI hinzugefügter Tab"}:
         raise AssertionError(f"The bootstrap configuration did not retain all default tab translations: {configured_tab}.")
-    if configured_tab.get("urls") != {"en-gb": "/en/contact", "lt-lt": "/lt/kontaktai"}:
+    if configured_tab.get("urls") != {"en-gb": "/en/contact", "lt-lt": "/lt/kontaktai", "de-de": "/de/kontakt"}:
         raise AssertionError(f"The bootstrap configuration did not retain all default tab URLs: {configured_tab}.")
     expected_default_tabs = {
         "home": ("Home", "/", "home-outline", "home"),
@@ -482,9 +482,9 @@ def check_route_bootstrap(payload: dict) -> None:
     if payload["route"] != "checkout/cart":
         raise AssertionError(f"Expected the checkout/cart bootstrap route, got {payload['route']}.")
     configured_tabs = payload["config"]["routes"]["checkout/cart"]
-    if len(configured_tabs) != 1 or configured_tabs[0].get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas"}:
+    if len(configured_tabs) != 1 or configured_tabs[0].get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
         raise AssertionError(f"The saved checkout/cart route translations are incorrect: {configured_tabs}.")
-    if configured_tabs[0].get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis"}:
+    if configured_tabs[0].get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis", "de-de": "/de/warenkorb"}:
         raise AssertionError(f"The saved checkout/cart localized URLs are incorrect: {configured_tabs}.")
     tabs = payload["navigation"]["tabs"]
     if len(tabs) != 1:
