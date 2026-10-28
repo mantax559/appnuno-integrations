@@ -557,8 +557,10 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count() != 1:
         raise AssertionError("The re-enabled module did not restore exactly one bootstrap script.")
     page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
-    page.locator('select[name="type"]').select_option("module")
+    type_select = page.locator('select[name="type"]')
+    type_select.select_option(type_select.locator('option[value*="extension/extension/module"]').get_attribute("value"))
     module_row = page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+    module_row.wait_for()
     page.once("dialog", lambda dialog: dialog.accept())
     module_row.locator("a.btn-danger").click()
     module_row.locator("a.btn-success").wait_for()
