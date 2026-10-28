@@ -127,7 +127,7 @@ def create_cart_product() -> int:
             ("APPNUNO-CI-PRODUCT", stock_status_id),
         )
         product_id = cursor.lastrowid
-        cursor.execute("SELECT value FROM oc_setting WHERE store_id = 0 AND `key` = 'config_language_id' LIMIT 1")
+        cursor.execute("SELECT l.language_id FROM oc_language l INNER JOIN oc_setting s ON s.store_id = 0 AND s.`key` = 'config_language' AND s.value = l.code LIMIT 1")
         language_row = cursor.fetchone()
         if not language_row or not language_row[0]:
             raise AssertionError("OpenCart has no store language, so the cart product cannot be displayed.")
