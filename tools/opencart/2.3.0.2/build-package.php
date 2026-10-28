@@ -1,6 +1,6 @@
 <?php
 $line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.2', '2.3'), true)) {
+if (!in_array($line, array('2.1', '2.2', '2.3'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 $repository = dirname(__DIR__, 3);
@@ -28,11 +28,14 @@ foreach ($entries as $name => $path) {
     if ($body === false) {
         throw new RuntimeException('Unable to read an OpenCart package file.');
     }
-    if ($line === '2.2' && $name !== 'README.md') {
+    if (in_array($line, array('2.1', '2.2'), true) && $name !== 'README.md') {
         $name = str_replace('/extension/module/', '/module/', $name);
-        $body = opencart22($name, $body);
+        $body = opencart_module_layout($line, $name, $body);
     }
     $prepared[$name] = $body;
+}
+if ($line === '2.1') {
+    $prepared['upload/admin/language/english/module/appnuno.php'] = $prepared['upload/admin/language/en-gb/module/appnuno.php'];
 }
 ksort($prepared, SORT_STRING);
 $staging = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'appnuno-opencart-package-' . bin2hex(random_bytes(12));
@@ -85,7 +88,7 @@ try {
 }
 echo $package . PHP_EOL;
 
-function opencart22($name, $content) {
+function opencart_module_layout($line, $name, $content) {
     $newline = strpos($content, "\r\n") !== false ? "\r\n" : "\n";
     if (substr($name, -4) === '.php' || $name === 'install.xml') {
         $content = str_replace(
@@ -108,12 +111,18 @@ function opencart22($name, $content) {
             $content
         );
     }
+    if ($line === '2.1' && substr($name, -4) === '.php') {
+        $content = str_replace("load->view('module/appnuno', \$data)", "load->view('module/appnuno.tpl', \$data)", $content);
+    }
     if ($name === 'install.xml') {
-        $content = str_replace(
-            array('AppNuno OpenCart 2.3', 'appnuno_opencart_2302', ", 'SSL')"),
-            array('AppNuno OpenCart 2.2', 'appnuno_opencart_2200', ', true)'),
-            $content
+        $replacements = array(
+            '2.1' => array('AppNuno OpenCart 2.1', 'appnuno_opencart_2100'),
+            '2.2' => array('AppNuno OpenCart 2.2', 'appnuno_opencart_2200')
         );
+        $content = str_replace(array('AppNuno OpenCart 2.3', 'appnuno_opencart_2302'), $replacements[$line], $content);
+        if ($line === '2.2') {
+            $content = str_replace(", 'SSL')", ', true)', $content);
+        }
     }
     $labels = array(
         'en-gb' => 'Modules',

@@ -21,12 +21,15 @@ REPOSITORY = Path(__file__).resolve().parents[4]
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
+SUPPORTED_OPENCART_VERSIONS = {"2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
-OPENCART_LINE = "2.2" if OPENCART_VERSION.startswith("2.2.") else "2.3"
+OPENCART_LINE = OPENCART_VERSION[:3]
 PACKAGE = REPOSITORY / "downloads" / "opencart" / OPENCART_LINE / f"appnuno-opencart-{OPENCART_LINE}.ocmod.zip"
-OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
+if OPENCART_LINE == "2.1":
+    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
+else:
+    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
 BASE_URL = "http://127.0.0.1:8080"
 DB_HOST = os.environ.get("OPENCART_DB_HOST", "127.0.0.1")
 DB_USER = os.environ.get("OPENCART_DB_USER", "root")
@@ -90,8 +93,12 @@ def configure_ftp() -> None:
         connection.close()
 
 
+def legacy_module_layout() -> bool:
+    return OPENCART_LINE != "2.3"
+
+
 def admin_module_route() -> str:
-    if OPENCART_LINE == "2.2":
+    if legacy_module_layout():
         return "module/appnuno"
     return "extension/module/appnuno"
 
@@ -101,7 +108,7 @@ def open_module_editor(page: Page, token: str) -> None:
 
 
 def module_list_row(page: Page, token: str):
-    if OPENCART_LINE == "2.2":
+    if legacy_module_layout():
         page.goto(BASE_URL + "/admin/index.php?route=extension/module&token=" + token)
         return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
     page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
@@ -117,9 +124,15 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     connection.close()
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
     page.locator('input[name="name"]').fill(name)
-    page.locator('select[name="code"]').select_option(code)
-    if OPENCART_LINE != "2.2":
+    if OPENCART_LINE == "2.1":
+        page.locator('input[name="code"]').fill(code)
         page.locator('input[name="locale"]').fill(locale)
+        page.locator('input[name="image"]').fill(code + ".png")
+        page.locator('input[name="directory"]').fill(code)
+    else:
+        page.locator('select[name="code"]').select_option(code)
+        if OPENCART_LINE != "2.2":
+            page.locator('input[name="locale"]').fill(locale)
     page.locator('select[name="status"]').select_option("1")
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
@@ -238,7 +251,7 @@ def refresh_modifications(page: Page, token: str) -> None:
 
 
 def click_module_list_button(page: Page, row, selector: str) -> None:
-    if OPENCART_LINE == "2.2":
+    if legacy_module_layout():
         with page.expect_navigation():
             row.locator(selector).click()
         return
@@ -339,13 +352,29 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     capture_screenshot(page, artifact_dir, "03-admin-settings-after-save.png")
 
 
+def use_en_gb_language_code(page: Page) -> None:
+    page.goto(BASE_URL + "/admin/index.php?route=localisation/language&token=" + admin_token(page))
+    page.locator('a[href*="route=localisation/language/edit"]').first.click()
+    page.locator('input[name="code"]').fill("en-gb")
+    with page.expect_navigation():
+        page.locator('button[form="form-language"]').click()
+    page.locator(".alert-success").wait_for()
+    switch_admin_language(page, "en-gb")
+
+
 def switch_admin_language(page: Page, code: str) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=setting/setting&token=" + admin_token(page))
-    page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
     page.locator('a[href="#tab-local"]').click()
-    page.locator("#input-admin-language").select_option(code)
-    with page.expect_navigation():
-        page.locator("#button-save").click()
+    if OPENCART_LINE == "2.1":
+        page.locator("#input-language").select_option(code)
+        page.locator("#input-admin-language").select_option(code)
+        with page.expect_navigation():
+            page.locator('button[form="form-setting"]').click()
+    else:
+        page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
+        page.locator("#input-admin-language").select_option(code)
+        with page.expect_navigation():
+            page.locator("#button-save").click()
     page.locator(".alert-success").wait_for()
 
 
@@ -767,6 +796,8 @@ def main() -> None:
                         token = admin_token(page)
                         upload_extension(page, token)
                         refresh_modifications(page, admin_token(page))
+                        if OPENCART_LINE == "2.1":
+                            use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
                         add_store_language(page, "German", "de-de", "de_DE.UTF-8,de_DE,de-de,german")
                         install_module(page, admin_token(page))
