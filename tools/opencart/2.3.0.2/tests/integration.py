@@ -512,7 +512,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
         raise AssertionError("The AppNuno module configuration was not persisted.")
     page.locator('#default-tabs .appnuno-tab').first.locator('[data-field="id"]').fill("")
     page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-danger").wait_for()
+    page.locator(".alert-danger:not(#client-validation-error)").wait_for()
     if setting_value("module_appnuno_config") != original_config:
         raise AssertionError("Invalid AppNuno settings changed the stored module configuration.")
     page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
@@ -529,8 +529,9 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     try:
         page.locator("#input-status").select_option("0")
         page.locator('button[form="form-appnuno"]').click()
-        page.locator(".alert-danger").wait_for()
-        if "permission" not in page.locator(".alert-danger").inner_text().lower():
+        server_error = page.locator(".alert-danger:not(#client-validation-error)")
+        server_error.wait_for()
+        if "permission" not in server_error.inner_text().lower():
             raise AssertionError("The module settings controller did not reject a user without modify permission.")
         if setting_value("module_appnuno_status") != "1":
             raise AssertionError("A user without modify permission changed the module status.")
