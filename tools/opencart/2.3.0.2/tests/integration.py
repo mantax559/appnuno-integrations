@@ -89,6 +89,30 @@ def configure_ftp() -> None:
         connection.close()
 
 
+def legacy_admin_modules() -> bool:
+    return OPENCART_VERSION.startswith("2.2.")
+
+
+def admin_module_route() -> str:
+    if legacy_admin_modules():
+        return "module/appnuno"
+    return "extension/module/appnuno"
+
+
+def open_module_editor(page: Page, token: str) -> None:
+    page.goto(BASE_URL + "/admin/index.php?route=" + admin_module_route() + "&token=" + token)
+
+
+def module_list_row(page: Page, token: str):
+    if legacy_admin_modules():
+        page.goto(BASE_URL + "/admin/index.php?route=extension/module&token=" + token)
+        return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
+    page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
+    module_filter = page.locator('select[name="type"]')
+    module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
+    return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+
+
 def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
@@ -97,7 +121,9 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
     page.locator('input[name="name"]').fill(name)
     page.locator('select[name="code"]').select_option(code)
-    page.locator('input[name="locale"]').fill(locale)
+    locale_field = page.locator('input[name="locale"]')
+    if locale_field.count():
+        locale_field.fill(locale)
     page.locator('select[name="status"]').select_option("1")
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
@@ -215,16 +241,20 @@ def refresh_modifications(page: Page, token: str) -> None:
     page.get_by_text("AppNuno OpenCart 2.x", exact=True).wait_for()
 
 
+def click_module_list_button(page: Page, row, selector: str) -> None:
+    if legacy_admin_modules():
+        with page.expect_navigation():
+            row.locator(selector).click()
+        return
+    row.locator(selector).click()
+
+
 def install_module(page: Page, token: str) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
-    module_filter = page.locator('select[name="type"]')
-    module_option = module_filter.locator("option").filter(has_text="Modules").first
-    module_filter.select_option(module_option.get_attribute("value"))
-    module_row = page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+    module_row = module_list_row(page, token)
     module_row.wait_for()
-    module_row.locator("a.btn-success").click()
+    click_module_list_button(page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     page.locator("#default-tabs .appnuno-tab").first.wait_for()
 
 
@@ -324,7 +354,7 @@ def switch_admin_language(page: Page, code: str) -> None:
 
 
 def expect_module_language(page: Page, phrases: tuple[str, ...]) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + admin_token(page))
+    open_module_editor(page, admin_token(page))
     page.locator("#default-tabs .appnuno-tab").first.wait_for()
     content = page.locator("#content").inner_text()
     for href in ("#tab-back", "#tab-glass", "#tab-colors"):
@@ -568,7 +598,7 @@ def save_module_status(page: Page, enabled: bool) -> None:
 
 
 def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     original_config = setting_value("module_appnuno_config")
     if not original_config:
         raise AssertionError("The AppNuno module configuration was not persisted.")
@@ -577,7 +607,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     page.locator(".alert-danger:not(#client-validation-error)").wait_for()
     if setting_value("module_appnuno_config") != original_config:
         raise AssertionError("Invalid AppNuno settings changed the stored module configuration.")
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
         cursor.execute("SELECT user_group_id FROM oc_user WHERE username = %s", (ADMIN_USER,))
@@ -585,7 +615,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
         cursor.execute("SELECT permission FROM oc_user_group WHERE user_group_id = %s", (group_id,))
         original_permissions = json.loads(cursor.fetchone()[0])
         restricted_permissions = json.loads(json.dumps(original_permissions))
-        restricted_permissions["modify"] = [route for route in restricted_permissions.get("modify", []) if route != "extension/module/appnuno"]
+        restricted_permissions["modify"] = [route for route in restricted_permissions.get("modify", []) if route != admin_module_route()]
         cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(restricted_permissions), group_id))
     connection.close()
     try:
@@ -603,7 +633,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
             cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(original_permissions), group_id))
         connection.close()
     token = admin_token(page)
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     save_module_status(page, False)
     page.goto(BASE_URL + "/")
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
@@ -611,29 +641,26 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=extension/module/appnuno/state")
     if disabled != 404:
         raise AssertionError(f"The disabled module state endpoint returned HTTP {disabled} instead of 404.")
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     save_module_status(page, True)
     token = admin_token(page)
     page.goto(BASE_URL + "/")
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count() != 1:
         raise AssertionError("The re-enabled module did not restore exactly one bootstrap script.")
-    page.goto(BASE_URL + "/admin/index.php?route=extension/extension&token=" + token)
-    type_select = page.locator('select[name="type"]')
-    type_select.select_option(type_select.locator('option[value*="extension/extension/module"]').get_attribute("value"))
-    module_row = page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").first
+    module_row = module_list_row(page, token)
     module_row.wait_for()
     page.once("dialog", lambda dialog: dialog.accept())
-    module_row.locator("a.btn-danger").click()
+    click_module_list_button(page, module_row, "a.btn-danger")
     module_row.locator("a.btn-success").wait_for()
     if setting_value("module_appnuno_status") is not None or appnuno_event_count():
         raise AssertionError("Uninstalling the module did not remove its settings and catalog event.")
-    module_row.locator("a.btn-success").click()
+    click_module_list_button(page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
     if appnuno_event_count() != 1:
         raise AssertionError("Reinstalling the module did not restore exactly one catalog event.")
     token = admin_token(page)
-    page.goto(BASE_URL + "/admin/index.php?route=extension/module/appnuno&token=" + token)
+    open_module_editor(page, token)
     save_module_status(page, True)
     page.goto(BASE_URL + "/")
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")

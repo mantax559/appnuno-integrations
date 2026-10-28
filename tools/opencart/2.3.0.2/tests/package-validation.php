@@ -11,7 +11,11 @@ $required = array(
     'upload/admin/model/extension/module/appnuno.php',
     'upload/admin/view/template/extension/module/appnuno.tpl',
     'upload/catalog/controller/extension/module/appnuno.php',
-    'upload/catalog/model/extension/module/appnuno.php'
+    'upload/catalog/model/extension/module/appnuno.php',
+    'upload/admin/controller/module/appnuno.php',
+    'upload/admin/language/en-gb/module/appnuno.php',
+    'upload/admin/language/lt-lt/module/appnuno.php',
+    'upload/admin/language/de-de/module/appnuno.php'
 );
 $archive = new ZipArchive();
 if (!$archive->open($package)) {
@@ -40,6 +44,8 @@ $english = $archive->getFromName('upload/admin/language/en-gb/extension/module/a
 $lithuanian = $archive->getFromName('upload/admin/language/lt-lt/extension/module/appnuno.php');
 $german = $archive->getFromName('upload/admin/language/de-de/extension/module/appnuno.php');
 $catalog_controller = $archive->getFromName('upload/catalog/controller/extension/module/appnuno.php');
+$legacy_controller = $archive->getFromName('upload/admin/controller/module/appnuno.php');
+$legacy_english = $archive->getFromName('upload/admin/language/en-gb/module/appnuno.php');
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
@@ -54,6 +60,9 @@ if (!is_string($english) || !strstr($english, 'Settings data was not submitted')
 }
 if (!is_string($controller) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')")) {
     throw new RuntimeException('OpenCart archive is missing strict submitted settings handling or catalog event repair on save.');
+}
+if (!is_string($legacy_controller) || !strstr($legacy_controller, 'class ControllerModuleAppnuno') || !strstr($legacy_controller, "hasPermission('modify', 'module/appnuno')") || !strstr($legacy_controller, "addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject')") || !strstr($legacy_controller, "load->language('extension/module/appnuno')") || !is_string($legacy_english) || !strstr($legacy_english, 'AppNuno Native Navigation')) {
+    throw new RuntimeException('OpenCart archive is missing the OpenCart 2.2 module entry that reuses the shared settings.');
 }
 if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {
     throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');

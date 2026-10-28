@@ -18,6 +18,35 @@ foreach ($iterator as $file) {
         $entries[str_replace(DIRECTORY_SEPARATOR, '/', $path)] = $file->getPathname();
     }
 }
+$shared_controller = file_get_contents($source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'controller' . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.php');
+$legacy_controller = str_replace(
+    array(
+        'class ControllerExtensionModuleAppnuno',
+        "url->link('extension/module/appnuno'",
+        "url->link('extension/extension', 'token=' . \$this->session->data['token'] . '&type=module', true)",
+        "addPermission(\$this->user->getGroupId(), 'access', 'extension/module/appnuno')",
+        "addPermission(\$this->user->getGroupId(), 'modify', 'extension/module/appnuno')",
+        "hasPermission('modify', 'extension/module/appnuno')"
+    ),
+    array(
+        'class ControllerModuleAppnuno',
+        "url->link('module/appnuno'",
+        "url->link('extension/module', 'token=' . \$this->session->data['token'], true)",
+        "addPermission(\$this->user->getGroupId(), 'access', 'module/appnuno')",
+        "addPermission(\$this->user->getGroupId(), 'modify', 'module/appnuno')",
+        "hasPermission('modify', 'module/appnuno')"
+    ),
+    $shared_controller
+);
+$legacy_controller_file = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'appnuno-legacy-controller-' . bin2hex(random_bytes(8)) . '.php';
+if ($legacy_controller === $shared_controller || file_put_contents($legacy_controller_file, $legacy_controller) === false) {
+    throw new RuntimeException('Unable to prepare the OpenCart 2.2 module controller.');
+}
+$entries['upload/admin/controller/module/appnuno.php'] = $legacy_controller_file;
+foreach (array('en-gb', 'lt-lt', 'de-de') as $language_code) {
+    $language_file = $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'language' . DIRECTORY_SEPARATOR . $language_code . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.php';
+    $entries['upload/admin/language/' . $language_code . '/module/appnuno.php'] = $language_file;
+}
 ksort($entries, SORT_STRING);
 $staging = sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'appnuno-opencart-package-' . bin2hex(random_bytes(12));
 if (!mkdir($staging, 0700)) {
@@ -66,5 +95,8 @@ try {
         }
     }
     rmdir($staging);
+    if (is_file($legacy_controller_file)) {
+        unlink($legacy_controller_file);
+    }
 }
 echo $package . PHP_EOL;
