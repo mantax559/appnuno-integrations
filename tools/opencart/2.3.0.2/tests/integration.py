@@ -159,6 +159,16 @@ def configuration_value(key: str) -> str | None:
     return row[0] if row else None
 
 
+def update_configuration_value(key: str, value: str) -> None:
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND code = 'config' AND `key` = %s", (value, key))
+        if cursor.rowcount != 1:
+            connection.close()
+            raise AssertionError(f"OpenCart setting {key} was not available to update.")
+    connection.close()
+
+
 def appnuno_event_count() -> int:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
     with connection.cursor() as cursor:
@@ -371,6 +381,7 @@ def use_en_gb_language_code(page: Page) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language&token=" + admin_token(page))
     page.locator('a[href*="route=localisation/language/edit"]').first.click()
     page.locator('input[name="code"]').fill("en-gb")
+    update_configuration_value("config_admin_language", "en-gb")
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
     page.locator(".alert-success").wait_for()
@@ -386,10 +397,13 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
         page.locator("#input-admin-language").select_option(code)
         with page.expect_navigation():
             page.locator('button[form="form-setting"]').click()
-        if configuration_value("config_admin_language") != code:
-            raise AssertionError("OpenCart 2.1 did not save the selected admin language.")
-        if update_storefront and configuration_value("config_language") != code:
-            raise AssertionError("OpenCart 2.1 did not save the selected store language.")
+        saved_admin_language = configuration_value("config_admin_language")
+        if saved_admin_language != code:
+            raise AssertionError(f"OpenCart 2.1 did not save the selected admin language; found {saved_admin_language!r}.")
+        if update_storefront:
+            saved_store_language = configuration_value("config_language")
+            if saved_store_language != code:
+                raise AssertionError(f"OpenCart 2.1 did not save the selected store language; found {saved_store_language!r}.")
         return
     page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
     page.locator("#input-admin-language").select_option(code)
