@@ -46,6 +46,28 @@ def capture_screenshot(page: Page, artifact_dir: Path, filename: str) -> None:
     page.screenshot(path=str(artifact_dir / filename), full_page=True, animations="disabled")
 
 
+def patch_installer_directory_listing(web_root: Path) -> None:
+    if OPENCART_VERSION not in ("2.0.0.0", "2.0.1.0"):
+        return
+    path = web_root / "admin" / "controller" / "extension" / "installer.php"
+    content = path.read_text(encoding="utf-8")
+    needle = "\t\t\t\t\t\t\t\tif (!in_array($destination, $list)) {\n"
+    replacement = (
+        "\t\t\t\t\t\t\t\t$list_data = array();\n"
+        "\n"
+        "\t\t\t\t\t\t\t\tif (is_array($list)) {\n"
+        "\t\t\t\t\t\t\t\t\tforeach ($list as $entry) {\n"
+        "\t\t\t\t\t\t\t\t\t\t$list_data[] = basename($entry);\n"
+        "\t\t\t\t\t\t\t\t\t}\n"
+        "\t\t\t\t\t\t\t\t}\n"
+        "\n"
+        "\t\t\t\t\t\t\t\tif (!in_array(basename($destination), $list_data)) {\n"
+    )
+    if content.count(needle) != 1:
+        raise AssertionError("OpenCart installer directory listing could not be patched.")
+    path.write_text(content.replace(needle, replacement, 1), encoding="utf-8")
+
+
 def prepare_store(workspace: Path) -> Path:
     archive_path = workspace / "opencart.zip"
     urllib.request.urlretrieve(OPENCART_ARCHIVE_URL, archive_path)
@@ -75,6 +97,12 @@ def wait_for_store(process: subprocess.Popen, log_path: Path) -> None:
     raise RuntimeError("OpenCart PHP server did not become ready.\n" + log_path.read_text(errors="replace"))
 
 
+def setting_scope_column() -> str:
+    if OPENCART_VERSION == "2.0.0.0":
+        return "`group`"
+    return "`code`"
+
+
 def configure_ftp() -> None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     try:
@@ -88,7 +116,7 @@ def configure_ftp() -> None:
                 "config_ftp_root": ""
             }
             for key, value in values.items():
-                cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND code = 'config' AND `key` = %s", (value, key))
+                cursor.execute(f"UPDATE oc_setting SET value = %s WHERE store_id = 0 AND {setting_scope_column()} = 'config' AND `key` = %s", (value, key))
     finally:
         connection.close()
 
@@ -129,6 +157,9 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
         page.locator('input[name="locale"]').fill(locale)
         page.locator('input[name="image"]').fill(code + ".png")
         page.locator('input[name="directory"]').fill(code)
+        filename = page.locator('input[name="filename"]')
+        if filename.count():
+            filename.fill(code)
     else:
         page.locator('select[name="code"]').select_option(code)
         if OPENCART_LINE != "2.2":
@@ -144,7 +175,7 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
 def setting_value(key: str) -> str | None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT value FROM oc_setting WHERE store_id = 0 AND code = 'module_appnuno' AND `key` = %s", (key,))
+        cursor.execute(f"SELECT value FROM oc_setting WHERE store_id = 0 AND {setting_scope_column()} = 'module_appnuno' AND `key` = %s", (key,))
         row = cursor.fetchone()
     connection.close()
     return row[0] if row else None
@@ -153,7 +184,7 @@ def setting_value(key: str) -> str | None:
 def configuration_value(key: str) -> str | None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
     with connection.cursor() as cursor:
-        cursor.execute("SELECT value FROM oc_setting WHERE store_id = 0 AND code = 'config' AND `key` = %s", (key,))
+        cursor.execute(f"SELECT value FROM oc_setting WHERE store_id = 0 AND {setting_scope_column()} = 'config' AND `key` = %s", (key,))
         row = cursor.fetchone()
     connection.close()
     return row[0] if row else None
@@ -166,7 +197,7 @@ def update_english_language_code() -> None:
         if cursor.rowcount != 1:
             connection.close()
             raise AssertionError("OpenCart's default English language could not be changed to en-gb.")
-        cursor.execute("UPDATE oc_setting SET value = 'en-gb' WHERE store_id = 0 AND code = 'config' AND `key` = 'config_admin_language' AND value = 'en'")
+        cursor.execute(f"UPDATE oc_setting SET value = 'en-gb' WHERE store_id = 0 AND {setting_scope_column()} = 'config' AND `key` = 'config_admin_language' AND value = 'en'")
         if cursor.rowcount != 1:
             connection.close()
             raise AssertionError("OpenCart's admin language setting could not be changed to en-gb.")
@@ -269,7 +300,19 @@ def upload_extension(page: Page, token: str) -> None:
     with page.expect_file_chooser() as chooser:
         page.locator("#button-upload").click()
     chooser.value.set_files(str(PACKAGE))
-    page.wait_for_function("document.querySelector('#progress-bar').style.width === '100%' && document.querySelector('#progress-bar').classList.contains('progress-bar-success')", timeout=90000)
+    page.wait_for_function(
+        """() => {
+            const bar = document.querySelector('#progress-bar');
+            if (!bar) {
+                return false;
+            }
+            if (bar.classList.contains('progress-bar-danger')) {
+                return true;
+            }
+            return bar.style.width === '100%' && bar.classList.contains('progress-bar-success');
+        }""",
+        timeout=90000,
+    )
     if page.locator("#progress-text .text-danger").count():
         raise AssertionError("OpenCart extension uploader failed: " + page.locator("#progress-text").inner_text())
 
@@ -868,6 +911,7 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
         workspace = Path(temporary)
         web_root = prepare_store(workspace)
+        patch_installer_directory_listing(web_root)
         log_path = artifact_dir / "php-server.log"
         with log_path.open("w", encoding="utf-8") as server_log:
             process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root)], stdout=server_log, stderr=subprocess.STDOUT)
