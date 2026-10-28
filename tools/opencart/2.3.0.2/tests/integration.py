@@ -235,7 +235,9 @@ def install_store(page: Page) -> None:
     page.locator('input[name="db_username"]').fill(DB_USER)
     page.locator('input[name="db_password"]').fill(DB_PASSWORD)
     page.locator('input[name="db_database"]').fill(DB_NAME)
-    page.locator('input[name="db_port"]').fill("3306")
+    database_port = page.locator('input[name="db_port"]')
+    if database_port.count():
+        database_port.fill("3306")
     page.locator('input[name="db_prefix"]').fill("oc_")
     page.locator('input[name="username"]').fill(ADMIN_USER)
     page.locator('input[name="password"]').fill(ADMIN_PASSWORD)
@@ -660,6 +662,63 @@ def save_module_status(page: Page, enabled: bool) -> None:
     page.locator(".alert-success").wait_for()
 
 
+def decode_permissions(value: str) -> dict:
+    if value.startswith("{"):
+        return json.loads(value)
+    parsed, end = parse_php_value(value, 0)
+    if end != len(value) or not isinstance(parsed, dict):
+        raise AssertionError("OpenCart user group permissions could not be read.")
+    return parsed
+
+
+def encode_permissions(original_value: str, permissions: dict) -> str:
+    if original_value.startswith("{"):
+        return json.dumps(permissions)
+    return serialize_php_value(permissions)
+
+
+def parse_php_value(value: str, index: int):
+    kind = value[index]
+    if kind == "a":
+        count_end = value.index(":", index + 2)
+        count = int(value[index + 2:count_end])
+        index = count_end + 2
+        items = []
+        sequential = True
+        for _ in range(count):
+            key, index = parse_php_value(value, index)
+            item, index = parse_php_value(value, index)
+            sequential = sequential and isinstance(key, int) and key == len(items)
+            items.append((key, item))
+        if value[index] != "}":
+            raise AssertionError("OpenCart user group permissions could not be read.")
+        parsed = [item for _, item in items] if sequential else {key: item for key, item in items}
+        return parsed, index + 1
+    if kind == "s":
+        length_end = value.index(":", index + 2)
+        length = int(value[index + 2:length_end])
+        start = length_end + 2
+        return value[start:start + length], start + length + 2
+    if kind == "i":
+        end = value.index(";", index)
+        return int(value[index + 2:end]), end + 1
+    raise AssertionError("OpenCart user group permissions could not be read.")
+
+
+def serialize_php_value(value) -> str:
+    if isinstance(value, dict):
+        content = "".join(serialize_php_value(key) + serialize_php_value(item) for key, item in value.items())
+        return f"a:{len(value)}:{{{content}}}"
+    if isinstance(value, list):
+        content = "".join(serialize_php_value(index) + serialize_php_value(item) for index, item in enumerate(value))
+        return f"a:{len(value)}:{{{content}}}"
+    if isinstance(value, str):
+        return f's:{len(value)}:"{value}";'
+    if isinstance(value, int):
+        return f"i:{value};"
+    raise AssertionError("OpenCart user group permissions could not be written.")
+
+
 def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     open_module_editor(page, token)
     original_config = setting_value("module_appnuno_config")
@@ -676,10 +735,11 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
         cursor.execute("SELECT user_group_id FROM oc_user WHERE username = %s", (ADMIN_USER,))
         group_id = cursor.fetchone()[0]
         cursor.execute("SELECT permission FROM oc_user_group WHERE user_group_id = %s", (group_id,))
-        original_permissions = json.loads(cursor.fetchone()[0])
+        original_permission_value = cursor.fetchone()[0]
+        original_permissions = decode_permissions(original_permission_value)
         restricted_permissions = json.loads(json.dumps(original_permissions))
         restricted_permissions["modify"] = [route for route in restricted_permissions.get("modify", []) if route != admin_module_route()]
-        cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(restricted_permissions), group_id))
+        cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (encode_permissions(original_permission_value, restricted_permissions), group_id))
     connection.close()
     try:
         page.locator("#input-status").select_option("0")
@@ -693,7 +753,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     finally:
         connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
         with connection.cursor() as cursor:
-            cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (json.dumps(original_permissions), group_id))
+            cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (original_permission_value, group_id))
         connection.close()
     token = admin_token(page)
     open_module_editor(page, token)
