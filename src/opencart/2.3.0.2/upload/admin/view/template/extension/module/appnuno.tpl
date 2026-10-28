@@ -378,7 +378,7 @@
         var tabContainer = document.createElement('div');
         tabContainer.className = 'route-tabs';
         (tabs || []).forEach(function (tab) { addTab(tabContainer, tab, 'routes.' + route); });
-        var routeField = card.querySelector('[data-field="route"]');
+        var routeField = body.querySelector('[data-field="route"]');
         var routeSelect = body.querySelector('select');
         routeField.addEventListener('input', function () { refreshRouteValidationPaths(card); });
         routeSelect.addEventListener('change', function () { refreshRouteValidationPaths(card); });
