@@ -8,7 +8,10 @@ class ControllerExtensionModuleAppnuno extends Controller {
             $data['scripts'] = array();
         }
         $page_route = isset($this->request->get['route']) && is_string($this->request->get['route']) ? $this->request->get['route'] : 'common/home';
-        $data['scripts'][] = html_entity_decode($this->url->link('extension/module/appnuno/bootstrap', 'page_route=' . rawurlencode($page_route), 'SSL'), ENT_QUOTES, 'UTF-8');
+        $script_url = html_entity_decode($this->url->link('extension/module/appnuno/bootstrap', 'page_route=' . rawurlencode($page_route), 'SSL'), ENT_QUOTES, 'UTF-8');
+        if (!in_array($script_url, $data['scripts'], true)) {
+            $data['scripts'][] = $script_url;
+        }
     }
 
     public function bootstrap() {
@@ -47,15 +50,36 @@ class ControllerExtensionModuleAppnuno extends Controller {
     private function getIntegrationJson() {
         $this->load->model('extension/module/appnuno');
         $config_json = $this->config->get('module_appnuno_config');
-        if (!is_string($config_json) || $this->model_extension_module_appnuno->validateConfig($config_json)) {
+        if (!is_string($config_json) || strlen($config_json) > 65535) {
             return '';
         }
         $config = json_decode($config_json, true);
+        if (!is_array($config) || json_last_error() || !isset($config['defaultTabs']) || !is_array($config['defaultTabs']) || !isset($config['routes']) || !is_array($config['routes'])) {
+            return '';
+        }
         $state = $this->model_extension_module_appnuno->getState();
         $route = isset($this->request->get['page_route']) && is_string($this->request->get['page_route']) ? $this->request->get['page_route'] : 'common/home';
         $tabs = isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? $config['routes'][$route] : $config['defaultTabs'];
         $cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
         foreach ($tabs as &$tab) {
+            if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
+                $language_code = $this->config->get('config_language');
+                if (isset($tab['urls'][$language_code])) {
+                    $tab['url'] = $tab['urls'][$language_code];
+                } elseif (!isset($tab['url'])) {
+                    $tab['url'] = reset($tab['urls']);
+                }
+                unset($tab['urls']);
+            }
+            if (isset($tab['labels']) && is_array($tab['labels'])) {
+                $language_code = $this->config->get('config_language');
+                if (isset($tab['labels'][$language_code])) {
+                    $tab['label'] = $tab['labels'][$language_code];
+                } elseif (count($tab['labels'])) {
+                    $tab['label'] = reset($tab['labels']);
+                }
+                unset($tab['labels']);
+            }
             if (isset($tab['id']) && in_array($tab['id'], array($cart_tab_id), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
                 $tab['badge'] = (int)$state['cartCount'];
             }
