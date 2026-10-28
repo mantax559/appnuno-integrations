@@ -476,7 +476,7 @@ def check_cart_and_customer_state(page: Page) -> None:
     if not country.input_value():
         country.select_option(index=1)
     zone = page.locator('select[name="zone_id"]')
-    zone.locator('option[value]:not([value=""])').first.wait_for()
+    zone.locator('option[value]:not([value=""])').first.wait_for(state="attached")
     zone.select_option(zone.locator('option[value]:not([value=""])').first.get_attribute("value"))
     agreement = page.locator('input[name="agree"]')
     if agreement.count():
