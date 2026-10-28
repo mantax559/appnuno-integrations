@@ -92,6 +92,36 @@ def patch_installer_directory_listing(web_root: Path) -> None:
     path.write_text(content.replace(needle, replacement, 1), encoding="utf-8")
 
 
+def patch_installer_storage_path(web_root: Path) -> None:
+    # 3.0.0.2 has no release and its installer writes DIR_STORAGE with a broken quote, so config.php cannot be parsed.
+    if OPENCART_VERSION != "3.0.0.2":
+        return
+    path = web_root / "install" / "controller" / "install" / "step_3.php"
+    content = path.read_text(encoding="utf-8")
+    broken = (
+        r"define(\'DIR_STORAGE\', \' . DIR_SYSTEM . \'storage/\');",
+        r"define(\'DIR_STORAGE\', \'DIR_SYSTEM . \'storage/\');",
+    )
+    fixed = r"define(\'DIR_STORAGE\', DIR_SYSTEM . \'storage/\');"
+    for needle in broken:
+        if content.count(needle) != 1:
+            raise AssertionError("OpenCart 3.0.0.2 storage path could not be patched.")
+        content = content.replace(needle, fixed, 1)
+    path.write_text(content, encoding="utf-8")
+
+
+def repair_prerelease_customer_ip() -> None:
+    # The 3.0.3.4 core pre-release inserts store_id into oc_customer_ip, but its installer SQL does not create that column.
+    if OPENCART_VERSION != "3.0.3.4":
+        return
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("ALTER TABLE oc_customer_ip ADD COLUMN store_id int(11) NOT NULL AFTER customer_id")
+    finally:
+        connection.close()
+
+
 def prepare_store(workspace: Path) -> Path:
     archive_path = workspace / "opencart.zip"
     urllib.request.urlretrieve(OPENCART_ARCHIVE_URL, archive_path)
@@ -692,6 +722,7 @@ def check_route_bootstrap(payload: dict) -> None:
 
 
 def check_cart_and_customer_state(page: Page) -> None:
+    repair_prerelease_customer_ip()
     product_id = create_cart_product()
     page.goto(BASE_URL + "/index.php?route=product/product&product_id=" + str(product_id))
     page.locator("#button-cart").wait_for()
@@ -956,6 +987,7 @@ def main() -> None:
         workspace = Path(temporary)
         web_root = prepare_store(workspace)
         patch_installer_directory_listing(web_root)
+        patch_installer_storage_path(web_root)
         log_path = artifact_dir / "php-server.log"
         with log_path.open("w", encoding="utf-8") as server_log:
             process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root)], stdout=server_log, stderr=subprocess.STDOUT)
