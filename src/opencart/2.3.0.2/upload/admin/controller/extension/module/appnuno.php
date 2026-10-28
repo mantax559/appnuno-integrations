@@ -193,8 +193,10 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	public function install() {
 		$this->load->model('user/user_group');
 
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'access', 'extension/module/appnuno');
-		$this->model_user_user_group->addPermission($this->user->getGroupId(), 'modify', 'extension/module/appnuno');
+		$permission_id = method_exists($this->user, 'getGroupId') ? $this->user->getGroupId() : $this->user->getId();
+
+		$this->model_user_user_group->addPermission($permission_id, 'access', 'extension/module/appnuno');
+		$this->model_user_user_group->addPermission($permission_id, 'modify', 'extension/module/appnuno');
 
 		$this->load->model('extension/event');
 
