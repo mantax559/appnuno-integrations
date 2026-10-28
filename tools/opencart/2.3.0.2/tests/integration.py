@@ -259,7 +259,7 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     page.locator("#dark-content").fill("#445566")
     page.locator("#add-route").click()
     route = page.locator(".appnuno-route").last
-    route.locator("select").select_option("checkout/cart")
+    route.locator('[data-field="route"]').fill("checkout/cart")
     route.locator('button:has-text("Add tab to this route")').click()
     route_tab = route.locator(".appnuno-tab").last
     route_tab.locator('[data-field="id"]').fill("ci-cart-route-tab")
