@@ -63,7 +63,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
         $cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
         foreach ($tabs as &$tab) {
             if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
-                $language_code = $this->config->get('config_language');
+                $language_code = $this->languageCode();
                 if (isset($tab['urls'][$language_code])) {
                     $tab['url'] = $tab['urls'][$language_code];
                 } elseif (!isset($tab['url'])) {
@@ -72,7 +72,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
                 unset($tab['urls']);
             }
             if (isset($tab['labels']) && is_array($tab['labels'])) {
-                $language_code = $this->config->get('config_language');
+                $language_code = $this->languageCode();
                 if (isset($tab['labels'][$language_code])) {
                     $tab['label'] = $tab['labels'][$language_code];
                 } elseif (count($tab['labels'])) {
@@ -99,5 +99,13 @@ class ControllerExtensionModuleAppnuno extends Controller {
             'navigation' => $navigation
         );
         return json_encode($integration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+    }
+
+    private function languageCode() {
+        if (isset($this->session->data['language']) && is_string($this->session->data['language']) && strlen($this->session->data['language'])) {
+            return $this->session->data['language'];
+        }
+        $language_code = $this->config->get('config_language');
+        return is_string($language_code) ? $language_code : '';
     }
 }
