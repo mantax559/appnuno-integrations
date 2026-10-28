@@ -469,11 +469,23 @@ def check_cart_and_customer_state(page: Page) -> None:
     page.locator('input[name="telephone"]').fill("5550100")
     page.locator('input[name="password"]').fill("ci-customer-password")
     page.locator('input[name="confirm"]').fill("ci-customer-password")
+    page.locator('input[name="address_1"]').fill("1 CI Street")
+    page.locator('input[name="city"]').fill("Vilnius")
+    page.locator('input[name="postcode"]').fill("01100")
+    country = page.locator('select[name="country_id"]')
+    if not country.input_value():
+        country.select_option(index=1)
+    zone = page.locator('select[name="zone_id"]')
+    zone.locator('option[value]:not([value=""])').first.wait_for()
+    zone.select_option(zone.locator('option[value]:not([value=""])').first.get_attribute("value"))
     agreement = page.locator('input[name="agree"]')
     if agreement.count():
         agreement.check()
-    page.locator('#content input[type="submit"], #content button[type="submit"]').last.click()
-    page.wait_for_load_state("domcontentloaded")
+    with page.expect_navigation():
+        page.locator('#content form input[type="submit"]').click()
+    if "route=account/success" not in page.url and "route=account/account" not in page.url:
+        errors = page.locator(".alert-danger, .text-danger").all_inner_texts()
+        raise AssertionError(f"OpenCart did not accept the customer registration at {page.url}: {errors}.")
     customer_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
     identity = customer_state.get("identity")
     if customer_state.get("cartCount") != 2 or not isinstance(identity, dict) or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not identity.get("identifier"):
