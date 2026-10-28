@@ -1,6 +1,6 @@
 <?php
 $line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.1', '2.2', '2.3'), true)) {
+if (!in_array($line, array('2.0', '2.1', '2.2', '2.3'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 $repository = dirname(__DIR__, 3);
@@ -28,13 +28,13 @@ foreach ($entries as $name => $path) {
     if ($body === false) {
         throw new RuntimeException('Unable to read an OpenCart package file.');
     }
-    if (in_array($line, array('2.1', '2.2'), true) && $name !== 'README.md') {
+    if (in_array($line, array('2.0', '2.1', '2.2'), true) && $name !== 'README.md') {
         $name = str_replace('/extension/module/', '/module/', $name);
         $body = opencart_module_layout($line, $name, $body);
     }
     $prepared[$name] = $body;
 }
-if ($line === '2.1') {
+if (in_array($line, array('2.0', '2.1'), true)) {
     $prepared['upload/admin/language/english/module/appnuno.php'] = $prepared['upload/admin/language/en-gb/module/appnuno.php'];
 }
 ksort($prepared, SORT_STRING);
@@ -111,11 +111,23 @@ function opencart_module_layout($line, $name, $content) {
             $content
         );
     }
-    if ($line === '2.1' && substr($name, -4) === '.php') {
+    if (in_array($line, array('2.0', '2.1'), true) && substr($name, -4) === '.php') {
         $content = str_replace("load->view('module/appnuno', \$data)", "load->view('module/appnuno.tpl', \$data)", $content);
+    }
+    if ($line === '2.0' && $name === 'upload/admin/controller/module/appnuno.php') {
+        $content = str_replace(
+            array(
+                "\$this->load->model('extension/event');",
+                "\$this->model_extension_event->deleteEvent('appnuno');",
+                "\$this->model_extension_event->addEvent('appnuno', 'catalog/view/common/header/before', 'module/appnuno/inject');"
+            ),
+            '',
+            $content
+        );
     }
     if ($name === 'install.xml') {
         $replacements = array(
+            '2.0' => array('AppNuno OpenCart 2.0', 'appnuno_opencart_2000'),
             '2.1' => array('AppNuno OpenCart 2.1', 'appnuno_opencart_2100'),
             '2.2' => array('AppNuno OpenCart 2.2', 'appnuno_opencart_2200')
         );

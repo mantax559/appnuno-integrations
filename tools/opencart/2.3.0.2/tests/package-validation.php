@@ -1,6 +1,6 @@
 <?php
 $line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.1', '2.2', '2.3'), true)) {
+if (!in_array($line, array('2.0', '2.1', '2.2', '2.3'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 $module_path = $line === '2.3' ? 'extension/module' : 'module';
@@ -47,7 +47,7 @@ if (!in_array($entries, array($sorted_entries), true)) {
 $view = $archive->getFromName('upload/admin/view/template/' . $module_path . '/appnuno.tpl');
 $controller = $archive->getFromName('upload/admin/controller/' . $module_path . '/appnuno.php');
 $english = $archive->getFromName('upload/admin/language/en-gb/' . $module_path . '/appnuno.php');
-$builtin_english = $line === '2.1' ? $archive->getFromName('upload/admin/language/english/' . $module_path . '/appnuno.php') : '';
+$builtin_english = in_array($line, array('2.0', '2.1'), true) ? $archive->getFromName('upload/admin/language/english/' . $module_path . '/appnuno.php') : '';
 $lithuanian = $archive->getFromName('upload/admin/language/lt-lt/' . $module_path . '/appnuno.php');
 $german = $archive->getFromName('upload/admin/language/de-de/' . $module_path . '/appnuno.php');
 $catalog_controller = $archive->getFromName('upload/catalog/controller/' . $module_path . '/appnuno.php');
@@ -63,23 +63,31 @@ if (!strstr($view, 'id="default-tabs"') || !strstr($view, "\$text['entry_cart_ta
 if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !strstr($english, 'Cart badge tab') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !strstr($lithuanian, 'Numatytieji skirtukai') || !is_string($german) || !strstr($german, 'AppNuno native Navigation') || !strstr($german, 'Standard-Tabs')) {
     throw new RuntimeException('OpenCart archive is missing the English, Lithuanian or German module language.');
 }
-if ($line === '2.1' && (!is_string($builtin_english) || !strstr($builtin_english, 'AppNuno Native Navigation') || !strstr($builtin_english, "\$_['text_module']"))) {
-    throw new RuntimeException('OpenCart 2.1 archive is missing the English language directory the store uses by default.');
+if (in_array($line, array('2.0', '2.1'), true) && (!is_string($builtin_english) || !strstr($builtin_english, 'AppNuno Native Navigation') || !strstr($builtin_english, "\$_['text_module']"))) {
+    throw new RuntimeException('OpenCart archive is missing the English language directory the store uses by default.');
 }
 if ($line !== '2.3' && (!is_string($english) || !strstr($english, "\$_['text_module']"))) {
     throw new RuntimeException('OpenCart archive is missing the modules breadcrumb label.');
 }
-if ($line === '2.1' && (!is_string($controller) || !strstr($controller, "load->view('module/appnuno.tpl', \$data)"))) {
-    throw new RuntimeException('OpenCart 2.1 archive is missing the template extension its loader requires.');
+if (in_array($line, array('2.0', '2.1'), true) && (!is_string($controller) || !strstr($controller, "load->view('module/appnuno.tpl', \$data)"))) {
+    throw new RuntimeException('OpenCart archive is missing the template extension its loader requires.');
 }
-if (!is_string($controller) || !strstr($controller, $controller_class) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config') || !strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', '" . $module_path . "/appnuno/inject')")) {
-    throw new RuntimeException('OpenCart archive is missing strict submitted settings handling or catalog event repair on save.');
+if (!is_string($controller) || !strstr($controller, $controller_class) || !strstr($controller, "language->get('error_config_missing')") || strstr($controller, '$stored_config')) {
+    throw new RuntimeException('OpenCart archive is missing strict submitted settings handling.');
+}
+if ($line === '2.0') {
+    if (strstr($controller, 'model_extension_event') || strstr($controller, "'appnuno'")) {
+        throw new RuntimeException('OpenCart 2.0 archive must not register unsupported controller-view events.');
+    }
+} elseif (!strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', '" . $module_path . "/appnuno/inject')")) {
+    throw new RuntimeException('OpenCart archive is missing catalog event repair on save.');
 }
 if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {
     throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');
 }
-if (!is_string($modification) || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
-    throw new RuntimeException('OpenCart archive is missing direct injection through the shared catalog header.');
+$modification_code = array('2.0' => 'appnuno_opencart_2000', '2.1' => 'appnuno_opencart_2100', '2.2' => 'appnuno_opencart_2200', '2.3' => 'appnuno_opencart_2302');
+if (!is_string($modification) || !strstr($modification, 'AppNuno OpenCart ' . $line) || !strstr($modification, '<code>' . $modification_code[$line] . '</code>') || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, '$data[\'scripts\'] = $this->document->getScripts();') || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
+    throw new RuntimeException('OpenCart archive is missing its version-specific modification or direct catalog header injection.');
 }
 if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'Access Permission') || !strstr($readme, 'Modify Permission')) {
     throw new RuntimeException('OpenCart archive is missing its installation, permissions and upgrade instructions.');

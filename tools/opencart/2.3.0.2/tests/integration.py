@@ -21,12 +21,12 @@ REPOSITORY = Path(__file__).resolve().parents[4]
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
+SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_LINE = OPENCART_VERSION[:3]
 PACKAGE = REPOSITORY / "downloads" / "opencart" / OPENCART_LINE / f"appnuno-opencart-{OPENCART_LINE}.ocmod.zip"
-if OPENCART_LINE == "2.1":
+if OPENCART_LINE in ("2.0", "2.1"):
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
 else:
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
@@ -124,7 +124,7 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     connection.close()
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language/add&token=" + admin_token(page))
     page.locator('input[name="name"]').fill(name)
-    if OPENCART_LINE == "2.1":
+    if OPENCART_LINE in ("2.0", "2.1"):
         page.locator('input[name="code"]').fill(code)
         page.locator('input[name="locale"]').fill(locale)
         page.locator('input[name="image"]').fill(code + ".png")
@@ -159,13 +159,17 @@ def configuration_value(key: str) -> str | None:
     return row[0] if row else None
 
 
-def update_configuration_value(key: str, value: str) -> None:
+def update_english_language_code() -> None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
-        cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND code = 'config' AND `key` = %s", (value, key))
+        cursor.execute("UPDATE oc_language SET code = 'en-gb' WHERE code = 'en' AND directory = 'english'")
         if cursor.rowcount != 1:
             connection.close()
-            raise AssertionError(f"OpenCart setting {key} was not available to update.")
+            raise AssertionError("OpenCart's default English language could not be changed to en-gb.")
+        cursor.execute("UPDATE oc_setting SET value = 'en-gb' WHERE store_id = 0 AND code = 'config' AND `key` = 'config_admin_language' AND value = 'en'")
+        if cursor.rowcount != 1:
+            connection.close()
+            raise AssertionError("OpenCart's admin language setting could not be changed to en-gb.")
     connection.close()
 
 
@@ -213,7 +217,7 @@ def start_ftp_server(web_root: Path) -> FTPServer:
 
 
 def install_route(route: str) -> str:
-    if OPENCART_LINE == "2.1":
+    if OPENCART_LINE in ("2.0", "2.1"):
         return "**route=" + route + "**"
     return "**route=install/" + route + "**"
 
@@ -381,7 +385,7 @@ def use_en_gb_language_code(page: Page) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=localisation/language&token=" + admin_token(page))
     page.locator('a[href*="route=localisation/language/edit"]').first.click()
     page.locator('input[name="code"]').fill("en-gb")
-    update_configuration_value("config_admin_language", "en-gb")
+    update_english_language_code()
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
     page.locator(".alert-success").wait_for()
@@ -391,7 +395,7 @@ def use_en_gb_language_code(page: Page) -> None:
 def switch_admin_language(page: Page, code: str, update_storefront: bool = False) -> None:
     page.goto(BASE_URL + "/admin/index.php?route=setting/setting&token=" + admin_token(page))
     page.locator('a[href="#tab-local"]').click()
-    if OPENCART_LINE == "2.1":
+    if OPENCART_LINE in ("2.0", "2.1"):
         if update_storefront:
             page.locator("#input-language").select_option(code)
         page.locator("#input-admin-language").select_option(code)
@@ -716,8 +720,9 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
         raise AssertionError("Uninstalling the module did not remove its settings and catalog event.")
     click_module_list_button(page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
-    if appnuno_event_count() != 1:
-        raise AssertionError("Reinstalling the module did not restore exactly one catalog event.")
+    expected_events = 0 if OPENCART_LINE == "2.0" else 1
+    if appnuno_event_count() != expected_events:
+        raise AssertionError(f"Reinstalling the module registered {appnuno_event_count()} catalog events instead of {expected_events}.")
     token = admin_token(page)
     open_module_editor(page, token)
     save_module_status(page, True)
@@ -830,7 +835,7 @@ def main() -> None:
                         token = admin_token(page)
                         upload_extension(page, token)
                         refresh_modifications(page, admin_token(page))
-                        if OPENCART_LINE == "2.1":
+                        if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
                         add_store_language(page, "German", "de-de", "de_DE.UTF-8,de_DE,de-de,german")
