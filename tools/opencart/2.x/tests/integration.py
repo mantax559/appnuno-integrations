@@ -273,7 +273,15 @@ def repair_opencart402_admin_language(web_root: Path) -> None:
         count=1,
         flags=re.S,
     )
-    if cookie_count != 1 or after_count != 1:
+    # These releases never call startup/language.after. The language object keeps the en-gb code from framework startup, so extension files load in English.
+    replacement = "$code = $this->config->get('config_language_admin');\n\t\t$language = new \\Opencart\\System\\Library\\Language((string)$code);\n\t\t$language->addPath(DIR_LANGUAGE);\n\t\t$this->registry->set('language', $language);"
+    text, object_count = re.subn(
+        r"\$code = \$this->config->get\('config_language_admin'\);",
+        lambda match: replacement,
+        text,
+        count=1,
+    )
+    if cookie_count != 1 or after_count != 1 or object_count != 1:
         raise AssertionError("OpenCart 4.0.2 admin language startup was not patched.")
     path.write_text(text, encoding="utf-8")
 
