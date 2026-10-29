@@ -253,6 +253,21 @@ def clear_opencart4_language_cache() -> None:
             item.unlink()
 
 
+def repair_opencart402_admin_language(web_root: Path) -> None:
+    # OpenCart 4.0.2.0 and 4.0.2.1 do not reload extension language files, and 4.0.2.2 reloads them with the storefront code.
+    if not opencart4() or not ((4, 0, 2, 0) <= opencart_version_parts() < (4, 0, 2, 3)):
+        return
+    path = web_root / "admin" / "controller" / "startup" / "language.php"
+    text = path.read_text(encoding="utf-8")
+    text = text.replace("get('language_code')", "get('config_language_admin')")
+    text = text.replace("get('config_language')", "get('config_language_admin')")
+    text = text.replace(
+        "\t\tif (oc_substr($route, 0, 10) != 'extension/' && self::$extension) {\n\t\t\t$this->load->language('extension/' . self::$extension . '/' . $route, $prefix, $language);\n\t\t}",
+        "\t\t$this->language->load($route, $prefix, $language);",
+    )
+    path.write_text(text, encoding="utf-8")
+
+
 def repair_opencart4_language_controller(web_root: Path) -> None:
     # OpenCart 4.0 calls the language model inside save() before that action loads it, so the admin form fatals.
     if not opencart4():
@@ -293,9 +308,21 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
             page.locator('input[type="checkbox"][name="status"]').check()
         page.locator('input[name="sort_order"]').fill("1")
         page.locator('button[form="form-language"]').click()
-        page.locator(".alert-success, .alert-danger").first.wait_for()
-        if page.locator(".alert-danger").count():
-            raise AssertionError("OpenCart did not save the language: " + page.locator(".alert-danger").inner_text())
+        saved = False
+        for _ in range(30):
+            if page.locator(".alert-danger, .invalid-feedback.d-block").count():
+                details = " ".join(page.locator(".alert-danger, .invalid-feedback.d-block").all_inner_texts())
+                raise AssertionError("OpenCart did not save the language: " + details)
+            connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME)
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT COUNT(*) FROM oc_language WHERE code = %s", (code,))
+                saved = cursor.fetchone()[0] == 1
+            connection.close()
+            if saved:
+                break
+            page.wait_for_timeout(500)
+        if not saved:
+            raise AssertionError("OpenCart did not save the language.")
         page.goto(admin_page("localisation/language", admin_token(page)))
         page.locator("#content").get_by_text(code).wait_for()
         clear_opencart4_language_cache()
@@ -416,7 +443,8 @@ def create_cart_product() -> int:
                 ("APPNUNO-CI-PRODUCT", stock_status_id),
             )
         product_id = cursor.lastrowid
-        cursor.execute("SELECT l.language_id FROM oc_language l INNER JOIN oc_setting s ON s.store_id = 0 AND s.`key` = 'config_language' AND s.value = l.code LIMIT 1")
+        language_key = "config_language_catalog" if opencart4() and opencart_version_parts() >= (4, 1, 0, 0) else "config_language"
+        cursor.execute(f"SELECT l.language_id FROM oc_language l INNER JOIN oc_setting s ON s.store_id = 0 AND s.`key` = '{language_key}' AND s.value = l.code LIMIT 1")
         language_row = cursor.fetchone()
         if not language_row or not language_row[0]:
             raise AssertionError("OpenCart has no store language, so the cart product cannot be displayed.")
@@ -1267,6 +1295,7 @@ def main() -> None:
                             refresh_modifications(page, admin_token(page))
                         publish_admin_language_directories(web_root)
                         repair_opencart4_language_controller(web_root)
+                        repair_opencart402_admin_language(web_root)
                         if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
