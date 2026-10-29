@@ -297,7 +297,7 @@ def add_cart_page_tab(page: Page) -> None:
     page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
     page_tab.locator('[data-field="icon"]').fill("cart-outline")
     page_tab.locator('[data-field="activeIcon"]').fill("cart")
-    page_tab.locator("[data-pages]").select_option(["checkout/cart"])
+    page_tab.locator("[data-pages] input[value='checkout/cart']").check()
 
 
 def add_contact_tab(page: Page) -> None:
@@ -338,7 +338,7 @@ def assert_module_settings_persisted(page: Page) -> None:
         raise AssertionError("The cart page tab label did not persist after reloading the settings page.")
     if saved_page_tab.locator('[data-language-url="lt-lt"]').input_value() != "/lt/krepselis":
         raise AssertionError("The cart page tab URL did not persist after reloading the settings page.")
-    selected_pages = saved_page_tab.locator("[data-pages]").evaluate("select => Array.from(select.selectedOptions).map(option => option.value)")
+    selected_pages = saved_page_tab.locator("[data-pages]").evaluate("list => Array.from(list.querySelectorAll('input:checked')).map(input => input.value)")
     if selected_pages != ["checkout/cart"]:
         raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
 

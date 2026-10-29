@@ -203,16 +203,33 @@
 	var defaultLanguageCode = <?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
 	var defaultContainer = document.getElementById('default-tabs');
 	var cartSelect = document.getElementById('cart-tab-id');
+	var adminMarkup = 'bootstrap3';
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
 
-	function createField(label, value, key, type, path) {
+	function createGroup() {
 		var group = document.createElement('div');
-		group.className = 'form-group';
+		group.className = adminMarkup === 'bootstrap5' ? 'row mb-3' : 'form-group';
+		group.setAttribute('data-field-group', 'true');
+		return group;
+	}
+
+	function createGroupLabel(label) {
 		var title = document.createElement('label');
-		title.className = 'col-sm-2 control-label';
+		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-2 col-form-label' : 'col-sm-2 control-label';
 		title.textContent = label;
+		return title;
+	}
+
+	function createGroupColumn() {
 		var column = document.createElement('div');
 		column.className = 'col-sm-10';
+		return column;
+	}
+
+	function createField(label, value, key, type, path) {
+		var group = createGroup();
+		var title = createGroupLabel(label);
+		var column = createGroupColumn();
 		var input = document.createElement('input');
 		input.type = type || 'text';
 		input.className = 'form-control';
@@ -226,14 +243,10 @@
 	}
 
 	function createLabelFields(tab, path) {
-		var group = document.createElement('div');
-		group.className = 'form-group';
+		var group = createGroup();
 		group.setAttribute('data-validation-path', path + '.labels');
-		var title = document.createElement('label');
-		title.className = 'col-sm-2 control-label';
-		title.textContent = text.text_language_labels;
-		var column = document.createElement('div');
-		column.className = 'col-sm-10';
+		var title = createGroupLabel(text.text_language_labels);
+		var column = createGroupColumn();
 		var labels = tab.labels || {};
 		var legacyLabel = tab.label || '';
 		var legacyAssigned = false;
@@ -242,7 +255,7 @@
 			inputGroup.className = 'input-group';
 			inputGroup.style.marginBottom = '8px';
 			var flag = document.createElement('span');
-			flag.className = 'input-group-addon';
+			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
 			if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
 				var image = document.createElement('img');
 				image.src = 'language/' + language.code + '/' + language.code + '.png';
@@ -295,14 +308,10 @@
 	}
 
 	function createUrlField(tab, path) {
-		var group = document.createElement('div');
-		group.className = 'form-group';
+		var group = createGroup();
 		group.setAttribute('data-validation-path', path + '.url');
-		var title = document.createElement('label');
-		title.className = 'col-sm-2 control-label';
-		title.textContent = text.text_destination;
-		var column = document.createElement('div');
-		column.className = 'col-sm-10';
+		var title = createGroupLabel(text.text_destination);
+		var column = createGroupColumn();
 		var select = document.createElement('select');
 		select.className = 'form-control';
 		select.setAttribute('data-url-select', 'true');
@@ -320,7 +329,7 @@
 			inputGroup.className = 'input-group';
 			inputGroup.style.marginTop = '8px';
 			var flag = document.createElement('span');
-			flag.className = 'input-group-addon';
+			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
 			if (language.code !== 'default' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
 				var image = document.createElement('img');
 				image.src = 'language/' + language.code + '/' + language.code + '.png';
@@ -371,20 +380,42 @@
 		return group;
 	}
 
+	function appendPageChoice(list, label, value, checked, path) {
+		var row = document.createElement('div');
+		var input = document.createElement('input');
+		input.type = 'checkbox';
+		input.value = value;
+		input.checked = !!checked;
+		if (adminMarkup === 'bootstrap5') {
+			row.className = 'form-check';
+			input.className = 'form-check-input';
+			input.id = 'appnuno-page-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-') + '-' + String(value).replace(/[^A-Za-z0-9_-]/g, '-');
+			var caption = document.createElement('label');
+			caption.className = 'form-check-label';
+			caption.htmlFor = input.id;
+			caption.textContent = label;
+			row.appendChild(input);
+			row.appendChild(caption);
+		} else {
+			row.className = 'checkbox';
+			var caption = document.createElement('label');
+			caption.appendChild(input);
+			caption.appendChild(document.createTextNode(' ' + label));
+			row.appendChild(caption);
+		}
+		list.appendChild(row);
+	}
+
 	function createPagesField(tab, path) {
-		var group = document.createElement('div');
-		group.className = 'form-group';
-		var title = document.createElement('label');
-		title.className = 'col-sm-2 control-label';
-		title.textContent = text.text_shown_on_pages;
-		var column = document.createElement('div');
-		column.className = 'col-sm-10';
-		var select = document.createElement('select');
-		select.multiple = true;
-		select.size = routeOptions.length > 8 ? 8 : (routeOptions.length || 1);
-		select.className = 'form-control';
-		select.setAttribute('data-pages', 'true');
-		select.setAttribute('data-validation-path', path + '.pages');
+		var group = createGroup();
+		var title = createGroupLabel(text.text_shown_on_pages);
+		var column = createGroupColumn();
+		var list = document.createElement('div');
+		list.className = adminMarkup === 'bootstrap5' ? 'form-control' : 'well well-sm';
+		list.style.height = '150px';
+		list.style.overflow = 'auto';
+		list.setAttribute('data-pages', 'true');
+		list.setAttribute('data-validation-path', path + '.pages');
 		var selected = {};
 		(tab.pages || []).forEach(function (page) {
 			selected[page] = true;
@@ -392,21 +423,17 @@
 		var known = {};
 		routeOptions.forEach(function (option) {
 			known[option.route] = true;
-			var choice = new Option(option.label, option.route);
-			choice.selected = !!selected[option.route];
-			select.appendChild(choice);
+			appendPageChoice(list, option.label, option.route, !!selected[option.route], path);
 		});
 		(tab.pages || []).forEach(function (page) {
 			if (!known[page]) {
-				var extra = new Option(page, page);
-				extra.selected = true;
-				select.appendChild(extra);
+				appendPageChoice(list, page, page, true, path);
 			}
 		});
-		var help = document.createElement('p');
-		help.className = 'help-block';
+		var help = document.createElement('div');
+		help.className = adminMarkup === 'bootstrap5' ? 'form-text' : 'help-block';
 		help.textContent = text.help_shown_on_pages;
-		column.appendChild(select);
+		column.appendChild(list);
 		column.appendChild(help);
 		group.appendChild(title);
 		group.appendChild(column);
@@ -415,7 +442,7 @@
 
 	function createTab(tab, path) {
 		var card = document.createElement('div');
-		card.className = 'well appnuno-tab';
+		card.className = adminMarkup === 'bootstrap5' ? 'card card-body mb-3 appnuno-tab' : 'well appnuno-tab';
 		card.setAttribute('data-validation-path', path);
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
 		card.appendChild(createLabelFields(tab, path));
@@ -425,7 +452,7 @@
 		card.appendChild(createPagesField(tab, path));
 		var remove = document.createElement('button');
 		remove.type = 'button';
-		remove.className = 'btn btn-danger btn-sm';
+		remove.className = adminMarkup === 'bootstrap5' ? 'btn btn-danger btn-sm mt-2' : 'btn btn-danger btn-sm';
 		remove.textContent = text.button_remove_tab;
 		remove.addEventListener('click', function () {
 			card.parentNode.removeChild(card);
@@ -472,9 +499,9 @@
 			var pagesField = card.querySelector('[data-pages]');
 			if (pagesField) {
 				var pages = [];
-				Array.prototype.forEach.call(pagesField.options, function (option) {
-					if (option.selected) {
-						pages.push(option.value);
+				Array.prototype.forEach.call(pagesField.querySelectorAll('input[type="checkbox"]'), function (input) {
+					if (input.checked) {
+						pages.push(input.value);
 					}
 				});
 				if (pages.length) {
@@ -619,11 +646,15 @@
 		}
 		if (matched) {
 			var group = matched;
-			while (group && !(' ' + group.className + ' ').match(/ form-group /) && group.id !== 'default-tabs') {
+			while (group && group.getAttribute('data-field-group') !== 'true' && !group.classList.contains('appnuno-tab') && group.id !== 'default-tabs') {
 				group = group.parentNode;
 			}
 			group = group || matched;
-			group.className += ' has-error';
+			if (adminMarkup === 'bootstrap5') {
+				matched.classList.add('is-invalid');
+			} else {
+				group.className += ' has-error';
+			}
 			if (typeof group.scrollIntoView === 'function') {
 				group.scrollIntoView({ block: 'center' });
 			}

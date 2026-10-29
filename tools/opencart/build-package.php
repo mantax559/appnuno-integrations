@@ -323,10 +323,63 @@ function opencart_40_layout($name, $content) {
 }
 
 function opencart_40_admin_template($content) {
-    // OpenCart 4 admin is Bootstrap 5, which only opens tabs marked with data-bs-toggle.
+    // OpenCart 4 admin is Bootstrap 5. 4.0.0.0 ships Font Awesome 5 (fas) and 4.0.1.0+ ships Font Awesome 6 (fa-solid), so both icon classes stay on the same element.
+    $content = str_replace("var adminMarkup = 'bootstrap3';", "var adminMarkup = 'bootstrap5';", $content);
     $content = str_replace(
-        array('data-toggle="tab"', 'data-toggle="tooltip"', 'data-dismiss="alert"', 'btn btn-default', 'class="close"'),
-        array('data-bs-toggle="tab"', 'data-bs-toggle="tooltip"', 'data-bs-dismiss="alert"', 'btn btn-light', 'class="btn-close"'),
+        array(
+            'fa fa-save',
+            'fa fa-reply',
+            'fa fa-pencil',
+            'fa fa-check-circle',
+            'fa fa-exclamation-circle',
+            'fa fa-plus',
+            'pull-right',
+            'data-toggle="tab"',
+            'data-toggle="tooltip"',
+            'data-dismiss="alert"',
+            'btn btn-default',
+            'class="close"',
+            'class="form-group"',
+            "'form-group'",
+            'control-label',
+            'help-block',
+            ' class="form-horizontal"'
+        ),
+        array(
+            'fas fa-solid fa-save fa-floppy-disk',
+            'fas fa-solid fa-reply',
+            'fas fa-solid fa-pencil',
+            'fas fa-solid fa-check-circle fa-circle-check',
+            'fas fa-solid fa-exclamation-circle fa-circle-exclamation',
+            'fas fa-solid fa-plus',
+            'float-end',
+            'data-bs-toggle="tab"',
+            'data-bs-toggle="tooltip"',
+            'data-bs-dismiss="alert"',
+            'btn btn-light',
+            'class="btn-close"',
+            'class="row mb-3"',
+            "'row mb-3'",
+            'col-form-label',
+            'form-text',
+            ''
+        ),
+        $content
+    );
+    $content = str_replace(
+        array('class="alert alert-success"', 'class="alert alert-danger"', '>&times;</button>'),
+        array('class="alert alert-success alert-dismissible"', 'class="alert alert-danger alert-dismissible"', '></button>'),
+        $content
+    );
+    $content = str_replace(
+        array('<div class="panel panel-default">', '<div class="panel-heading">', '<h3 class="panel-title">', '</h3>', '<div class="panel-body">'),
+        array('<div class="card">', '<div class="card-header">', '', '', '<div class="card-body">'),
+        $content
+    );
+    $content = preg_replace('/(<input type="color"[^>]*class=")form-control(")/', '$1form-control form-control-color$2', $content);
+    $content = preg_replace(
+        '/<ul class="breadcrumb">\s*\{% for breadcrumb in breadcrumbs %\}\s*<li><a href="\{\{ breadcrumb\.href \}\}">\{\{ breadcrumb\.text \}\}<\/a><\/li>\s*\{% endfor %\}\s*<\/ul>/',
+        '<ol class="breadcrumb">{% for breadcrumb in breadcrumbs %}<li class="breadcrumb-item"><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>{% endfor %}</ol>',
         $content
     );
     $content = str_replace('<li class="active"><a href="#tab-navigation" data-bs-toggle="tab">', '<li class="nav-item"><a href="#tab-navigation" data-bs-toggle="tab" class="nav-link active">', $content);
