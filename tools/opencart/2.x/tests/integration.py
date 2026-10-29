@@ -366,24 +366,78 @@ def appnuno_event_count() -> int:
     return count
 
 
+def remember_admin_language_code(code: str) -> None:
+    # OpenCart 4.0.2 and 4.1 construct the admin language from the language_code setting, which the settings form does not post.
+    if not opencart4() or opencart_version_parts() < (4, 0, 2, 0):
+        return
+    connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+    with connection.cursor() as cursor:
+        cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND `key` = 'language_code'", (code,))
+        if cursor.rowcount == 0:
+            cursor.execute("INSERT INTO oc_setting (store_id, code, `key`, value, serialized) VALUES (0, 'config', 'language_code', %s, 0)", (code,))
+    connection.close()
+
+
 def create_cart_product() -> int:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
         cursor.execute("SELECT stock_status_id FROM oc_stock_status ORDER BY stock_status_id LIMIT 1")
         stock_status_id = cursor.fetchone()[0]
-        cursor.execute(
-            "INSERT INTO oc_product (model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id, image, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, viewed, date_added, date_modified) VALUES (%s, '', '', '', '', '', '', '', 50, %s, '', 0, 1, 1.00, 0, 0, CURDATE(), 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, NOW(), NOW())",
-            ("APPNUNO-CI-PRODUCT", stock_status_id),
-        )
+        if opencart4():
+            cursor.execute("SHOW COLUMNS FROM oc_product")
+            product_columns = {row[0] for row in cursor.fetchall()}
+            assignments = []
+            for column, value in (
+                ("master_id", "0"),
+                ("model", "'APPNUNO-CI-PRODUCT'"),
+                ("quantity", "50"),
+                ("stock_status_id", str(stock_status_id)),
+                ("shipping", "1"),
+                ("price", "1.00"),
+                ("tax_class_id", "0"),
+                ("date_available", "CURDATE()"),
+                ("subtract", "1"),
+                ("minimum", "1"),
+                ("sort_order", "0"),
+                ("status", "1"),
+                ("viewed", "0"),
+                ("variant", "''"),
+            ):
+                if column in product_columns:
+                    assignments.append(f"`{column}` = {value}")
+            if "date_added" in product_columns:
+                assignments.append("`date_added` = NOW()")
+            if "date_modified" in product_columns:
+                assignments.append("`date_modified` = NOW()")
+            cursor.execute("INSERT INTO oc_product SET " + ", ".join(assignments))
+        else:
+            cursor.execute(
+                "INSERT INTO oc_product (model, sku, upc, ean, jan, isbn, mpn, location, quantity, stock_status_id, image, manufacturer_id, shipping, price, points, tax_class_id, date_available, weight, weight_class_id, length, width, height, length_class_id, subtract, minimum, sort_order, status, viewed, date_added, date_modified) VALUES (%s, '', '', '', '', '', '', '', 50, %s, '', 0, 1, 1.00, 0, 0, CURDATE(), 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, NOW(), NOW())",
+                ("APPNUNO-CI-PRODUCT", stock_status_id),
+            )
         product_id = cursor.lastrowid
         cursor.execute("SELECT l.language_id FROM oc_language l INNER JOIN oc_setting s ON s.store_id = 0 AND s.`key` = 'config_language' AND s.value = l.code LIMIT 1")
         language_row = cursor.fetchone()
         if not language_row or not language_row[0]:
             raise AssertionError("OpenCart has no store language, so the cart product cannot be displayed.")
-        cursor.execute(
-            "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES (%s, %s, 'AppNuno CI Product', 'Cart integration fixture', '', 'AppNuno CI Product', '', '')",
-            (product_id, language_row[0]),
-        )
+        if opencart4():
+            cursor.execute("SHOW COLUMNS FROM oc_product_description")
+            description_columns = {row[0] for row in cursor.fetchall()}
+            fields = ["product_id", "language_id", "name", "description"]
+            params: list[object] = [product_id, language_row[0], "AppNuno CI Product", "Cart integration fixture"]
+            for column, value in (("tag", ""), ("meta_title", "AppNuno CI Product"), ("meta_description", ""), ("meta_keyword", "")):
+                if column in description_columns:
+                    fields.append(column)
+                    params.append(value)
+            cursor.execute(
+                "INSERT INTO oc_product_description (" + ", ".join(f"`{field}`" for field in fields) + ") VALUES (" + ", ".join(["%s"] * len(fields)) + ")",
+                params,
+            )
+        else:
+            cursor.execute(
+                "INSERT INTO oc_product_description (product_id, language_id, name, description, tag, meta_title, meta_description, meta_keyword) VALUES (%s, %s, 'AppNuno CI Product', 'Cart integration fixture', '', 'AppNuno CI Product', '', '')",
+                (product_id, language_row[0]),
+            )
         cursor.execute("INSERT INTO oc_product_to_store (product_id, store_id) VALUES (%s, 0)", (product_id,))
     connection.close()
     return product_id
@@ -659,9 +713,11 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
             if not store_language.count():
                 store_language = page.locator("#input-language")
             store_language.select_option(code)
-        for field in page.locator('[id^="input-meta-title"]').all():
-            if not field.input_value():
-                field.fill("CI Store", force=True)
+        page.evaluate("""() => {
+            document.querySelectorAll('[id^="input-meta-title"]').forEach(field => {
+                if (!field.value) field.value = 'CI Store';
+            });
+        }""")
         # The settings script enables #button-save after the zone list loads, but the OpenCart 4 button has no such id.
         page.wait_for_function("() => { const zone = document.querySelector('#input-zone'); return !!zone && zone.options.length > 0; }")
         page.locator('button[form="form-setting"]').click()
@@ -669,6 +725,7 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
         if page.locator(".alert-danger").count():
             details = " ".join(page.locator(".invalid-feedback.d-block").all_inner_texts())
             raise AssertionError("OpenCart did not save the store settings: " + page.locator(".alert-danger").inner_text() + " " + details)
+        remember_admin_language_code(code)
         return
     page.locator('a[href="#tab-local"]').click()
     if OPENCART_LINE in ("2.0", "2.1"):
