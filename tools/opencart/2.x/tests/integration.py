@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -254,18 +255,40 @@ def clear_opencart4_language_cache() -> None:
 
 
 def repair_opencart402_admin_language(web_root: Path) -> None:
-    # OpenCart 4.0.2.0 and 4.0.2.1 do not reload extension language files, and 4.0.2.2 reloads them with the storefront code.
+    # OpenCart 4.0.2.0 and 4.0.2.1 do not reload extension language files, and 4.0.2.2 reloads them with the storefront code. A storefront cookie also overwrites the admin language.
     if not opencart4() or not ((4, 0, 2, 0) <= opencart_version_parts() < (4, 0, 2, 3)):
         return
     path = web_root / "admin" / "controller" / "startup" / "language.php"
-    text = path.read_text(encoding="utf-8")
-    text = text.replace("get('language_code')", "get('config_language_admin')")
-    text = text.replace("get('config_language')", "get('config_language_admin')")
-    text = text.replace(
-        "\t\tif (oc_substr($route, 0, 10) != 'extension/' && self::$extension) {\n\t\t\t$this->load->language('extension/' . self::$extension . '/' . $route, $prefix, $language);\n\t\t}",
-        "\t\t$this->language->load($route, $prefix, $language);",
+    text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
+    text, cookie_count = re.subn(
+        r"if \(isset\(\$this->request->cookie\['language'\]\)\) \{\n\s+\$code = \(string\)\$this->request->cookie\['language'\];\n\s+\} else \{\n\s+\$code = \$this->config->get\('[^']+'\);\n\s+\}",
+        "$code = $this->config->get('config_language_admin');",
+        text,
+        count=1,
     )
+    text, after_count = re.subn(
+        r"public function after\(&\$route, &\$prefix, &\$code, &\$output\): void \{.*?\n\t\}",
+        "public function after(&$route, &$prefix, &$code, &$output): void {\n\t\t$code = $this->config->get('config_language_admin');\n\t\t$this->language->load($route, $prefix, $code);\n\t}",
+        text,
+        count=1,
+        flags=re.S,
+    )
+    if cookie_count != 1 or after_count != 1:
+        raise AssertionError("OpenCart 4.0.2 admin language startup was not patched.")
     path.write_text(text, encoding="utf-8")
+
+
+def repair_opencart411_language_save(web_root: Path) -> None:
+    # OpenCart 4.1.0.1 and 4.1.0.2 evaluate the language id before checking that a matching language exists, so a new language fatals.
+    if opencart_version_parts() not in ((4, 1, 0, 1), (4, 1, 0, 2)):
+        return
+    path = web_root / "admin" / "controller" / "localisation" / "language.php"
+    text = path.read_text(encoding="utf-8")
+    old = "if ($language_info && !$post_info['language_id'] || ($language_info['language_id'] != $post_info['language_id'])) {"
+    new = "if ($language_info && (!$post_info['language_id'] || $language_info['language_id'] != $post_info['language_id'])) {"
+    if old not in text:
+        raise AssertionError("OpenCart 4.1 language save was not patched.")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
 
 
 def repair_opencart4_language_controller(web_root: Path) -> None:
@@ -417,6 +440,7 @@ def create_cart_product() -> int:
             for column, value in (
                 ("master_id", "0"),
                 ("model", "'APPNUNO-CI-PRODUCT'"),
+                ("manufacturer_id", "0"),
                 ("quantity", "50"),
                 ("stock_status_id", str(stock_status_id)),
                 ("shipping", "1"),
@@ -1296,6 +1320,7 @@ def main() -> None:
                         publish_admin_language_directories(web_root)
                         repair_opencart4_language_controller(web_root)
                         repair_opencart402_admin_language(web_root)
+                        repair_opencart411_language_save(web_root)
                         if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
