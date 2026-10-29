@@ -1,0 +1,133 @@
+name: OpenCart 3.x compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - opencart-version: '3.0.0.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.0.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.1.1'
+            php-version: '5.4'
+          - opencart-version: '3.0.1.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.2.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.1'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.3'
+            php-version: '5.4'
+          # The shipped 3.0.3.4 core pre-release zip exits unless PHP is 7.1 or newer.
+          - opencart-version: '3.0.3.4'
+            php-version: '7.1'
+          - opencart-version: '3.0.3.5'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.6'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.7'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.8'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.9'
+            php-version: '7.3'
+          - opencart-version: '3.0.4.0'
+            php-version: '7.3'
+          - opencart-version: '3.0.4.1'
+            php-version: '7.3'
+          - opencart-version: '3.0.5.0'
+            php-version: '8.1'
+          - opencart-version: '3.0.5.1'
+            php-version: '8.1'
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: opencart
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check out storefront SDK source
+        uses: actions/checkout@v6
+        with:
+          repository: mantax559/appnuno-web
+          ref: production
+          path: appnuno-web
+          token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
+
+      - name: Set up PHP for the package build
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.3'
+          extensions: zip, mbstring, xml
+          coverage: none
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install -r tools/opencart/tests/requirements-ci.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Build and validate extension package reproducibly
+        env:
+          TZ: UTC
+        run: |
+          php tools/opencart/build-package.php 3.0
+          first_hash=$(sha256sum downloads/opencart/3.x/appnuno-opencart-3.x.ocmod.zip | cut -d ' ' -f 1)
+          php tools/opencart/build-package.php 3.0
+          second_hash=$(sha256sum downloads/opencart/3.x/appnuno-opencart-3.x.ocmod.zip | cut -d ' ' -f 1)
+          test "$first_hash" = "$second_hash"
+          php tools/opencart/tests/package-validation.php 3.0
+          php tools/opencart/tests/config-validation.php
+          php tools/opencart/tests/language-validation.php
+
+      - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, ftp, gd, mysqli, zip, mbstring, xml
+          coverage: none
+
+      - name: Install OpenCart ${{ matrix.opencart-version }} and run browser integration test
+        env:
+          OPENCART_VERSION: ${{ matrix.opencart-version }}
+          OPENCART_DB_HOST: 127.0.0.1
+          OPENCART_DB_USER: root
+          OPENCART_DB_PASSWORD: root
+          OPENCART_DB_NAME: opencart
+          OPENCART_ARTIFACT_DIR: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
+          APPNUNO_SDK_SOURCE: ${{ github.workspace }}/appnuno-web/public/sdk/v1/appnuno.js
+        run: python tools/opencart/tests/integration.py
+
+      - name: Upload browser test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: opencart-${{ matrix.opencart-version }}-browser-artifacts
+          path: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
+          if-no-files-found: warn
+          retention-days: 7
