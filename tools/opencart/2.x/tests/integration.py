@@ -990,7 +990,8 @@ def main() -> None:
         patch_installer_storage_path(web_root)
         log_path = artifact_dir / "php-server.log"
         with log_path.open("w", encoding="utf-8") as server_log:
-            process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root)], stdout=server_log, stderr=subprocess.STDOUT)
+            # OpenCart 3.0.0.0 writes sessions to session_save_path(), which is empty on this PHP and then becomes /sess_* at the filesystem root.
+            process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root), "-d", "session.save_path=/tmp"], stdout=server_log, stderr=subprocess.STDOUT)
             ftp_server = None
             try:
                 wait_for_store(process, log_path)

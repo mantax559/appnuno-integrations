@@ -30,8 +30,9 @@ jobs:
             php-version: '5.4'
           - opencart-version: '3.0.3.3'
             php-version: '5.4'
+          # The shipped 3.0.3.4 core pre-release zip exits unless PHP is 7.1 or newer.
           - opencart-version: '3.0.3.4'
-            php-version: '5.4'
+            php-version: '7.1'
           - opencart-version: '3.0.3.5'
             php-version: '7.3'
           - opencart-version: '3.0.3.6'

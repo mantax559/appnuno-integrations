@@ -65,10 +65,11 @@ jobs:
           php tools/opencart/2.x/tests/package-validation.php 2.0
           php tools/opencart/2.x/tests/config-validation.php
 
-      - name: Set up PHP 5.3 for the OpenCart store
+      # OpenCart accepts PHP 5.3, but the store is served with php -S, which exists from PHP 5.4.
+      - name: Set up PHP 5.4 for the OpenCart store
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '5.3'
+          php-version: '5.4'
           extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
           coverage: none
 
