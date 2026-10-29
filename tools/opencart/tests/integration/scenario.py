@@ -5,6 +5,7 @@ from integration.admin import (
     add_store_language,
     admin_token,
     check_admin_module_languages,
+    check_extension_removal,
     check_module_lifecycle_and_admin_validation,
     install_module,
     login_admin,
@@ -69,7 +70,9 @@ def run(runtime: Runtime) -> None:
                     token = admin_token(runtime, page)
                     check_storefront(runtime, page, artifact_dir)
                     check_cart_and_customer_state(runtime, page)
-                    check_module_lifecycle_and_admin_validation(runtime, page, token)
+                    token = check_module_lifecycle_and_admin_validation(runtime, page, token)
+                    if not opencart4(runtime):
+                        check_extension_removal(runtime, page, token, web_root)
             finally:
                 if ftp_server is not None:
                     ftp_server.close_all()

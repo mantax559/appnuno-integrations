@@ -528,7 +528,7 @@ def assert_enabled_module_bootstraps(runtime: Runtime, page: Page) -> str:
     return token
 
 
-def assert_reinstall_restores_module(runtime: Runtime, page: Page, token: str) -> None:
+def uninstall_module(runtime: Runtime, page: Page, token: str) -> None:
     module_row = module_list_row(runtime, page, token)
     module_row.wait_for()
 
@@ -540,15 +540,23 @@ def assert_reinstall_restores_module(runtime: Runtime, page: Page, token: str) -
     module_row.locator("a.btn-success").wait_for()
     if setting_value(runtime, "module_appnuno_status") is not None or appnuno_event_count(runtime):
         raise AssertionError("Uninstalling the module did not remove its settings and catalog event.")
+
+
+def assert_reinstall_restores_module(runtime: Runtime, page: Page, token: str) -> str:
+    uninstall_module(runtime, page, token)
+    module_row = module_list_row(runtime, page, token)
+    module_row.wait_for()
     click_module_list_button(runtime, page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
     expected_events = 0 if runtime.line == "2.0" else 1
     if appnuno_event_count(runtime) != expected_events:
         raise AssertionError(f"Reinstalling the module registered {appnuno_event_count(runtime)} catalog events instead of {expected_events}.")
-    open_module_editor(runtime, page, admin_token(runtime, page))
+    token = admin_token(runtime, page)
+    open_module_editor(runtime, page, token)
     save_module_status(page, True)
     page.goto(runtime.base_url + "/")
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.navigation")
+    return token
 
 
 def reject_invalid_module_configuration(runtime: Runtime, page: Page, token: str) -> None:
@@ -590,9 +598,62 @@ def reject_save_without_modify_permission(runtime: Runtime, page: Page, token: s
                 cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (original_permission_value, group_id))
 
 
-def check_module_lifecycle_and_admin_validation(runtime: Runtime, page: Page, token: str) -> None:
+def uploaded_module_controllers(runtime: Runtime, web_root: Path) -> tuple[Path, Path]:
+    directory = ("module",) if legacy_module_layout(runtime) else ("extension", "module")
+    return (
+        web_root.joinpath("admin", "controller", *directory, "appnuno.php"),
+        web_root.joinpath("catalog", "controller", *directory, "appnuno.php"),
+    )
+
+
+def assert_uploaded_module_files(runtime: Runtime, web_root: Path, present: bool) -> None:
+    unexpected = [str(path) for path in uploaded_module_controllers(runtime, web_root) if path.is_file() != present]
+    if unexpected:
+        expected_state = "present" if present else "removed"
+        raise AssertionError(f"Uploaded module files were not {expected_state}: {unexpected}.")
+
+
+def delete_appnuno_modification(runtime: Runtime, page: Page, token: str) -> None:
+    page.goto(admin_page(runtime, "marketplace/modification" if runtime.line == "3.0" else "extension/modification", token))
+    row = page.locator("#form-modification tbody tr").filter(has_text=f"AppNuno OpenCart {runtime.release_line}.x")
+    row.locator("input[name='selected[]']").check()
+
+    def accept_delete_dialog(dialog: Dialog) -> None:
+        dialog.accept()
+
+    page.once("dialog", accept_delete_dialog)
+    with page.expect_navigation():
+        page.locator(".page-header button.btn-danger").click()
+    if f"AppNuno OpenCart {runtime.release_line}.x" in page.locator("#form-modification").inner_text():
+        raise AssertionError("OpenCart did not delete the AppNuno modification.")
+    with page.expect_navigation():
+        page.locator(".page-header a.btn-info").click()
+
+
+def remove_opencart3_uploaded_extension(runtime: Runtime, page: Page, token: str) -> None:
+    # OpenCart 3 deletes its recorded upload paths on the local filesystem. This action does not use FTP.
+    page.goto(admin_page(runtime, "marketplace/installer", token))
+    page.locator("#history tr").filter(has_text=runtime.package.name).locator("button.btn-danger").click()
+    page.locator(".alert-success").wait_for()
+
+
+def check_extension_removal(runtime: Runtime, page: Page, token: str, web_root: Path) -> None:
+    # OpenCart 2 copies extension files through FTP and keeps no path list, so deleting the modification cannot remove them.
+    delete_appnuno_modification(runtime, page, token)
+    page.goto(runtime.base_url + "/")
+    if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
+        raise AssertionError("Deleting the modification left the storefront bootstrap script in place.")
+    assert_uploaded_module_files(runtime, web_root, True)
+    uninstall_module(runtime, page, token)
+    assert_uploaded_module_files(runtime, web_root, True)
+    if runtime.line == "3.0":
+        remove_opencart3_uploaded_extension(runtime, page, token)
+        assert_uploaded_module_files(runtime, web_root, False)
+
+
+def check_module_lifecycle_and_admin_validation(runtime: Runtime, page: Page, token: str) -> str:
     reject_invalid_module_configuration(runtime, page, token)
     reject_save_without_modify_permission(runtime, page, token)
     assert_disabled_module_is_not_published(runtime, page, admin_token(runtime, page))
     token = assert_enabled_module_bootstraps(runtime, page)
-    assert_reinstall_restores_module(runtime, page, token)
+    return assert_reinstall_restores_module(runtime, page, token)
