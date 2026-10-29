@@ -168,7 +168,7 @@ function opencart_40_package($repository) {
     if (!is_string($controller) || !strstr($controller, 'namespace Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module;') || !strstr($controller, 'class Appnuno extends \\Opencart\\System\\Engine\\Controller') || !strstr($controller, 'function repairEvent()') || !strstr($controller, "deleteEventByCode('appnuno')") || !strstr($controller, "session->data['user_token']") || strstr($controller, "session->data['token']") || strstr($controller, 'model_extension_event') || !strstr($controller, 'extension/appnuno/module/appnuno')) {
         throw new RuntimeException('OpenCart 4 archive is missing the extension controller, user_token links or event repair.');
     }
-    if (!is_string($catalog_controller) || !strstr($catalog_controller, 'namespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;') || !strstr($catalog_controller, "version_compare(VERSION, '4.0.2.0', '<')") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])')) {
+    if (!is_string($catalog_controller) || !strstr($catalog_controller, 'namespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;') || !strstr($catalog_controller, "version_compare(VERSION, '4.0.2.0', '<')") || !strstr($catalog_controller, "array('href' => \$script_url)") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])')) {
         throw new RuntimeException('OpenCart 4 archive is missing the catalog bootstrap controller.');
     }
     if (!is_string($manifest) || !strstr($manifest, '"name": "AppNuno OpenCart 4.x"') || !strstr($manifest, '"code": "appnuno"')) {

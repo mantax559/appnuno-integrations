@@ -18,6 +18,7 @@ from pyftpdlib.servers import FTPServer
 
 
 REPOSITORY = Path(__file__).resolve().parents[4]
+STORE_ROOT: Path | None = None
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
@@ -236,6 +237,22 @@ def module_list_row(page: Page, token: str):
     return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
 
 
+def clear_opencart4_language_cache() -> None:
+    # OpenCart 4.0.2 caches the language list as language.{hash}, while addLanguage still deletes admin.language.
+    if not opencart4() or STORE_ROOT is None:
+        return
+    cache = STORE_ROOT / "system" / "storage" / "cache"
+    if not cache.is_dir():
+        return
+    for item in cache.iterdir():
+        if item.name == "index.html":
+            continue
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
+
 def repair_opencart4_language_controller(web_root: Path) -> None:
     # OpenCart 4.0 calls the language model inside save() before that action loads it, so the admin form fatals.
     if not opencart4():
@@ -281,6 +298,7 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
             raise AssertionError("OpenCart did not save the language: " + page.locator(".alert-danger").inner_text())
         page.goto(admin_page("localisation/language", admin_token(page)))
         page.locator("#content").get_by_text(code).wait_for()
+        clear_opencart4_language_cache()
         return
     page.goto(admin_page("localisation/language/add", admin_token(page)))
     page.locator('input[name="name"]').fill(name)
@@ -641,7 +659,7 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
             if not store_language.count():
                 store_language = page.locator("#input-language")
             store_language.select_option(code)
-        for field in page.locator('input[name*="[meta_title]"]').all():
+        for field in page.locator('[id^="input-meta-title"]').all():
             if not field.input_value():
                 field.fill("CI Store", force=True)
         # The settings script enables #button-save after the zone list loads, but the OpenCart 4 button has no such id.
@@ -1157,6 +1175,8 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
         workspace = Path(temporary)
         web_root = prepare_store(workspace)
+        global STORE_ROOT
+        STORE_ROOT = web_root
         patch_installer_directory_listing(web_root)
         patch_installer_storage_path(web_root)
         log_path = artifact_dir / "php-server.log"

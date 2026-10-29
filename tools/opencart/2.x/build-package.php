@@ -287,6 +287,11 @@ function opencart_40_layout($name, $content) {
             $content
         );
         $content = str_replace(
+            "\t\tif (!in_array(\$script_url, \$data['scripts'], true)) {\n\t\t\t\$data['scripts'][] = \$script_url;\n\t\t}",
+            "\t\t// OpenCart 4.0.1.0+ header templates read script.href. 4.0.0.0 prints the script string.\n\t\tif (version_compare(VERSION, '4.0.1.0', '<')) {\n\t\t\tif (!in_array(\$script_url, \$data['scripts'], true)) {\n\t\t\t\t\$data['scripts'][] = \$script_url;\n\t\t\t}\n\t\t} elseif (!isset(\$data['scripts'][\$script_url])) {\n\t\t\t\$data['scripts'][\$script_url] = array('href' => \$script_url);\n\t\t}",
+            $content
+        );
+        $content = str_replace(
             "\tprivate function languageCode() {\n\t\tif (isset(\$this->session->data['language']) && is_string(\$this->session->data['language']) && strlen(\$this->session->data['language'])) {\n\t\t\treturn \$this->session->data['language'];\n\t\t}\n\n\t\t\$language_code = \$this->config->get('config_language');\n\n\t\treturn is_string(\$language_code) ? \$language_code : '';\n\t}",
             "\tprivate function languageCode() {\n\t\t// OpenCart 4 startup writes the active request language into config_language. The session can still hold the previous code.\n\t\t\$language_code = \$this->config->get('config_language');\n\n\t\tif (is_string(\$language_code) && strlen(\$language_code)) {\n\t\t\treturn \$language_code;\n\t\t}\n\n\t\tif (isset(\$this->session->data['language']) && is_string(\$this->session->data['language']) && strlen(\$this->session->data['language'])) {\n\t\t\treturn \$this->session->data['language'];\n\t\t}\n\n\t\treturn '';\n\t}",
             $content
