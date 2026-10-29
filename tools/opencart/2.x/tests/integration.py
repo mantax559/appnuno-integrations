@@ -209,12 +209,16 @@ def admin_module_route() -> str:
     return "extension/module/appnuno"
 
 
-def catalog_method_route(method: str) -> str:
+def admin_method_route(route: str, method: str) -> str:
     # OpenCart 4.0.0.0 and 4.0.1.x separate the method with a pipe. 4.0.2.0+ uses a dot.
     if opencart4():
         separator = "|" if opencart_version_parts() < (4, 0, 2, 0) else "."
-        return admin_module_route() + separator + method
-    return admin_module_route() + "/" + method
+        return route + separator + method
+    return route + "/" + method
+
+
+def catalog_method_route(method: str) -> str:
+    return admin_method_route(admin_module_route(), method)
 
 
 def open_module_editor(page: Page, token: str) -> None:
@@ -232,11 +236,52 @@ def module_list_row(page: Page, token: str):
     return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
 
 
+def repair_opencart4_language_controller(web_root: Path) -> None:
+    # OpenCart 4.0 calls the language model inside save() before that action loads it, so the admin form fatals.
+    if not opencart4():
+        return
+    path = web_root / "admin" / "controller" / "localisation" / "language.php"
+    text = path.read_text(encoding="utf-8")
+    start = text.find("function save")
+    if start < 0:
+        return
+    tail = text[start:]
+    needle = "$this->model_localisation_language->getLanguageByCode"
+    use_at = tail.find(needle)
+    load_at = tail.find("$this->load->model('localisation/language')")
+    if use_at < 0 or (load_at >= 0 and load_at < use_at):
+        return
+    tail = tail.replace(needle, "$this->load->model('localisation/language');\n\t\t" + needle, 1)
+    path.write_text(text[:start] + tail, encoding="utf-8")
+
+
 def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
     with connection.cursor() as cursor:
         cursor.execute("SET GLOBAL sql_mode = 'NO_ENGINE_SUBSTITUTION'")
     connection.close()
+    if opencart4():
+        page.goto(admin_page(admin_method_route("localisation/language", "form"), admin_token(page)))
+        page.locator('input[name="name"]').fill(name)
+        code_field = page.locator('select[name="code"]')
+        if code_field.count():
+            code_field.select_option(code)
+        else:
+            page.locator('input[name="code"]').fill(code)
+        page.locator('input[name="locale"]').fill(locale)
+        status = page.locator('select[name="status"]')
+        if status.count():
+            status.select_option("1")
+        else:
+            page.locator('input[type="checkbox"][name="status"]').check()
+        page.locator('input[name="sort_order"]').fill("1")
+        page.locator('button[form="form-language"]').click()
+        page.locator(".alert-success, .alert-danger").first.wait_for()
+        if page.locator(".alert-danger").count():
+            raise AssertionError("OpenCart did not save the language: " + page.locator(".alert-danger").inner_text())
+        page.goto(admin_page("localisation/language", admin_token(page)))
+        page.locator("#content").get_by_text(code).wait_for()
+        return
     page.goto(admin_page("localisation/language/add", admin_token(page)))
     page.locator('input[name="name"]').fill(name)
     if OPENCART_LINE in ("2.0", "2.1"):
@@ -1127,6 +1172,7 @@ def main() -> None:
                         if not opencart4():
                             refresh_modifications(page, admin_token(page))
                         publish_admin_language_directories(web_root)
+                        repair_opencart4_language_controller(web_root)
                         if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
