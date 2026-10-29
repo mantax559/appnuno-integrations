@@ -21,7 +21,7 @@ REPOSITORY = Path(__file__).resolve().parents[4]
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
 OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2", "3.0.0.0", "3.0.0.2", "3.0.1.1", "3.0.1.2", "3.0.2.0", "3.0.3.0", "3.0.3.1", "3.0.3.2", "3.0.3.3", "3.0.3.4", "3.0.3.5", "3.0.3.6", "3.0.3.7", "3.0.3.8", "3.0.3.9", "3.0.4.0", "3.0.4.1", "3.0.5.0", "3.0.5.1"}
+SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2", "3.0.0.0", "3.0.0.2", "3.0.1.1", "3.0.1.2", "3.0.2.0", "3.0.3.0", "3.0.3.1", "3.0.3.2", "3.0.3.3", "3.0.3.4", "3.0.3.5", "3.0.3.6", "3.0.3.7", "3.0.3.8", "3.0.3.9", "3.0.4.0", "3.0.4.1", "3.0.5.0", "3.0.5.1", "4.0.0.0", "4.0.1.0", "4.0.1.1", "4.0.2.0", "4.0.2.1", "4.0.2.2", "4.0.2.3", "4.1.0.0", "4.1.0.1", "4.1.0.2", "4.1.0.3", "4.1.0.4"}
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_LINE = OPENCART_VERSION[:3]
@@ -52,6 +52,10 @@ if OPENCART_LINE in ("2.0", "2.1") or (OPENCART_LINE == "3.0" and OPENCART_30_AS
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
 elif OPENCART_LINE == "3.0":
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_30_ASSETS[OPENCART_VERSION]}"
+elif OPENCART_VERSION.startswith("4."):
+    # OpenCart 4 uses the uploaded filename as the extension code, so every 4.x test installs the same appnuno.ocmod.zip.
+    PACKAGE = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno.ocmod.zip"
+    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/opencart-{OPENCART_VERSION}.zip"
 else:
     OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
 BASE_URL = "http://127.0.0.1:8080"
@@ -175,14 +179,22 @@ def configure_ftp() -> None:
         connection.close()
 
 
+def opencart4() -> bool:
+    return OPENCART_VERSION.startswith("4.")
+
+
+def opencart_version_parts() -> tuple[int, ...]:
+    return tuple(int(part) for part in OPENCART_VERSION.split("."))
+
+
 def legacy_module_layout() -> bool:
-    # OpenCart 2.3 and 3.0 list modules under extension/module. 2.0–2.2 still use the older module list.
-    return OPENCART_LINE not in ("2.3", "3.0")
+    # OpenCart 2.3, 3.0 and 4.x list modules under the extension marketplace. 2.0–2.2 still use the older module list.
+    return OPENCART_LINE not in ("2.3", "3.0", "4.0", "4.1")
 
 
 def admin_token_name() -> str:
-    # OpenCart 3 renamed the admin session query key from token to user_token.
-    return "user_token" if OPENCART_LINE == "3.0" else "token"
+    # OpenCart 3 renamed the admin session query key from token to user_token. OpenCart 4 keeps that name.
+    return "user_token" if OPENCART_LINE == "3.0" or opencart4() else "token"
 
 
 def admin_page(route: str, token: str) -> str:
@@ -190,9 +202,19 @@ def admin_page(route: str, token: str) -> str:
 
 
 def admin_module_route() -> str:
+    if opencart4():
+        return "extension/appnuno/module/appnuno"
     if legacy_module_layout():
         return "module/appnuno"
     return "extension/module/appnuno"
+
+
+def catalog_method_route(method: str) -> str:
+    # OpenCart 4.0.0.0 and 4.0.1.x separate the method with a pipe. 4.0.2.0+ uses a dot.
+    if opencart4():
+        separator = "|" if opencart_version_parts() < (4, 0, 2, 0) else "."
+        return admin_module_route() + separator + method
+    return admin_module_route() + "/" + method
 
 
 def open_module_editor(page: Page, token: str) -> None:
@@ -204,7 +226,7 @@ def module_list_row(page: Page, token: str):
         page.goto(admin_page("extension/module", token))
         return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
     # OpenCart 3 moved the extension type list from extension/extension to marketplace/extension.
-    page.goto(admin_page("marketplace/extension" if OPENCART_LINE == "3.0" else "extension/extension", token))
+    page.goto(admin_page("marketplace/extension" if OPENCART_LINE == "3.0" or opencart4() else "extension/extension", token))
     module_filter = page.locator('select[name="type"]')
     module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
     return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
@@ -230,6 +252,9 @@ def add_store_language(page: Page, name: str, code: str, locale: str) -> None:
         if OPENCART_LINE != "2.2":
             page.locator('input[name="locale"]').fill(locale)
     page.locator('select[name="status"]').select_option("1")
+    sort_order = page.locator('input[name="sort_order"]')
+    if opencart4() and sort_order.count():
+        sort_order.fill("1")
     with page.expect_navigation():
         page.locator('button[form="form-language"]').click()
     page.locator(".alert-success").wait_for()
@@ -361,6 +386,9 @@ def admin_token(page: Page) -> str:
 
 
 def upload_extension(page: Page, token: str) -> None:
+    if opencart4():
+        upload_opencart4_extension(page, token)
+        return
     # OpenCart 3 installs extensions from marketplace/installer and marks success before the bar reaches 100%.
     page.goto(admin_page("marketplace/installer" if OPENCART_LINE == "3.0" else "extension/installer", token))
     with page.expect_file_chooser() as chooser:
@@ -378,6 +406,38 @@ def upload_extension(page: Page, token: str) -> None:
     )
     if page.locator("#progress-text .text-danger").count():
         raise AssertionError("OpenCart extension uploader failed: " + page.locator("#progress-text").inner_text())
+
+
+def upload_opencart4_extension(page: Page, token: str) -> None:
+    # The upload only registers the package. A second Install click extracts it into extension/appnuno. 4.0.0.0 confirms that with alert().
+    page.goto(admin_page("marketplace/installer", token))
+
+    def accept_dialog(dialog) -> None:
+        dialog.accept()
+
+    page.on("dialog", accept_dialog)
+    with page.expect_file_chooser() as chooser:
+        page.locator("#button-upload").click()
+    chooser.value.set_files(str(PACKAGE))
+    row = page.locator("#extension tr").filter(has_text="AppNuno").first
+    row.wait_for(timeout=90000)
+    row.locator("a.btn-success").click()
+    page.wait_for_function(
+        """() => {
+            const bar = document.querySelector('#progress-bar');
+            if (!bar) {
+                return false;
+            }
+            const width = parseFloat(bar.style.width || '0');
+            const danger = bar.classList.contains('progress-bar-danger') || bar.classList.contains('bg-danger');
+            const success = width >= 100 && (bar.classList.contains('progress-bar-success') || bar.classList.contains('bg-success'));
+            return danger || success;
+        }""",
+        timeout=90000,
+    )
+    page.remove_listener("dialog", accept_dialog)
+    if page.locator("#progress-text .text-danger").count():
+        raise AssertionError("OpenCart extension installer failed: " + page.locator("#progress-text").inner_text())
 
 
 def refresh_modifications(page: Page, token: str) -> None:
@@ -500,8 +560,36 @@ def use_en_gb_language_code(page: Page) -> None:
     switch_admin_language(page, "en-gb", update_storefront=True)
 
 
+def publish_admin_language_directories(web_root: Path) -> None:
+    # OpenCart 4 only offers language codes that already exist as admin/language directories.
+    if not opencart4():
+        return
+    source = web_root / "admin" / "language" / "en-gb"
+    for code in ("lt-lt", "de-de"):
+        destination = web_root / "admin" / "language" / code
+        if not destination.exists():
+            shutil.copytree(source, destination)
+
+
 def switch_admin_language(page: Page, code: str, update_storefront: bool = False) -> None:
     page.goto(admin_page("setting/setting", admin_token(page)))
+    if opencart4():
+        admin_language = page.locator("#input-language-admin")
+        if not admin_language.is_visible():
+            for tab in page.locator('a[data-bs-toggle="tab"]').all():
+                tab.click()
+                if admin_language.is_visible():
+                    break
+        admin_language.select_option(code)
+        if update_storefront:
+            store_language = page.locator("#input-language-catalog")
+            if not store_language.count():
+                store_language = page.locator("#input-language")
+            store_language.select_option(code)
+        page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
+        page.locator("#button-save").click()
+        page.locator(".alert-success").wait_for()
+        return
     page.locator('a[href="#tab-local"]').click()
     if OPENCART_LINE in ("2.0", "2.1"):
         if update_storefront:
@@ -591,7 +679,7 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
     bootstrap_responses = [
         response
         for response in responses
-        if parse_qs(urlparse(response.url).query).get("route", []) == [admin_module_route() + "/bootstrap"]
+        if parse_qs(urlparse(response.url).query).get("route", []) == [catalog_method_route("bootstrap")]
         and parse_qs(urlparse(response.url).query).get("page_route", []) == [expected_route]
     ]
     if not bootstrap_responses or bootstrap_responses[-1].status != 200:
@@ -607,7 +695,7 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
         raise AssertionError(f"The storefront SDK did not publish its initialization event: {sdk_signal}.")
     if payload["route"] != expected_route:
         raise AssertionError(f"Expected bootstrap route {expected_route}, got {payload['route']}.")
-    if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != [admin_module_route() + "/state"]:
+    if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != [catalog_method_route("state")]:
         raise AssertionError("The bootstrap state URL does not target the AppNuno state endpoint.")
     if payload["state"] != {"cartCount": 0, "identity": None}:
         raise AssertionError(f"Unexpected unauthenticated storefront state: {payload['state']}.")
@@ -730,7 +818,7 @@ def check_cart_and_customer_state(page: Page) -> None:
     page.wait_for_timeout(500)
     page.locator("#button-cart").click()
     page.wait_for_timeout(500)
-    state_url = BASE_URL + "/index.php?route=" + admin_module_route() + "/state"
+    state_url = BASE_URL + "/index.php?route=" + catalog_method_route("state")
     cart_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
     if cart_state.get("cartCount") != 2 or cart_state.get("identity") is not None:
         raise AssertionError(f"The storefront state did not report the real cart quantity: {cart_state}.")
@@ -879,7 +967,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
     page.goto(BASE_URL + "/")
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
         raise AssertionError("The disabled module still injected its bootstrap script.")
-    disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=" + admin_module_route() + "/state")
+    disabled = page.evaluate("async url => { const response = await fetch(url, { credentials: 'same-origin' }); return response.status; }", BASE_URL + "/index.php?route=" + catalog_method_route("state"))
     if disabled != 404:
         raise AssertionError(f"The disabled module state endpoint returned HTTP {disabled} instead of 404.")
     open_module_editor(page, token)
@@ -909,6 +997,18 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
 
 
 def set_storefront_language(page: Page, code: str) -> None:
+    if opencart4():
+        # 4.0.0.0 prefers the browser language. Later 4.x releases read the store language setting when the request has no language query.
+        keys = ["config_language"]
+        if opencart_version_parts() >= (4, 1, 0, 0):
+            keys.append("config_language_catalog")
+        connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
+        with connection.cursor() as cursor:
+            for key in keys:
+                cursor.execute("UPDATE oc_setting SET value = %s WHERE store_id = 0 AND `code` = 'config' AND `key` = %s", (code, key))
+        connection.close()
+        page.set_extra_http_headers({"Accept-Language": code})
+        return
     status = page.evaluate(
         """async code => {
             const body = new URLSearchParams();
@@ -1015,7 +1115,9 @@ def main() -> None:
                         ftp_server = start_ftp_server(web_root)
                         token = admin_token(page)
                         upload_extension(page, token)
-                        refresh_modifications(page, admin_token(page))
+                        if not opencart4():
+                            refresh_modifications(page, admin_token(page))
+                        publish_admin_language_directories(web_root)
                         if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")

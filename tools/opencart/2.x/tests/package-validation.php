@@ -1,7 +1,12 @@
 <?php
 $line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0'), true)) {
+if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0', '4'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
+}
+if ($line === '4') {
+    opencart_40_package(dirname(__DIR__, 4));
+    echo "OpenCart package structure tests passed.\n";
+    return;
 }
 $extension_layout = in_array($line, array('2.3', '3.0'), true);
 $module_path = $extension_layout ? 'extension/module' : 'module';
@@ -106,3 +111,74 @@ if (count($missing)) {
     throw new RuntimeException('Missing OpenCart package files: ' . implode(', ', $missing));
 }
 echo "OpenCart package structure tests passed.\n";
+
+function opencart_40_package($repository) {
+    $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '4.x' . DIRECTORY_SEPARATOR . 'appnuno.ocmod.zip';
+    $required = array(
+        'install.json',
+        'README.md',
+        'admin/controller/module/appnuno.php',
+        'admin/language/en-gb/module/appnuno.php',
+        'admin/language/lt-lt/module/appnuno.php',
+        'admin/language/de-de/module/appnuno.php',
+        'admin/model/module/appnuno.php',
+        'admin/view/template/module/appnuno.twig',
+        'catalog/controller/module/appnuno.php',
+        'catalog/model/module/appnuno.php'
+    );
+    $archive = new ZipArchive();
+    if (!$archive->open($package)) {
+        throw new RuntimeException('Unable to open OpenCart extension archive.');
+    }
+    $entries = array();
+    for ($index = 0; $index < $archive->numFiles; $index++) {
+        $name = $archive->getNameIndex($index);
+        $entries[] = $name;
+        $stat = $archive->statIndex($index);
+        if (preg_match('~^/|(^|/)\.\.(/|$)|(^|/)tests(/|$)~', $name)) {
+            throw new RuntimeException('Unsafe or non-installable archive entry: ' . $name);
+        }
+        if (!is_array($stat) || !in_array($stat['mtime'], array(946684800), true)) {
+            throw new RuntimeException('OpenCart package entries must use the normalized timestamp.');
+        }
+    }
+    $sorted_entries = $entries;
+    sort($sorted_entries, SORT_STRING);
+    if (!in_array($entries, array($sorted_entries), true)) {
+        throw new RuntimeException('OpenCart package entries must be sorted deterministically.');
+    }
+    $view = $archive->getFromName('admin/view/template/module/appnuno.twig');
+    $controller = $archive->getFromName('admin/controller/module/appnuno.php');
+    $catalog_controller = $archive->getFromName('catalog/controller/module/appnuno.php');
+    $english = $archive->getFromName('admin/language/en-gb/module/appnuno.php');
+    $lithuanian = $archive->getFromName('admin/language/lt-lt/module/appnuno.php');
+    $german = $archive->getFromName('admin/language/de-de/module/appnuno.php');
+    $manifest = $archive->getFromName('install.json');
+    $readme = $archive->getFromName('README.md');
+    $archive->close();
+    if (in_array('install.xml', $entries, true) || in_array('upload/admin/controller/extension/module/appnuno.php', $entries, true)) {
+        throw new RuntimeException('OpenCart 4 archive must not ship the 2.x or 3.x layout.');
+    }
+    if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, '{{ text.entry_cart_tab }}') || strstr($view, '<?php') || !strstr($view, '{{ configuration_json|raw }}')) {
+        throw new RuntimeException('OpenCart 4 archive is missing the Twig settings form.');
+    }
+    if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !is_string($german) || !strstr($german, 'AppNuno native Navigation')) {
+        throw new RuntimeException('OpenCart 4 archive is missing the English, Lithuanian or German module language.');
+    }
+    if (!is_string($controller) || !strstr($controller, 'namespace Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module;') || !strstr($controller, 'class Appnuno extends \\Opencart\\System\\Engine\\Controller') || !strstr($controller, 'function repairEvent()') || !strstr($controller, "deleteEventByCode('appnuno')") || !strstr($controller, "session->data['user_token']") || strstr($controller, "session->data['token']") || strstr($controller, 'model_extension_event') || !strstr($controller, 'extension/appnuno/module/appnuno')) {
+        throw new RuntimeException('OpenCart 4 archive is missing the extension controller, user_token links or event repair.');
+    }
+    if (!is_string($catalog_controller) || !strstr($catalog_controller, 'namespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;') || !strstr($catalog_controller, "version_compare(VERSION, '4.0.2.0', '<')") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])')) {
+        throw new RuntimeException('OpenCart 4 archive is missing the catalog bootstrap controller.');
+    }
+    if (!is_string($manifest) || !strstr($manifest, '"name": "AppNuno OpenCart 4.x"') || !strstr($manifest, '"code": "appnuno"')) {
+        throw new RuntimeException('OpenCart 4 archive is missing install.json.');
+    }
+    if (!is_string($readme) || !strstr($readme, 'appnuno.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
+        throw new RuntimeException('OpenCart 4 archive is missing its installation instructions.');
+    }
+    $missing = array_diff($required, $entries);
+    if (count($missing)) {
+        throw new RuntimeException('Missing OpenCart package files: ' . implode(', ', $missing));
+    }
+}
