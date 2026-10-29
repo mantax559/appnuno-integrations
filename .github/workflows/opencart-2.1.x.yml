@@ -36,11 +36,11 @@ jobs:
           path: appnuno-web
           token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
 
-      - name: Set up PHP
+      - name: Set up PHP for the package build
         uses: shivammathur/setup-php@v2
         with:
           php-version: '7.3'
-          extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
+          extensions: zip, mbstring, xml
           coverage: none
 
       - name: Set up Python
@@ -64,6 +64,13 @@ jobs:
           test "$first_hash" = "$second_hash"
           php tools/opencart/2.x/tests/package-validation.php 2.1
           php tools/opencart/2.x/tests/config-validation.php
+
+      - name: Set up PHP 5.3 for the OpenCart store
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '5.3'
+          extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
+          coverage: none
 
       - name: Install OpenCart ${{ matrix.opencart-version }} and run browser integration test
         env:

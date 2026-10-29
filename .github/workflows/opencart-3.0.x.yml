@@ -11,33 +11,41 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        opencart-version:
-          - '3.0.0.0'
-          - '3.0.0.2'
-          - '3.0.1.1'
-          - '3.0.1.2'
-          - '3.0.2.0'
-          - '3.0.3.0'
-          - '3.0.3.1'
-          - '3.0.3.2'
-          - '3.0.3.3'
-          - '3.0.3.4'
-          - '3.0.3.5'
-          - '3.0.3.6'
-          - '3.0.3.7'
-          - '3.0.3.8'
-          - '3.0.3.9'
-          - '3.0.4.0'
-          - '3.0.4.1'
-          - '3.0.5.0'
-          - '3.0.5.1'
-        php-version: ['7.3']
-        exclude:
-          - opencart-version: '3.0.5.0'
-            php-version: '7.3'
-          - opencart-version: '3.0.5.1'
-            php-version: '7.3'
         include:
+          - opencart-version: '3.0.0.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.0.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.1.1'
+            php-version: '5.4'
+          - opencart-version: '3.0.1.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.2.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.0'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.1'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.2'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.3'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.4'
+            php-version: '5.4'
+          - opencart-version: '3.0.3.5'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.6'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.7'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.8'
+            php-version: '7.3'
+          - opencart-version: '3.0.3.9'
+            php-version: '7.3'
+          - opencart-version: '3.0.4.0'
+            php-version: '7.3'
+          - opencart-version: '3.0.4.1'
+            php-version: '7.3'
           - opencart-version: '3.0.5.0'
             php-version: '8.1'
           - opencart-version: '3.0.5.1'
@@ -66,11 +74,11 @@ jobs:
           path: appnuno-web
           token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
 
-      - name: Set up PHP
+      - name: Set up PHP for the package build
         uses: shivammathur/setup-php@v2
         with:
-          php-version: ${{ matrix.php-version }}
-          extensions: curl, ftp, gd, mysqli, zip, mbstring, xml${{ matrix.php-version == '7.3' && ', mcrypt' || '' }}
+          php-version: '7.3'
+          extensions: zip, mbstring, xml
           coverage: none
 
       - name: Set up Python
@@ -94,6 +102,13 @@ jobs:
           test "$first_hash" = "$second_hash"
           php tools/opencart/2.x/tests/package-validation.php 3.0
           php tools/opencart/2.x/tests/config-validation.php
+
+      - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: curl, ftp, gd, mysqli, zip, mbstring, xml
+          coverage: none
 
       - name: Install OpenCart ${{ matrix.opencart-version }} and run browser integration test
         env:
