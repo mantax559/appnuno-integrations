@@ -343,13 +343,22 @@ def install_route(route: str) -> str:
     return "**route=install/" + route + "**"
 
 
+def click_install_continue(page: Page) -> None:
+    # OpenCart 4 license step continues through a link. Later steps still submit a form, and 4.1 uses a button rather than an input.
+    control = page.locator('input[type="submit"], button[type="submit"]')
+    if control.count():
+        control.first.click()
+        return
+    page.locator("a.btn-primary").click()
+
+
 def install_store(page: Page) -> None:
     page.goto(BASE_URL)
-    page.locator('input[type="submit"]').click()
+    click_install_continue(page)
     page.wait_for_url(install_route("step_2"))
     if page.locator(".alert-danger").count():
         raise AssertionError("OpenCart pre-installation checks reported an error: " + page.locator(".alert-danger").inner_text())
-    page.locator('input[type="submit"]').click()
+    click_install_continue(page)
     page.wait_for_url(install_route("step_3"))
     page.locator('select[name="db_driver"]').select_option("mysqli")
     page.locator('input[name="db_hostname"]').fill(DB_HOST)
@@ -363,7 +372,7 @@ def install_store(page: Page) -> None:
     page.locator('input[name="username"]').fill(ADMIN_USER)
     page.locator('input[name="password"]').fill(ADMIN_PASSWORD)
     page.locator('input[name="email"]').fill("opencart-ci@example.test")
-    page.locator('input[type="submit"]').click()
+    click_install_continue(page)
     page.wait_for_url(install_route("step_4"), timeout=30000)
 
 
