@@ -640,9 +640,12 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
             if not store_language.count():
                 store_language = page.locator("#input-language")
             store_language.select_option(code)
-        page.wait_for_function("() => { const button = document.querySelector('#button-save'); return !!button && !button.disabled; }")
-        page.locator("#button-save").click()
-        page.locator(".alert-success").wait_for()
+        # The settings script enables #button-save after the zone list loads, but the OpenCart 4 button has no such id.
+        page.wait_for_function("() => { const zone = document.querySelector('#input-zone'); return !!zone && zone.options.length > 0; }")
+        page.locator('button[form="form-setting"]').click()
+        page.locator(".alert-success, .alert-danger").first.wait_for()
+        if page.locator(".alert-danger").count():
+            raise AssertionError("OpenCart did not save the store settings: " + page.locator(".alert-danger").inner_text())
         return
     page.locator('a[href="#tab-local"]').click()
     if OPENCART_LINE in ("2.0", "2.1"):
