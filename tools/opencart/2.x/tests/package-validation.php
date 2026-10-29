@@ -159,7 +159,7 @@ function opencart_40_package($repository) {
     if (in_array('install.xml', $entries, true) || in_array('upload/admin/controller/extension/module/appnuno.php', $entries, true)) {
         throw new RuntimeException('OpenCart 4 archive must not ship the 2.x or 3.x layout.');
     }
-    if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, '{{ text.entry_cart_tab }}') || strstr($view, '<?php') || !strstr($view, '{{ configuration_json|raw }}')) {
+    if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, '{{ text.entry_cart_tab }}') || !strstr($view, 'data-bs-toggle="tab"') || strstr($view, 'data-toggle="tab"') || strstr($view, '<?php') || !strstr($view, '{{ configuration_json|raw }}')) {
         throw new RuntimeException('OpenCart 4 archive is missing the Twig settings form.');
     }
     if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !is_string($german) || !strstr($german, 'AppNuno native Navigation')) {

@@ -50,7 +50,7 @@ foreach ($entries as $name => $path) {
         $name = str_replace('/extension/module/', '/module/', $name);
         $body = opencart_40_layout($name, $body);
         if (substr($name, -4) === '.tpl') {
-            $body = opencart_twig_template($body);
+            $body = opencart_40_admin_template(opencart_twig_template($body));
             $name = substr($name, 0, -4) . '.twig';
         }
     }
@@ -314,4 +314,15 @@ function opencart_40_layout($name, $content) {
     );
     $content = preg_replace('/->link\(([^;]*?),\s*true\)/', '->link($1)', $content);
     return $content;
+}
+
+function opencart_40_admin_template($content) {
+    // OpenCart 4 admin is Bootstrap 5, which only opens tabs marked with data-bs-toggle.
+    $content = str_replace(
+        array('data-toggle="tab"', 'data-toggle="tooltip"', 'data-dismiss="alert"', 'btn btn-default', 'class="close"'),
+        array('data-bs-toggle="tab"', 'data-bs-toggle="tooltip"', 'data-bs-dismiss="alert"', 'btn btn-light', 'class="btn-close"'),
+        $content
+    );
+    $content = str_replace('<li class="active"><a href="#tab-navigation" data-bs-toggle="tab">', '<li class="nav-item"><a href="#tab-navigation" data-bs-toggle="tab" class="nav-link active">', $content);
+    return str_replace('<li><a href="#tab-', '<li class="nav-item"><a class="nav-link" href="#tab-', $content);
 }
