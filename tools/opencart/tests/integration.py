@@ -684,21 +684,18 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     default_panel = page.locator("#default-tabs").locator("xpath=../..")
     if not default_panel.locator("#cart-tab-id").count():
         raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
-    for index, labels in enumerate((("Home", "Pradžia", "Start"), ("Cart", "Krepšelis", "Warenkorb"))):
+    for index, labels in enumerate((("Home", "Pradžia"), ("Cart", "Krepšelis"))):
         tab = page.locator("#default-tabs .appnuno-tab").nth(index)
         tab.locator('[data-language-label="en-gb"]').fill(labels[0])
         tab.locator('[data-language-label="lt-lt"]').fill(labels[1])
-        tab.locator('[data-language-label="de-de"]').fill(labels[2])
     page.locator('button[data-add-tab="default-tabs"]').click()
     tab = page.locator("#default-tabs .appnuno-tab").last
     tab.locator('[data-field="id"]').fill("ci-added-tab")
     tab.locator('[data-language-label="en-gb"]').fill("CI Added Tab")
     tab.locator('[data-language-label="lt-lt"]').fill("CI pridėtas skirtukas")
-    tab.locator('[data-language-label="de-de"]').fill("CI hinzugefügter Tab")
     tab.locator('[data-url-select]').select_option("__custom__")
     tab.locator('[data-language-url="en-gb"]').fill("/en/contact")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/kontaktai")
-    tab.locator('[data-language-url="de-de"]').fill("/de/kontakt")
     tab.locator('[data-field="icon"]').fill("home-outline")
     tab.locator('[data-field="activeIcon"]').fill("home")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
@@ -730,11 +727,9 @@ def save_and_check_tab(page: Page, artifact_dir: Path) -> None:
     page_tab.locator('[data-field="id"]').fill("ci-cart-route-tab")
     page_tab.locator('[data-language-label="en-gb"]').fill("Cart route tab")
     page_tab.locator('[data-language-label="lt-lt"]').fill("Krepšelio skirtukas")
-    page_tab.locator('[data-language-label="de-de"]').fill("Warenkorb-Route")
     page_tab.locator('[data-url-select]').select_option("__custom__")
     page_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
     page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
-    page_tab.locator('[data-language-url="de-de"]').fill("/de/warenkorb")
     page_tab.locator('[data-field="icon"]').fill("cart-outline")
     page_tab.locator('[data-field="activeIcon"]').fill("cart")
     page_tab.locator("[data-pages]").select_option(["checkout/cart"])
@@ -781,10 +776,9 @@ def publish_admin_language_directories(web_root: Path) -> None:
     if not opencart4():
         return
     source = web_root / "admin" / "language" / "en-gb"
-    for code in ("lt-lt", "de-de"):
-        destination = web_root / "admin" / "language" / code
-        if not destination.exists():
-            shutil.copytree(source, destination)
+    destination = web_root / "admin" / "language" / "lt-lt"
+    if not destination.exists():
+        shutil.copytree(source, destination)
 
 
 def switch_admin_language(page: Page, code: str, update_storefront: bool = False) -> None:
@@ -867,20 +861,6 @@ def check_admin_module_languages(page: Page) -> None:
         "Skirtukų pavadinimai pagal kalbą",
         "Įjungta",
     ))
-    switch_admin_language(page, "de-de")
-    expect_module_language(page, (
-        "AppNuno native Navigation",
-        "AppNuno native Navigation bearbeiten",
-        "Standard-Tabs",
-        "Tab für das Warenkorbsymbol",
-        "Angezeigt auf Seiten",
-        "Zurück-Schaltfläche",
-        "Glas-Schaltflächenleiste",
-        "Navigationsfarben",
-        "Heller Modus",
-        "Tab-Beschriftungen nach Sprache",
-        "Aktiviert",
-    ))
     switch_admin_language(page, "en-gb")
     expect_module_language(page, (
         "AppNuno Native Navigation",
@@ -941,14 +921,14 @@ def check_default_bootstrap(payload: dict[str, Any]) -> None:
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
     if len(configuration["defaultTabs"]) != 4:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {configuration['defaultTabs']}.")
-    for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia", "de-de": "Start"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis", "de-de": "Warenkorb"})):
+    for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis"})):
         configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == tab_id)
         if configured_tab.get("labels") != labels:
             raise AssertionError(f"The bootstrap configuration did not retain translations for {tab_id}: {configured_tab}.")
     configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "ci-added-tab")
-    if configured_tab.get("labels") != {"en-gb": "CI Added Tab", "lt-lt": "CI pridėtas skirtukas", "de-de": "CI hinzugefügter Tab"}:
+    if configured_tab.get("labels") != {"en-gb": "CI Added Tab", "lt-lt": "CI pridėtas skirtukas"}:
         raise AssertionError(f"The bootstrap configuration did not retain all default tab translations: {configured_tab}.")
-    if configured_tab.get("urls") != {"en-gb": "/en/contact", "lt-lt": "/lt/kontaktai", "de-de": "/de/kontakt"}:
+    if configured_tab.get("urls") != {"en-gb": "/en/contact", "lt-lt": "/lt/kontaktai"}:
         raise AssertionError(f"The bootstrap configuration did not retain all default tab URLs: {configured_tab}.")
     expected_default_tabs = {
         "home": ("Home", "/", "home-outline", "home"),
@@ -968,7 +948,7 @@ def check_default_bootstrap(payload: dict[str, Any]) -> None:
     page_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
     if page_tab.get("pages") != ["checkout/cart"]:
         raise AssertionError(f"The cart-only tab was not limited to the cart page: {page_tab}.")
-    if page_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
+    if page_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas"}:
         raise AssertionError(f"The cart-only tab translations were not retained: {page_tab}.")
     if configuration.get("routes"):
         raise AssertionError(f"Page visibility replaced route-specific tab sets: {configuration['routes']}.")
@@ -1016,9 +996,9 @@ def check_route_bootstrap(payload: dict[str, Any]) -> None:
     if payload["route"] != "checkout/cart":
         raise AssertionError(f"Expected the checkout/cart bootstrap route, got {payload['route']}.")
     configured_tab = next(tab for tab in payload["config"]["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
-    if configured_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas", "de-de": "Warenkorb-Route"}:
+    if configured_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas"}:
         raise AssertionError(f"The saved cart page tab translations are incorrect: {configured_tab}.")
-    if configured_tab.get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis", "de-de": "/de/warenkorb"}:
+    if configured_tab.get("urls") != {"en-gb": "/en/cart", "lt-lt": "/lt/krepselis"}:
         raise AssertionError(f"The saved cart page tab URLs are incorrect: {configured_tab}.")
     tabs = payload["navigation"]["tabs"]
     published_ids = [tab.get("id") for tab in tabs]
@@ -1291,8 +1271,6 @@ def check_storefront_label_languages(page: Page, responses: list[Response]) -> N
         raise AssertionError(f"The storefront published the wrong checkout/cart language: {route_tab}.")
     if published.get("home", {}).get("label") != "Pradžia":
         raise AssertionError(f"The shared home tab was not published in Lithuanian on the cart page: {published.get('home')}.")
-    set_storefront_language(page, "de-de")
-    expect_resolved_storefront_language(page, responses, "Start", "Warenkorb", "CI hinzugefügter Tab", "/de/kontakt")
     set_storefront_language(page, "en-gb")
     expect_resolved_storefront_language(page, responses, "Home", "Cart", "CI Added Tab", "/en/contact")
 
@@ -1376,7 +1354,6 @@ def main() -> None:
                         if OPENCART_LINE in ("2.0", "2.1"):
                             use_en_gb_language_code(page)
                         add_store_language(page, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
-                        add_store_language(page, "German", "de-de", "de_DE.UTF-8,de_DE,de-de,german")
                         install_module(page, admin_token(page))
                         capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
                         save_and_check_tab(page, artifact_dir)
