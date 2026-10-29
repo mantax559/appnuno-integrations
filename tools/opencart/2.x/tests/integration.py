@@ -635,17 +635,22 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
                 if admin_language.is_visible():
                     break
         admin_language.select_option(code)
-        if update_storefront:
+        # OpenCart 4.0.2 reloads admin language files with the storefront language code.
+        if update_storefront or (opencart_version_parts() >= (4, 0, 2, 0) and opencart_version_parts() < (4, 1, 0, 0)):
             store_language = page.locator("#input-language-catalog")
             if not store_language.count():
                 store_language = page.locator("#input-language")
             store_language.select_option(code)
+        for field in page.locator('input[name*="[meta_title]"]').all():
+            if not field.input_value():
+                field.fill("CI Store", force=True)
         # The settings script enables #button-save after the zone list loads, but the OpenCart 4 button has no such id.
         page.wait_for_function("() => { const zone = document.querySelector('#input-zone'); return !!zone && zone.options.length > 0; }")
         page.locator('button[form="form-setting"]').click()
         page.locator(".alert-success, .alert-danger").first.wait_for()
         if page.locator(".alert-danger").count():
-            raise AssertionError("OpenCart did not save the store settings: " + page.locator(".alert-danger").inner_text())
+            details = " ".join(page.locator(".invalid-feedback.d-block").all_inner_texts())
+            raise AssertionError("OpenCart did not save the store settings: " + page.locator(".alert-danger").inner_text() + " " + details)
         return
     page.locator('a[href="#tab-local"]').click()
     if OPENCART_LINE in ("2.0", "2.1"):
@@ -883,9 +888,13 @@ def check_cart_and_customer_state(page: Page) -> None:
     page.locator('input[name="firstname"]').fill("AppNuno")
     page.locator('input[name="lastname"]').fill("CI Customer")
     page.locator('input[name="email"]').fill("appnuno-ci-customer@example.test")
-    page.locator('input[name="telephone"]').fill("5550100")
+    telephone = page.locator('input[name="telephone"]')
+    if telephone.count():
+        telephone.fill("5550100")
     page.locator('input[name="password"]').fill("ci-customer-password")
-    page.locator('input[name="confirm"]').fill("ci-customer-password")
+    confirm = page.locator('input[name="confirm"]')
+    if confirm.count():
+        confirm.fill("ci-customer-password")
     # OpenCart 3 collects the address at checkout, so the account form has no address fields.
     address = page.locator('input[name="address_1"]')
     if address.count():
@@ -901,10 +910,15 @@ def check_cart_and_customer_state(page: Page) -> None:
     agreement = page.locator('input[name="agree"]')
     if agreement.count():
         agreement.check()
-    with page.expect_navigation():
-        page.locator('#content form input[type="submit"]').click()
+    submit = page.locator('#content form button[type="submit"], #content form input[type="submit"]').first
+    if opencart4():
+        submit.click()
+        page.wait_for_function("() => location.href.includes('route=account/success') || location.href.includes('route=account/account') || !!document.querySelector('.alert-danger, .invalid-feedback.d-block')")
+    else:
+        with page.expect_navigation():
+            submit.click()
     if "route=account/success" not in page.url and "route=account/account" not in page.url:
-        errors = page.locator(".alert-danger, .text-danger").all_inner_texts()
+        errors = page.locator(".alert-danger, .text-danger, .invalid-feedback.d-block").all_inner_texts()
         raise AssertionError(f"OpenCart did not accept the customer registration at {page.url}: {errors}.")
     customer_state = page.evaluate("async url => (await fetch(url, { credentials: 'same-origin', cache: 'no-store' })).json()", state_url)
     identity = customer_state.get("identity")
