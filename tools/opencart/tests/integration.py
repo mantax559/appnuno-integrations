@@ -6,31 +6,31 @@ import subprocess
 import tempfile
 import threading
 import time
-import urllib.request
 import zipfile
-from urllib.parse import parse_qs, urlparse
 from pathlib import Path
+from typing import Any
+from urllib.parse import parse_qs, urlparse
+from urllib.request import urlopen, urlretrieve
 
 import pymysql
-from playwright.sync_api import Page, Response, sync_playwright
+from playwright.sync_api import Dialog, Locator, Page, Response, Route, sync_playwright
 from pyftpdlib.authorizers import DummyAuthorizer
 from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 
-REPOSITORY = Path(__file__).resolve().parents[3]
-STORE_ROOT: Path | None = None
-SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
-SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
-OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
-SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1", "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2", "3.0.0.0", "3.0.0.2", "3.0.1.1", "3.0.1.2", "3.0.2.0", "3.0.3.0", "3.0.3.1", "3.0.3.2", "3.0.3.3", "3.0.3.4", "3.0.3.5", "3.0.3.6", "3.0.3.7", "3.0.3.8", "3.0.3.9", "3.0.4.0", "3.0.4.1", "3.0.5.0", "3.0.5.1", "4.0.0.0", "4.0.1.0", "4.0.1.1", "4.0.2.0", "4.0.2.1", "4.0.2.2", "4.0.2.3", "4.1.0.0", "4.1.0.1", "4.1.0.2", "4.1.0.3", "4.1.0.4"}
-if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
-    raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
-OPENCART_LINE = OPENCART_VERSION[:3]
-OPENCART_RELEASE_LINE = "3" if OPENCART_LINE == "3.0" else OPENCART_LINE
-PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_RELEASE_LINE}.x" / f"appnuno-opencart-{OPENCART_RELEASE_LINE}.x.ocmod.zip"
-# OpenCart 3.0 release assets do not share one filename, and 3.0.0.2 has a tag but no GitHub release.
-OPENCART_30_ASSETS = {
+ADMIN_PASSWORD: str = "opencart-ci-password"
+ADMIN_USER: str = "admin"
+BASE_URL: str = "http://127.0.0.1:8080"
+DB_HOST: str
+DB_NAME: str
+DB_PASSWORD: str
+DB_USER: str
+FTP_PASSWORD: str = "opencart-ci-password"
+FTP_PORT: int = 2121
+FTP_USER: str = "opencart-ci"
+# OpenCart 3 release assets use inconsistent names; 3.0.0.2 has a tag but no release archive.
+OPENCART_30_ASSETS: dict[str, str] = {
     "3.0.0.0": "3.0.0.0-compiled.zip",
     "3.0.0.2": "",
     "3.0.1.1": "3.0.1.1-compiled.zip",
@@ -51,26 +51,51 @@ OPENCART_30_ASSETS = {
     "3.0.5.0": "opencart-3.0.5.0.zip",
     "3.0.5.1": "opencart-3.0.5.1.zip",
 }
-if OPENCART_LINE in ("2.0", "2.1") or (OPENCART_LINE == "3.0" and OPENCART_30_ASSETS[OPENCART_VERSION] == ""):
-    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
-elif OPENCART_LINE == "3.0":
-    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_30_ASSETS[OPENCART_VERSION]}"
-elif OPENCART_VERSION.startswith("4."):
-    # OpenCart 4 uses the uploaded filename as the extension code, so every 4.x test installs the same appnuno.ocmod.zip.
-    PACKAGE = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno.ocmod.zip"
-    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/opencart-{OPENCART_VERSION}.zip"
-else:
-    OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
-BASE_URL = "http://127.0.0.1:8080"
-DB_HOST = os.environ.get("OPENCART_DB_HOST", "127.0.0.1")
-DB_USER = os.environ.get("OPENCART_DB_USER", "root")
-DB_PASSWORD = os.environ.get("OPENCART_DB_PASSWORD", "root")
-DB_NAME = os.environ.get("OPENCART_DB_NAME", "opencart")
-ADMIN_USER = "admin"
-ADMIN_PASSWORD = "opencart-ci-password"
-FTP_USER = "opencart-ci"
-FTP_PASSWORD = "opencart-ci-password"
-FTP_PORT = 2121
+OPENCART_ARCHIVE_URL: str
+OPENCART_LINE: str
+OPENCART_RELEASE_LINE: str
+OPENCART_VERSION: str
+PACKAGE: Path
+REPOSITORY: Path = Path(__file__).resolve().parents[3]
+SDK_SOURCE: str
+STORE_ROOT: Path | None = None
+SUPPORTED_OPENCART_VERSIONS: set[str] = {
+    "2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.3.0", "2.0.3.1",
+    "2.1.0.0", "2.1.0.1", "2.1.0.2", "2.2.0.0", "2.3.0.0", "2.3.0.1", "2.3.0.2",
+    "3.0.0.0", "3.0.0.2", "3.0.1.1", "3.0.1.2", "3.0.2.0", "3.0.3.0", "3.0.3.1",
+    "3.0.3.2", "3.0.3.3", "3.0.3.4", "3.0.3.5", "3.0.3.6", "3.0.3.7", "3.0.3.8",
+    "3.0.3.9", "3.0.4.0", "3.0.4.1", "3.0.5.0", "3.0.5.1", "4.0.0.0", "4.0.1.0",
+    "4.0.1.1", "4.0.2.0", "4.0.2.1", "4.0.2.2", "4.0.2.3", "4.1.0.0", "4.1.0.1",
+    "4.1.0.2", "4.1.0.3", "4.1.0.4",
+}
+
+
+def configure_runtime() -> None:
+    global DB_HOST, DB_NAME, DB_PASSWORD, DB_USER
+    global OPENCART_ARCHIVE_URL, OPENCART_LINE
+    global OPENCART_RELEASE_LINE, OPENCART_VERSION, PACKAGE, SDK_SOURCE
+
+    DB_HOST = os.environ.get("OPENCART_DB_HOST", "127.0.0.1")
+    DB_NAME = os.environ.get("OPENCART_DB_NAME", "opencart")
+    DB_PASSWORD = os.environ.get("OPENCART_DB_PASSWORD", "root")
+    DB_USER = os.environ.get("OPENCART_DB_USER", "root")
+    OPENCART_VERSION = os.environ.get("OPENCART_VERSION", "2.3.0.2")
+    if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
+        raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
+    OPENCART_LINE = OPENCART_VERSION[:3]
+    OPENCART_RELEASE_LINE = "3" if OPENCART_LINE == "3.0" else OPENCART_LINE
+    PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_RELEASE_LINE}.x" / f"appnuno-opencart-{OPENCART_RELEASE_LINE}.x.ocmod.zip"
+    if OPENCART_LINE in ("2.0", "2.1") or (OPENCART_LINE == "3.0" and OPENCART_30_ASSETS[OPENCART_VERSION] == ""):
+        OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/archive/refs/tags/{OPENCART_VERSION}.zip"
+    elif OPENCART_LINE == "3.0":
+        OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_30_ASSETS[OPENCART_VERSION]}"
+    elif OPENCART_VERSION.startswith("4."):
+        # OpenCart 4 uses the uploaded filename as its extension code.
+        PACKAGE = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno.ocmod.zip"
+        OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/opencart-{OPENCART_VERSION}.zip"
+    else:
+        OPENCART_ARCHIVE_URL = f"https://github.com/opencart/opencart/releases/download/{OPENCART_VERSION}/{OPENCART_VERSION}-compiled.zip"
+    SDK_SOURCE = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js"))).read_text(encoding="utf-8")
 
 
 def capture_screenshot(page: Page, artifact_dir: Path, filename: str) -> None:
@@ -100,7 +125,7 @@ def patch_installer_directory_listing(web_root: Path) -> None:
 
 
 def patch_installer_storage_path(web_root: Path) -> None:
-    # 3.0.0.2 has no release and its installer writes DIR_STORAGE with a broken quote, so config.php cannot be parsed.
+    # OpenCart 3.0.0.2 has no release archive, and its installer writes a malformed DIR_STORAGE definition.
     if OPENCART_VERSION != "3.0.0.2":
         return
     path = web_root / "install" / "controller" / "install" / "step_3.php"
@@ -118,7 +143,7 @@ def patch_installer_storage_path(web_root: Path) -> None:
 
 
 def repair_prerelease_customer_ip() -> None:
-    # The 3.0.3.4 core pre-release inserts store_id into oc_customer_ip, but its installer SQL does not create that column.
+    # The 3.0.3.4 pre-release installer omits store_id although its customer IP code expects it.
     if OPENCART_VERSION != "3.0.3.4":
         return
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
@@ -131,7 +156,7 @@ def repair_prerelease_customer_ip() -> None:
 
 def prepare_store(workspace: Path) -> Path:
     archive_path = workspace / "opencart.zip"
-    urllib.request.urlretrieve(OPENCART_ARCHIVE_URL, archive_path)
+    urlretrieve(OPENCART_ARCHIVE_URL, archive_path)
     extracted = workspace / "upstream"
     extracted.mkdir()
     with zipfile.ZipFile(archive_path) as archive:
@@ -145,13 +170,13 @@ def prepare_store(workspace: Path) -> Path:
     return web_root
 
 
-def wait_for_store(process: subprocess.Popen, log_path: Path) -> None:
+def wait_for_store(process: subprocess.Popen[bytes], log_path: Path) -> None:
     deadline = time.monotonic() + 60
     while time.monotonic() < deadline:
         if process.poll() is not None:
             raise RuntimeError("OpenCart PHP server stopped before becoming ready.\n" + log_path.read_text(errors="replace"))
         try:
-            with urllib.request.urlopen(BASE_URL, timeout=2):
+            with urlopen(BASE_URL, timeout=2):
                 return
         except Exception:
             time.sleep(1)
@@ -191,12 +216,12 @@ def opencart_version_parts() -> tuple[int, ...]:
 
 
 def legacy_module_layout() -> bool:
-    # OpenCart 2.3, 3.0 and 4.x list modules under the extension marketplace. 2.0–2.2 still use the older module list.
+    # OpenCart 2.0–2.2 list modules directly; later supported lines use the extensions marketplace.
     return OPENCART_LINE not in ("2.3", "3.0", "4.0", "4.1")
 
 
 def admin_token_name() -> str:
-    # OpenCart 3 renamed the admin session query key from token to user_token. OpenCart 4 keeps that name.
+    # OpenCart 3 renamed the admin session query key; OpenCart 4 retains user_token.
     return "user_token" if OPENCART_LINE == "3.0" or opencart4() else "token"
 
 
@@ -213,7 +238,7 @@ def admin_module_route() -> str:
 
 
 def admin_method_route(route: str, method: str) -> str:
-    # OpenCart 4.0.0.0 and 4.0.1.x separate the method with a pipe. 4.0.2.0+ uses a dot.
+    # OpenCart 4.0.0.0 and 4.0.1.x use a pipe before the method; 4.0.2.0+ uses a dot.
     if opencart4():
         separator = "|" if opencart_version_parts() < (4, 0, 2, 0) else "."
         return route + separator + method
@@ -228,7 +253,7 @@ def open_module_editor(page: Page, token: str) -> None:
     page.goto(admin_page(admin_module_route(), token))
 
 
-def module_list_row(page: Page, token: str):
+def module_list_row(page: Page, token: str) -> Locator:
     if legacy_module_layout():
         page.goto(admin_page("extension/module", token))
         return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
@@ -240,7 +265,7 @@ def module_list_row(page: Page, token: str):
 
 
 def clear_opencart4_language_cache() -> None:
-    # OpenCart 4.0.2 caches the language list as language.{hash}, while addLanguage still deletes admin.language.
+    # OpenCart 4.0.2 caches languages under a versioned filename while addLanguage deletes admin.language.
     if not opencart4() or STORE_ROOT is None:
         return
     cache = STORE_ROOT / "system" / "storage" / "cache"
@@ -256,7 +281,7 @@ def clear_opencart4_language_cache() -> None:
 
 
 def repair_opencart402_admin_language(web_root: Path) -> None:
-    # OpenCart 4.0.2.0 and 4.0.2.1 do not reload extension language files, and 4.0.2.2 reloads them with the storefront code. A storefront cookie also overwrites the admin language.
+    # These OpenCart 4.0.2 releases reload extension language files with the storefront language, which may differ from admin.
     if not opencart4() or not ((4, 0, 2, 0) <= opencart_version_parts() < (4, 0, 2, 3)):
         return
     path = web_root / "admin" / "controller" / "startup" / "language.php"
@@ -274,11 +299,15 @@ def repair_opencart402_admin_language(web_root: Path) -> None:
         count=1,
         flags=re.S,
     )
-    # These releases never call startup/language.after. The language object keeps the en-gb code from framework startup, so extension files load in English.
+    # These releases skip startup/language.after, leaving the language service initialized to en-gb.
     replacement = "$code = $this->config->get('config_language_admin');\n\t\t$language = new \\Opencart\\System\\Library\\Language((string)$code);\n\t\t$language->addPath(DIR_LANGUAGE);\n\t\t$this->registry->set('language', $language);"
+
+    def replace_language_code(match: re.Match[str]) -> str:
+        return replacement
+
     text, object_count = re.subn(
         r"\$code = \$this->config->get\('config_language_admin'\);",
-        lambda match: replacement,
+        replace_language_code,
         text,
         count=1,
     )
@@ -288,7 +317,7 @@ def repair_opencart402_admin_language(web_root: Path) -> None:
 
 
 def repair_opencart411_language_save(web_root: Path) -> None:
-    # OpenCart 4.1.0.1 and 4.1.0.2 evaluate the language id before checking that a matching language exists, so a new language fatals.
+    # OpenCart 4.1.0.1–4.1.0.2 dereferences the language record before checking whether it exists.
     if opencart_version_parts() not in ((4, 1, 0, 1), (4, 1, 0, 2)):
         return
     path = web_root / "admin" / "controller" / "localisation" / "language.php"
@@ -301,7 +330,7 @@ def repair_opencart411_language_save(web_root: Path) -> None:
 
 
 def repair_opencart4_language_controller(web_root: Path) -> None:
-    # OpenCart 4.0 calls the language model inside save() before that action loads it, so the admin form fatals.
+    # OpenCart 4.0 invokes the language model in save() before loading it.
     if not opencart4():
         return
     path = web_root / "admin" / "controller" / "localisation" / "language.php"
@@ -426,7 +455,7 @@ def appnuno_event_count() -> int:
 
 
 def remember_admin_language_code(code: str) -> None:
-    # OpenCart 4.0.2 and 4.1 construct the admin language from the language_code setting, which the settings form does not post.
+    # OpenCart 4.0.2+ builds the admin language from language_code, which the settings form does not post.
     if not opencart4() or opencart_version_parts() < (4, 0, 2, 0):
         return
     connection = pymysql.connect(host=DB_HOST, user=DB_USER, password=DB_PASSWORD, database=DB_NAME, autocommit=True)
@@ -522,7 +551,7 @@ def install_route(route: str) -> str:
 
 
 def click_install_continue(page: Page) -> None:
-    # OpenCart 4 license step continues through a link. Later steps still submit a form, and 4.1 uses a button rather than an input.
+    # OpenCart 4 license step continues through a link; other installer steps use a submit control.
     control = page.locator('input[type="submit"], button[type="submit"]')
     if control.count():
         control.first.click()
@@ -576,7 +605,7 @@ def upload_extension(page: Page, token: str) -> None:
     if opencart4():
         upload_opencart4_extension(page, token)
         return
-    # OpenCart 3 installs extensions from marketplace/installer and marks success before the bar reaches 100%.
+    # OpenCart 3 uses marketplace/installer and can report success before its progress bar completes.
     page.goto(admin_page("marketplace/installer" if OPENCART_LINE == "3.0" else "extension/installer", token))
     with page.expect_file_chooser() as chooser:
         page.locator("#button-upload").click()
@@ -596,10 +625,10 @@ def upload_extension(page: Page, token: str) -> None:
 
 
 def upload_opencart4_extension(page: Page, token: str) -> None:
-    # The upload only registers the package. A second Install click extracts it into extension/appnuno. 4.0.0.0 confirms that with alert().
+    # Uploading registers the package; the Install action extracts it into extension/appnuno.
     page.goto(admin_page("marketplace/installer", token))
 
-    def accept_dialog(dialog) -> None:
+    def accept_dialog(dialog: Dialog) -> None:
         dialog.accept()
 
     page.on("dialog", accept_dialog)
@@ -634,7 +663,7 @@ def refresh_modifications(page: Page, token: str) -> None:
     page.get_by_text(f"AppNuno OpenCart {OPENCART_RELEASE_LINE}.x", exact=True).wait_for()
 
 
-def click_module_list_button(page: Page, row, selector: str) -> None:
+def click_module_list_button(page: Page, row: Locator, selector: str) -> None:
     if legacy_module_layout():
         with page.expect_navigation():
             row.locator(selector).click()
@@ -748,7 +777,7 @@ def use_en_gb_language_code(page: Page) -> None:
 
 
 def publish_admin_language_directories(web_root: Path) -> None:
-    # OpenCart 4 only offers language codes that already exist as admin/language directories.
+    # OpenCart 4 only lists language codes that already have admin/language directories.
     if not opencart4():
         return
     source = web_root / "admin" / "language" / "en-gb"
@@ -768,7 +797,7 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
                 if admin_language.is_visible():
                     break
         admin_language.select_option(code)
-        # OpenCart 4.0.2 reloads admin language files with the storefront language code.
+        # OpenCart 4.0.2 reloads admin language files using the storefront language.
         if update_storefront or (opencart_version_parts() >= (4, 0, 2, 0) and opencart_version_parts() < (4, 1, 0, 0)):
             store_language = page.locator("#input-language-catalog")
             if not store_language.count():
@@ -779,7 +808,7 @@ def switch_admin_language(page: Page, code: str, update_storefront: bool = False
                 if (!field.value) field.value = 'CI Store';
             });
         }""")
-        # The settings script enables #button-save after the zone list loads, but the OpenCart 4 button has no such id.
+        # The zone list load enables the settings form; the OpenCart 4 save button has no #button-save id.
         page.wait_for_function("() => { const zone = document.querySelector('#input-zone'); return !!zone && zone.options.length > 0; }")
         page.locator('button[form="form-setting"]').click()
         page.locator(".alert-success, .alert-danger").first.wait_for()
@@ -868,7 +897,7 @@ def check_admin_module_languages(page: Page) -> None:
     ))
 
 
-def get_bootstrap_payload(page: Page, responses: list[Response], expected_route: str) -> dict:
+def get_bootstrap_payload(page: Page, responses: list[Response], expected_route: str) -> dict[str, Any]:
     page.wait_for_function("window.AppNunoIntegration && window.AppNunoIntegration.config && window.AppNunoIntegration.navigation && window.AppNuno && window.AppNuno.ready === true && window.__appnunoReadyEvents && window.__appnunoReadyEvents.length")
     bootstrap_scripts = page.locator('script[src*="appnuno"][src*="bootstrap"]')
     if bootstrap_scripts.count() != 1:
@@ -906,7 +935,7 @@ def get_bootstrap_payload(page: Page, responses: list[Response], expected_route:
     return payload
 
 
-def check_default_bootstrap(payload: dict) -> None:
+def check_default_bootstrap(payload: dict[str, Any]) -> None:
     configuration = payload["config"]
     if configuration["cartTabId"] != "ci-added-tab":
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
@@ -983,7 +1012,7 @@ def check_default_bootstrap(payload: dict) -> None:
         raise AssertionError(f"Unexpected bootstrap colors: {configuration['colors']}.")
 
 
-def check_route_bootstrap(payload: dict) -> None:
+def check_route_bootstrap(payload: dict[str, Any]) -> None:
     if payload["route"] != "checkout/cart":
         raise AssertionError(f"Expected the checkout/cart bootstrap route, got {payload['route']}.")
     configured_tab = next(tab for tab in payload["config"]["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
@@ -1031,7 +1060,7 @@ def check_cart_and_customer_state(page: Page) -> None:
     confirm = page.locator('input[name="confirm"]')
     if confirm.count():
         confirm.fill("ci-customer-password")
-    # OpenCart 3 collects the address at checkout, so the account form has no address fields.
+    # OpenCart 3 collects customer addresses during checkout rather than registration.
     address = page.locator('input[name="address_1"]')
     if address.count():
         address.fill("1 CI Street")
@@ -1075,7 +1104,7 @@ def save_module_status(page: Page, enabled: bool) -> None:
     page.locator(".alert-success").wait_for()
 
 
-def decode_permissions(value: str) -> dict:
+def decode_permissions(value: str) -> dict[str, Any]:
     if value.startswith("{"):
         return json.loads(value)
     parsed, end = parse_php_value(value, 0)
@@ -1084,13 +1113,13 @@ def decode_permissions(value: str) -> dict:
     return parsed
 
 
-def encode_permissions(original_value: str, permissions: dict) -> str:
+def encode_permissions(original_value: str, permissions: dict[str, Any]) -> str:
     if original_value.startswith("{"):
         return json.dumps(permissions)
     return serialize_php_value(permissions)
 
 
-def parse_php_value(value: str, index: int):
+def parse_php_value(value: str, index: int) -> tuple[Any, int]:
     kind = value[index]
     if kind == "a":
         count_end = value.index(":", index + 2)
@@ -1118,7 +1147,7 @@ def parse_php_value(value: str, index: int):
     raise AssertionError("OpenCart user group permissions could not be read.")
 
 
-def serialize_php_value(value) -> str:
+def serialize_php_value(value: Any) -> str:
     if isinstance(value, dict):
         content = "".join(serialize_php_value(key) + serialize_php_value(item) for key, item in value.items())
         return f"a:{len(value)}:{{{content}}}"
@@ -1186,7 +1215,11 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
         raise AssertionError("The re-enabled module did not restore exactly one bootstrap script.")
     module_row = module_list_row(page, token)
     module_row.wait_for()
-    page.once("dialog", lambda dialog: dialog.accept())
+
+    def accept_uninstall_dialog(dialog: Dialog) -> None:
+        dialog.accept()
+
+    page.once("dialog", accept_uninstall_dialog)
     click_module_list_button(page, module_row, "a.btn-danger")
     module_row.locator("a.btn-success").wait_for()
     if setting_value("module_appnuno_status") is not None or appnuno_event_count():
@@ -1205,7 +1238,7 @@ def check_module_lifecycle_and_admin_validation(page: Page, token: str) -> None:
 
 def set_storefront_language(page: Page, code: str) -> None:
     if opencart4():
-        # 4.0.0.0 prefers the browser language. Later 4.x releases read the store language setting when the request has no language query.
+        # OpenCart 4.0.0.0 prefers browser language; later versions use store-language settings.
         keys = ["config_language"]
         if opencart_version_parts() >= (4, 1, 0, 0):
             keys.append("config_language_catalog")
@@ -1266,7 +1299,11 @@ def check_storefront_label_languages(page: Page, responses: list[Response]) -> N
 
 def check_storefront(page: Page, artifact_dir: Path) -> None:
     responses: list[Response] = []
-    page.on("response", lambda response: responses.append(response))
+
+    def capture_response(response: Response) -> None:
+        responses.append(response)
+
+    page.on("response", capture_response)
     page.goto(BASE_URL + "/")
     check_default_bootstrap(get_bootstrap_payload(page, responses, "common/home"))
     capture_screenshot(page, artifact_dir, "04-storefront-desktop.png")
@@ -1284,6 +1321,9 @@ def check_storefront(page: Page, artifact_dir: Path) -> None:
 
 
 def main() -> None:
+    global STORE_ROOT
+
+    configure_runtime()
     if not PACKAGE.is_file():
         raise FileNotFoundError("Build the OCMOD package before running the integration test: " + str(PACKAGE))
     artifact_dir = Path(os.environ.get("OPENCART_ARTIFACT_DIR", str(REPOSITORY / "artifacts" / "opencart" / OPENCART_VERSION)))
@@ -1293,13 +1333,12 @@ def main() -> None:
     with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
         workspace = Path(temporary)
         web_root = prepare_store(workspace)
-        global STORE_ROOT
         STORE_ROOT = web_root
         patch_installer_directory_listing(web_root)
         patch_installer_storage_path(web_root)
         log_path = artifact_dir / "php-server.log"
         with log_path.open("w", encoding="utf-8") as server_log:
-            # OpenCart 3.0.0.0 writes sessions to session_save_path(), which is empty on this PHP and then becomes /sess_* at the filesystem root.
+            # OpenCart 3.0.0.0 needs an explicit session path on current PHP to avoid writing /sess_* at filesystem root.
             process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root), "-d", "session.save_path=/tmp"], stdout=server_log, stderr=subprocess.STDOUT)
             ftp_server = None
             try:
@@ -1311,7 +1350,11 @@ def main() -> None:
                         record_video_dir=str(artifact_dir / "video"),
                         record_video_size={"width": 1440, "height": 1000},
                     )
-                    context.route("https://appnuno.com/sdk/v1/appnuno.js", lambda route: route.fulfill(status=200, content_type="application/javascript", body=SDK_SOURCE))
+
+                    def fulfill_sdk(route: Route) -> None:
+                        route.fulfill(status=200, content_type="application/javascript", body=SDK_SOURCE)
+
+                    context.route("https://appnuno.com/sdk/v1/appnuno.js", fulfill_sdk)
                     context.add_init_script("window.__appnunoReadyEvents = []; window.addEventListener('appnuno:ready', event => window.__appnunoReadyEvents.push({ type: event.type, navigation: event.detail.navigation, identity: event.detail.identity }));")
                     tracing_started = False
                     try:
