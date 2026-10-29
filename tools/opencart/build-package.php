@@ -3,9 +3,10 @@ $line = isset($argv[1]) ? $argv[1] : '2.3';
 if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0', '4'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
-$repository = dirname(__DIR__, 3);
-$source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '2.x';
-$release_line = $line === '4' ? '4.x' : $line . '.x';
+$repository = dirname(__DIR__, 2);
+$source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart';
+$release_lines = array('3.0' => '3.x', '4' => '4.x');
+$release_line = isset($release_lines[$line]) ? $release_lines[$line] : $line . '.x';
 $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line;
 $package_file = $line === '4' ? 'appnuno.ocmod.zip' : 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $package = $release . DIRECTORY_SEPARATOR . $package_file;
@@ -194,7 +195,7 @@ function opencart_30_layout($name, $content) {
     if ($name === 'install.xml') {
         $content = str_replace(
             array('AppNuno OpenCart 2.3.x', 'appnuno_opencart_2302', "\$data['scripts'] = \$this->document->getScripts();"),
-            array('AppNuno OpenCart 3.0.x', 'appnuno_opencart_3000', "\$data['scripts'] = \$this->document->getScripts('header');"),
+            array('AppNuno OpenCart 3.x', 'appnuno_opencart_3000', "\$data['scripts'] = \$this->document->getScripts('header');"),
             $content
         );
     }

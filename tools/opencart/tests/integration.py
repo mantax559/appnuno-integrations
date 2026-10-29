@@ -18,7 +18,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 
-REPOSITORY = Path(__file__).resolve().parents[4]
+REPOSITORY = Path(__file__).resolve().parents[3]
 STORE_ROOT: Path | None = None
 SDK_PATH = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
 SDK_SOURCE = SDK_PATH.read_text(encoding="utf-8")
@@ -27,7 +27,8 @@ SUPPORTED_OPENCART_VERSIONS = {"2.0.0.0", "2.0.1.0", "2.0.1.1", "2.0.2.0", "2.0.
 if OPENCART_VERSION not in SUPPORTED_OPENCART_VERSIONS:
     raise ValueError(f"Unsupported OpenCart test version: {OPENCART_VERSION}")
 OPENCART_LINE = OPENCART_VERSION[:3]
-PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_LINE}.x" / f"appnuno-opencart-{OPENCART_LINE}.x.ocmod.zip"
+OPENCART_RELEASE_LINE = "3" if OPENCART_LINE == "3.0" else OPENCART_LINE
+PACKAGE = REPOSITORY / "downloads" / "opencart" / f"{OPENCART_RELEASE_LINE}.x" / f"appnuno-opencart-{OPENCART_RELEASE_LINE}.x.ocmod.zip"
 # OpenCart 3.0 release assets do not share one filename, and 3.0.0.2 has a tag but no GitHub release.
 OPENCART_30_ASSETS = {
     "3.0.0.0": "3.0.0.0-compiled.zip",
@@ -630,7 +631,7 @@ def refresh_modifications(page: Page, token: str) -> None:
     page.goto(admin_page("marketplace/modification" if OPENCART_LINE == "3.0" else "extension/modification", token))
     with page.expect_navigation():
         page.locator(".page-header .btn-info").click()
-    page.get_by_text(f"AppNuno OpenCart {OPENCART_LINE}.x", exact=True).wait_for()
+    page.get_by_text(f"AppNuno OpenCart {OPENCART_RELEASE_LINE}.x", exact=True).wait_for()
 
 
 def click_module_list_button(page: Page, row, selector: str) -> None:

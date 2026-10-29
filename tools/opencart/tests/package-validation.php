@@ -4,7 +4,7 @@ if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0', '4'), true)) {
     throw new RuntimeException('Unsupported OpenCart package line.');
 }
 if ($line === '4') {
-    opencart_40_package(dirname(__DIR__, 4));
+    opencart_40_package(dirname(__DIR__, 3));
     echo "OpenCart package structure tests passed.\n";
     return;
 }
@@ -12,8 +12,9 @@ $extension_layout = in_array($line, array('2.3', '3.0'), true);
 $module_path = $extension_layout ? 'extension/module' : 'module';
 $controller_class = $extension_layout ? 'class ControllerExtensionModuleAppnuno' : 'class ControllerModuleAppnuno';
 $view_extension = $line === '3.0' ? 'twig' : 'tpl';
-$repository = dirname(__DIR__, 4);
-$release_line = $line . '.x';
+$repository = dirname(__DIR__, 3);
+$release_lines = array('3.0' => '3.x');
+$release_line = isset($release_lines[$line]) ? $release_lines[$line] : $line . '.x';
 $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line . DIRECTORY_SEPARATOR . 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $required = array(
     'install.xml',
@@ -100,7 +101,7 @@ if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateCo
 }
 $modification_code = array('2.0' => 'appnuno_opencart_2000', '2.1' => 'appnuno_opencart_2100', '2.2' => 'appnuno_opencart_2200', '2.3' => 'appnuno_opencart_2302', '3.0' => 'appnuno_opencart_3000');
 $script_call = $line === '3.0' ? "\$data['scripts'] = \$this->document->getScripts('header');" : "\$data['scripts'] = \$this->document->getScripts();";
-if (!is_string($modification) || !strstr($modification, 'AppNuno OpenCart ' . $line . '.x') || !strstr($modification, '<code>' . $modification_code[$line] . '</code>') || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, $script_call) || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
+if (!is_string($modification) || !strstr($modification, 'AppNuno OpenCart ' . $release_line) || !strstr($modification, '<code>' . $modification_code[$line] . '</code>') || !strstr($modification, 'catalog/controller/common/header.php') || !strstr($modification, $script_call) || !strstr($modification, $module_path . "/appnuno/bootstrap")) {
     throw new RuntimeException('OpenCart archive is missing its version-specific modification or direct catalog header injection.');
 }
 if (!is_string($readme) || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Modifications') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'Access Permission') || !strstr($readme, 'Modify Permission')) {

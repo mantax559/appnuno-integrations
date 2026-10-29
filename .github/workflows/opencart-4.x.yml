@@ -74,20 +74,20 @@ jobs:
 
       - name: Install browser test dependencies
         run: |
-          python -m pip install -r tools/opencart/2.x/tests/requirements-ci.txt
+          python -m pip install -r tools/opencart/tests/requirements-ci.txt
           python -m playwright install --with-deps chromium
 
       - name: Build and validate extension package reproducibly
         env:
           TZ: UTC
         run: |
-          php tools/opencart/2.x/build-package.php 4
+          php tools/opencart/build-package.php 4
           first_hash=$(sha256sum downloads/opencart/4.x/appnuno.ocmod.zip | cut -d ' ' -f 1)
-          php tools/opencart/2.x/build-package.php 4
+          php tools/opencart/build-package.php 4
           second_hash=$(sha256sum downloads/opencart/4.x/appnuno.ocmod.zip | cut -d ' ' -f 1)
           test "$first_hash" = "$second_hash"
-          php tools/opencart/2.x/tests/package-validation.php 4
-          php tools/opencart/2.x/tests/config-validation.php
+          php tools/opencart/tests/package-validation.php 4
+          php tools/opencart/tests/config-validation.php
 
       - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
         uses: shivammathur/setup-php@v2
@@ -105,7 +105,7 @@ jobs:
           OPENCART_DB_NAME: opencart
           OPENCART_ARTIFACT_DIR: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
           APPNUNO_SDK_SOURCE: ${{ github.workspace }}/appnuno-web/public/sdk/v1/appnuno.js
-        run: python tools/opencart/2.x/tests/integration.py
+        run: python tools/opencart/tests/integration.py
 
       - name: Upload browser test artifacts
         if: always()
