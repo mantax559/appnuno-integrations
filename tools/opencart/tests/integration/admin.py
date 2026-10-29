@@ -13,7 +13,9 @@ from integration.compatibility import (
     admin_token_name,
     catalog_method_url,
     clear_opencart4_language_cache,
+    header_event_injects_script,
     legacy_module_layout,
+    modification_refresh_keeps_nested_files,
     opencart4,
     opencart_version_parts,
 )
@@ -641,11 +643,18 @@ def check_extension_removal(runtime: Runtime, page: Page, token: str, web_root: 
     # OpenCart 2 copies extension files through FTP and keeps no path list, so deleting the modification cannot remove them.
     delete_appnuno_modification(runtime, page, token)
     page.goto(runtime.base_url + "/")
-    if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
+    bootstrap_present = page.locator('script[src*="appnuno"][src*="bootstrap"]').count() > 0
+    script_stays_while_module_enabled = header_event_injects_script(runtime) or modification_refresh_keeps_nested_files(runtime)
+    if script_stays_while_module_enabled and not bootstrap_present:
+        raise AssertionError("The storefront bootstrap script disappeared while the module was still enabled.")
+    if not script_stays_while_module_enabled and bootstrap_present:
         raise AssertionError("Deleting the modification left the storefront bootstrap script in place.")
     assert_uploaded_module_files(runtime, web_root, True)
     uninstall_module(runtime, page, token)
     assert_uploaded_module_files(runtime, web_root, True)
+    page.goto(runtime.base_url + "/")
+    if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():
+        raise AssertionError("Uninstalling the module left the storefront bootstrap script in place.")
     if runtime.line == "3.0":
         remove_opencart3_uploaded_extension(runtime, page, token)
         assert_uploaded_module_files(runtime, web_root, False)

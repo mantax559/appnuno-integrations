@@ -54,6 +54,12 @@ def clear_opencart4_language_cache(runtime: Runtime, web_root: Path) -> None:
             item.unlink()
 
 
+def header_event_injects_script(runtime: Runtime) -> bool:
+    # OpenCart 2.2 and 2.3 register catalog/view/common/header/before, then startup strips the catalog/ prefix and the view event runs.
+    # OpenCart 2.0 removes that registration, 2.1 leaves the view triggers commented out, and OpenCart 3 stores the trigger without catalog/, so startup strips it to a trigger that never fires.
+    return runtime.line in ("2.2", "2.3")
+
+
 def install_route(runtime: Runtime, route: str) -> str:
     if runtime.line in ("2.0", "2.1"):
         return "**route=" + route + "**"
@@ -63,6 +69,11 @@ def install_route(runtime: Runtime, route: str) -> str:
 def legacy_module_layout(runtime: Runtime) -> bool:
     # OpenCart 2.0–2.2 list modules directly; later supported lines use the extensions marketplace.
     return runtime.line not in ("2.3", "3.0", "4.0", "4.1")
+
+
+def modification_refresh_keeps_nested_files(runtime: Runtime) -> bool:
+    # OpenCart 2.0.0.0 refresh deletes only files in the modification root. The generated catalog/controller/common/header.php stays.
+    return runtime.version == "2.0.0.0"
 
 
 def opencart4(runtime: Runtime) -> bool:
