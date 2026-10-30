@@ -73,6 +73,8 @@ def assert_configured_tabs(configuration: dict[str, Any]) -> None:
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
     if len(configuration["defaultTabs"]) != 4:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {configuration['defaultTabs']}.")
+    if any(tab["id"] == "ci-hidden-tab" for tab in configuration["defaultTabs"]):
+        raise AssertionError("The externally hidden tab leaked into the public configuration.")
     for tab_id, labels in (("home", {"en-gb": "Home", "lt-lt": "Pradžia"}), ("cart", {"en-gb": "Cart", "lt-lt": "Krepšelis"})):
         configured_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == tab_id)
         if configured_tab.get("labels") != labels:
@@ -95,6 +97,8 @@ def assert_resolved_contact_tab(payload: dict[str, Any]) -> None:
 
 
 def assert_resolved_default_tabs(payload: dict[str, Any]) -> None:
+    if any(tab.get("id") == "ci-hidden-tab" for tab in payload["navigation"]["tabs"]):
+        raise AssertionError("The externally hidden tab appeared in storefront navigation.")
     expected_default_tabs = {
         "home": ("Home", "/", "home-outline", "home"),
         "cart": ("Cart", "/index.php?route=checkout/cart", "cart-outline", "cart"),

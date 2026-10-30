@@ -63,7 +63,7 @@ $catalog_controller = $archive->getFromName('upload/catalog/controller/' . $modu
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
-if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, "adminMarkup = 'bootstrap3'") || !strstr($view, 'well well-sm') || !strstr($view, "className = 'checkbox'")) {
+if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, "adminMarkup = 'bootstrap3'") || !strstr($view, 'well well-sm') || !strstr($view, "className = 'checkbox'") || !strstr($view, 'data-tab-target') || !strstr($view, 'data-tab-visibility') || !strstr($view, 'button_clear_pages')) {
     throw new RuntimeException('OpenCart archive is missing the updated settings controls and defaults.');
 }
 $cart_label = $line === '3.0' ? '{{ text.entry_cart_tab }}' : "\$text['entry_cart_tab']";
@@ -96,7 +96,7 @@ if ($line === '2.0') {
 } elseif (!strstr($controller, "deleteEvent('appnuno')") || !strstr($controller, "addEvent('appnuno', 'catalog/view/common/header/before', '" . $module_path . "/appnuno/inject')")) {
     throw new RuntimeException('OpenCart archive is missing catalog event repair on save.');
 }
-if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']")) {
+if (!is_string($catalog_controller) || strstr($catalog_controller, '->validateConfig(') || !strstr($catalog_controller, "['urls']") || !strstr($catalog_controller, "['urls'][\$language_code]") || !strstr($catalog_controller, 'unset($tab[\'urls\'])') || !strstr($catalog_controller, "['defaultTabs']") || !strstr($catalog_controller, 'visibleTabs') || !strstr($catalog_controller, "['visible']")) {
     throw new RuntimeException('OpenCart archive is missing a valid bootstrap configuration path or localized URL resolution.');
 }
 $modification_code = array('2.0' => 'appnuno_opencart_2000', '2.1' => 'appnuno_opencart_2100', '2.2' => 'appnuno_opencart_2200', '2.3' => 'appnuno_opencart_2302', '3.0' => 'appnuno_opencart_3000');
@@ -160,7 +160,7 @@ function opencart_40_package($repository) {
     if (in_array('install.xml', $entries, true) || in_array('upload/admin/controller/extension/module/appnuno.php', $entries, true)) {
         throw new RuntimeException('OpenCart 4 archive must not ship the 2.x or 3.x layout.');
     }
-    if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, '{{ text.entry_cart_tab }}') || !strstr($view, 'data-bs-toggle="tab"') || strstr($view, 'data-toggle="tab"') || strstr($view, '<?php') || !strstr($view, '{{ configuration_json|raw }}') || !strstr($view, "adminMarkup = 'bootstrap5'") || !strstr($view, 'form-check') || !strstr($view, 'card-header') || !strstr($view, 'float-end') || strstr($view, 'panel panel-default') || strstr($view, 'class="form-group"')) {
+    if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, '{{ text.entry_cart_tab }}') || !strstr($view, 'data-bs-toggle="tab"') || strstr($view, 'data-toggle="tab"') || strstr($view, '<?php') || !strstr($view, '{{ configuration_json|raw }}') || !strstr($view, "adminMarkup = 'bootstrap5'") || !strstr($view, 'form-check') || !strstr($view, 'data-tab-target') || !strstr($view, 'data-tab-visibility') || !strstr($view, 'button_clear_pages') || !strstr($view, 'card-header') || !strstr($view, 'float-end') || strstr($view, 'panel panel-default') || strstr($view, 'class="form-group"')) {
         throw new RuntimeException('OpenCart 4 archive is missing the Twig settings form.');
     }
     if (!is_string($english) || !strstr($english, 'Settings data was not submitted') || !is_string($lithuanian) || !strstr($lithuanian, 'AppNuno vietinė navigacija') || !is_string($german) || !strstr($german, 'AppNuno native Navigation')) {

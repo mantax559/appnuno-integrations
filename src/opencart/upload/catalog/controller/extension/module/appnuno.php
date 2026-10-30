@@ -79,6 +79,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$route = isset($this->request->get['page_route']) && is_string($this->request->get['page_route']) ? $this->request->get['page_route'] : 'common/home';
 		$tabs = $this->tabsForRoute($config, $route);
 		$cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
+		$public_config = $config;
+		$public_config['defaultTabs'] = $this->visibleTabs($config['defaultTabs']);
+		foreach ($config['routes'] as $route_key => $route_tabs) {
+			$public_config['routes'][$route_key] = $this->visibleTabs($route_tabs);
+		}
 
 		foreach ($tabs as &$tab) {
 			if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
@@ -126,7 +131,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		$integration = array(
-			'config' => $config,
+			'config' => $public_config,
 			'route' => $route,
 			'stateUrl' => html_entity_decode($this->url->link('extension/module/appnuno/state', '', true), ENT_QUOTES, 'UTF-8'),
 			'state' => $state,
@@ -138,7 +143,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 	private function tabsForRoute($config, $route) {
 		if (isset($config['routes'][$route]) && is_array($config['routes'][$route]) && count($config['routes'][$route])) {
-			return $config['routes'][$route];
+			return $this->visibleTabs($config['routes'][$route]);
 		}
 
 		$tabs = array();
@@ -148,12 +153,32 @@ class ControllerExtensionModuleAppnuno extends Controller {
 				continue;
 			}
 
-			if ($this->tabShownOnRoute($tab, $route)) {
+			if ($this->tabVisible($tab) && $this->tabShownOnRoute($tab, $route)) {
 				$tabs[] = $tab;
 			}
 		}
 
 		return $tabs;
+	}
+
+	private function visibleTabs($tabs) {
+		if (!is_array($tabs)) {
+			return array();
+		}
+
+		$visible_tabs = array();
+
+		foreach ($tabs as $tab) {
+			if (is_array($tab) && $this->tabVisible($tab)) {
+				$visible_tabs[] = $tab;
+			}
+		}
+
+		return $visible_tabs;
+	}
+
+	private function tabVisible($tab) {
+		return !array_key_exists('visible', $tab) || filter_var($tab['visible'], FILTER_VALIDATE_BOOLEAN);
 	}
 
 	private function tabShownOnRoute($tab, $route) {

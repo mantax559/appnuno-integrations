@@ -120,6 +120,14 @@ $visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 
 if (strlen($model->validateConfig($visible_pages))) {
     throw new RuntimeException('Expected a tab limited to a store page to be valid.');
 }
+$visibility_states = json_encode(array('defaultTabs' => array(array('id' => 'visible', 'label' => 'Visible', 'url' => '/', 'visible' => true), array('id' => 'hidden', 'label' => 'Hidden', 'url' => '/', 'visible' => false)), 'routes' => array()));
+if (strlen($model->validateConfig($visibility_states))) {
+    throw new RuntimeException('Expected explicitly visible and hidden tabs to be valid.');
+}
+$invalid_visibility = json_encode(array('defaultTabs' => array(array('id' => 'invalid-visibility', 'label' => 'Invalid visibility', 'url' => '/', 'visible' => 'false')), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_visibility), 'defaultTabs[0].visible')) {
+    throw new RuntimeException('Expected a non-boolean tab visibility state to be rejected.');
+}
 $invalid_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart?redirect=home'))), 'routes' => array()));
 if (!strstr($model->validateConfig($invalid_pages), 'defaultTabs[0].pages')) {
     throw new RuntimeException('Expected an invalid store page selection to be rejected.');

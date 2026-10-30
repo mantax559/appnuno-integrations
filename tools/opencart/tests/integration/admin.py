@@ -281,7 +281,7 @@ def install_module(runtime: Runtime, page: Page, token: str) -> None:
     click_module_list_button(runtime, page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
     open_module_editor(runtime, page, token)
-    page.locator("#default-tabs .appnuno-tab").first.wait_for()
+    page.locator("#default-tabs .appnuno-tab").first.wait_for(state="attached")
 
 
 def add_cart_page_tab(page: Page) -> None:
@@ -297,6 +297,15 @@ def add_cart_page_tab(page: Page) -> None:
     page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
     page_tab.locator('[data-field="icon"]').fill("cart-outline")
     page_tab.locator('[data-field="activeIcon"]').fill("cart")
+    visibility = page_tab.locator('[data-tab-visibility]')
+    if not visibility.is_checked():
+        raise AssertionError("A newly added tab should be visible by default.")
+    if page_tab.locator('[data-pages]').locator('xpath=following-sibling::button/following-sibling::div[contains(@class, "alert-info")]//strong').inner_text() != "Leave empty":
+        raise AssertionError("The page visibility explanation should be a bold lead inside an information box.")
+    page_tab.locator("[data-pages] input[value='checkout/cart']").check()
+    page_tab.locator('[data-pages]').locator('xpath=following-sibling::button').click()
+    if page_tab.locator('[data-pages] input:checked').count():
+        raise AssertionError("The clear-pages button did not uncheck every page.")
     page_tab.locator("[data-pages] input[value='checkout/cart']").check()
 
 
@@ -311,8 +320,24 @@ def add_contact_tab(page: Page) -> None:
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/kontaktai")
     tab.locator('[data-field="icon"]').fill("home-outline")
     tab.locator('[data-field="activeIcon"]').fill("home")
+    if not tab.locator('[data-tab-visibility]').is_checked():
+        raise AssertionError("A newly added tab should be visible by default.")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
     page.locator("#input-status").select_option("1")
+
+
+def add_hidden_tab(page: Page) -> None:
+    page.locator('button[data-add-tab="default-tabs"]').click()
+    tab = page.locator("#default-tabs .appnuno-tab").last
+    tab.locator('[data-field="id"]').fill("ci-hidden-tab")
+    tab.locator('[data-language-label="en-gb"]').fill("CI Hidden Tab")
+    tab.locator('[data-language-label="lt-lt"]').fill("CI paslėptas skirtukas")
+    tab.locator('[data-url-select]').select_option("__custom__")
+    tab.locator('[data-language-url="en-gb"]').fill("/en/hidden")
+    tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
+    tab.locator('[data-tab-visibility]').uncheck()
+    if not page.locator('#default-tabs [data-tab-target="tab-4"] .fa-eye-slash').count():
+        raise AssertionError("The vertical tab list did not mark a hidden tab.")
 
 
 def assert_cart_badge_is_in_default_panel(page: Page) -> None:
@@ -341,6 +366,9 @@ def assert_module_settings_persisted(page: Page) -> None:
     selected_pages = saved_page_tab.locator("[data-pages]").evaluate("list => Array.from(list.querySelectorAll('input:checked')).map(input => input.value)")
     if selected_pages != ["checkout/cart"]:
         raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
+    hidden_tab = page.locator("#default-tabs .appnuno-tab").nth(4)
+    if hidden_tab.locator('[data-field="id"]').input_value() != "ci-hidden-tab" or hidden_tab.locator('[data-tab-visibility]').is_checked():
+        raise AssertionError("The hidden tab did not remain saved in settings with external visibility turned off.")
 
 
 def configure_back_button(page: Page) -> None:
@@ -374,7 +402,10 @@ def configure_glass(page: Page) -> None:
 
 def fill_builtin_tab_labels(page: Page) -> None:
     for index, labels in enumerate((("Home", "Pradžia"), ("Cart", "Krepšelis"))):
+        page.locator(f'#default-tabs [data-tab-target="tab-{index}"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").nth(index)
+        if not tab.is_visible() or page.locator("#default-tabs .appnuno-tab").nth(1 - index).is_visible():
+            raise AssertionError("The vertical tab list should display only the selected tab panel.")
         tab.locator('[data-language-label="en-gb"]').fill(labels[0])
         tab.locator('[data-language-label="lt-lt"]').fill(labels[1])
 
@@ -383,7 +414,7 @@ def submit_module_settings(page: Page) -> None:
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
     page.reload()
-    page.locator("#default-tabs .appnuno-tab").nth(2).wait_for()
+    page.locator("#default-tabs .appnuno-tab").nth(2).wait_for(state="attached")
 
 
 def save_module_settings(page: Page, artifact_dir: Path) -> None:
@@ -394,6 +425,7 @@ def save_module_settings(page: Page, artifact_dir: Path) -> None:
     configure_glass(page)
     configure_colors(page)
     add_cart_page_tab(page)
+    add_hidden_tab(page)
     capture_screenshot(page, artifact_dir, "02-admin-settings-before-save.png")
     submit_module_settings(page)
     assert_module_settings_persisted(page)
@@ -402,7 +434,7 @@ def save_module_settings(page: Page, artifact_dir: Path) -> None:
 
 def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...]) -> None:
     open_module_editor(runtime, page, admin_token(runtime, page))
-    page.locator("#default-tabs .appnuno-tab").first.wait_for()
+    page.locator("#default-tabs .appnuno-tab").first.wait_for(state="attached")
     content = page.locator("#content").inner_text()
     for href in ("#tab-back", "#tab-glass", "#tab-colors"):
         page.locator(f'a[href="{href}"]').click()
@@ -421,6 +453,9 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Numatytieji skirtukai",
         "Krepšelio ženkliuko skirtukas",
         "Rodoma puslapiuose",
+        "Atžymėti visus",
+        "Išorinis matomumas",
+        "Rodyti šį skirtuką lankytojams",
         "Grįžimo mygtukas",
         "Stiklinė mygtukų juosta",
         "Navigacijos spalvos",
@@ -435,6 +470,9 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Default tabs",
         "Cart badge tab",
         "Shown on pages",
+        "Uncheck all",
+        "External visibility",
+        "Show this tab to visitors",
         "Back button",
         "Glass button bar",
         "Navigation colors",
@@ -566,6 +604,7 @@ def reject_invalid_module_configuration(runtime: Runtime, page: Page, token: str
     original_config = setting_value(runtime, "module_appnuno_config")
     if not original_config:
         raise AssertionError("The AppNuno module configuration was not persisted.")
+    page.locator('#default-tabs [data-tab-target="tab-0"]').click()
     page.locator('#default-tabs .appnuno-tab').first.locator('[data-field="id"]').fill("")
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-danger:not(#client-validation-error)").wait_for()

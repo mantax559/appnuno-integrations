@@ -59,7 +59,7 @@
           </ul>
           <div class="tab-content">
             <div class="tab-pane active" id="tab-navigation">
-              <div class="alert alert-info"><?php echo $text['text_default_tabs_help']; ?></div>
+              <div class="alert alert-info"><?php echo $text['help_default_tabs']; ?></div>
               <div id="default-tabs"></div>
               <button type="button" class="btn btn-default" data-add-tab="default-tabs"><i class="fa fa-plus"></i> <?php echo $text['button_add_default_tab']; ?></button>
               <hr />
@@ -67,7 +67,6 @@
                 <label class="col-sm-2 control-label" for="cart-tab-id"><?php echo $text['entry_cart_tab']; ?></label>
                 <div class="col-sm-10">
                   <select id="cart-tab-id" class="form-control"></select>
-                  <p class="help-block"><?php echo $text['help_cart_tab']; ?></p>
                 </div>
               </div>
             </div>
@@ -204,7 +203,78 @@
 	var defaultContainer = document.getElementById('default-tabs');
 	var cartSelect = document.getElementById('cart-tab-id');
 	var adminMarkup = 'bootstrap3';
+	defaultContainer.className = 'row';
+	var tabNavigationColumn = document.createElement('div');
+	tabNavigationColumn.className = 'col-sm-3';
+	var tabNavigation = document.createElement('div');
+	tabNavigation.className = 'nav nav-pills nav-stacked';
+	tabNavigation.setAttribute('role', 'tablist');
+	tabNavigation.setAttribute('aria-orientation', 'vertical');
+	var tabPanels = document.createElement('div');
+	var tabSequence = 0;
+	tabPanels.className = 'col-sm-9';
+	tabNavigationColumn.appendChild(tabNavigation);
+	defaultContainer.appendChild(tabNavigationColumn);
+	defaultContainer.appendChild(tabPanels);
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
+
+	function appendHelp(column, message) {
+		if (!message) {
+			return;
+		}
+		var help = document.createElement('div');
+		help.className = adminMarkup === 'bootstrap5' ? 'form-text' : 'help-block';
+		help.textContent = message;
+		column.appendChild(help);
+	}
+
+	function appendFieldHelp(column, key) {
+		var aliases = { id: 'tab_id', icon: 'tab_icon', activeIcon: 'tab_active_icon' };
+		appendHelp(column, text['help_' + (aliases[key] || key)]);
+	}
+
+	function refreshTabNavigation() {
+		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
+			var button = tabNavigation.querySelector('[data-tab-target="' + card.getAttribute('data-tab-key') + '"]');
+			if (!button) {
+				return;
+			}
+			var label = card.querySelector('[data-language-label="' + defaultLanguageCode + '"]');
+			if (!label || !label.value.trim()) {
+				label = card.querySelector('[data-language-label]');
+			}
+			var id = card.querySelector('[data-field="id"]');
+			var title = label && label.value.trim() ? label.value.trim() : (id && id.value.trim() ? id.value.trim() : text.text_tab_list_empty);
+			button.textContent = title;
+			if (!card.querySelector('[data-tab-visibility]').checked) {
+				var marker = document.createElement('span');
+				marker.className = 'pull-right fa fa-eye-slash';
+				marker.textContent = ' ' + text.text_visibility_indicator;
+				button.appendChild(marker);
+			}
+		});
+	}
+
+	function activateTab(card) {
+		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (panel) {
+			panel.style.display = panel === card ? '' : 'none';
+			var button = tabNavigation.querySelector('[data-tab-target="' + panel.getAttribute('data-tab-key') + '"]');
+			if (button) {
+				button.className = panel === card ? 'btn btn-primary btn-block' : 'btn btn-default btn-block';
+				button.setAttribute('aria-selected', panel === card ? 'true' : 'false');
+			}
+		});
+	}
+
+	function appendControlHelp(id, key) {
+		var control = document.getElementById(id);
+		if (!control) {
+			return;
+		}
+		var group = control.parentNode.parentNode;
+		var column = group.querySelector('.col-sm-10');
+		appendHelp(column, text[key]);
+	}
 
 	function createGroup() {
 		var group = document.createElement('div');
@@ -237,6 +307,7 @@
 		input.setAttribute('data-field', key);
 		input.setAttribute('data-validation-path', path);
 		column.appendChild(input);
+		appendFieldHelp(column, key);
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -302,6 +373,7 @@
 			fallback.setAttribute('data-validation-path', path + '.labels.default');
 			column.appendChild(fallback);
 		}
+		appendFieldHelp(column, 'tab_labels');
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -375,6 +447,7 @@
 		});
 		column.appendChild(select);
 		column.appendChild(customUrls);
+		appendFieldHelp(column, 'tab_destination');
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -431,10 +504,50 @@
 			}
 		});
 		var help = document.createElement('div');
-		help.className = adminMarkup === 'bootstrap5' ? 'form-text' : 'help-block';
-		help.textContent = text.help_shown_on_pages;
+		help.className = adminMarkup === 'bootstrap5' ? 'alert alert-info' : 'alert alert-info';
+		var lead = document.createElement('strong');
+		lead.textContent = text.help_shown_on_pages_lead;
+		help.appendChild(lead);
+		help.appendChild(document.createTextNode(' ' + text.help_shown_on_pages));
+		var clearButton = document.createElement('button');
+		clearButton.type = 'button';
+		clearButton.className = 'btn btn-default btn-sm';
+		clearButton.textContent = text.button_clear_pages;
+		clearButton.addEventListener('click', function () {
+			Array.prototype.forEach.call(list.querySelectorAll('input[type="checkbox"]'), function (input) { input.checked = false; });
+		});
 		column.appendChild(list);
+		column.appendChild(clearButton);
 		column.appendChild(help);
+		group.appendChild(title);
+		group.appendChild(column);
+		return group;
+	}
+
+	function createVisibilityField(tab, path) {
+		var group = createGroup();
+		var title = createGroupLabel(text.text_tab_visible);
+		var column = createGroupColumn();
+		var label = document.createElement('label');
+		label.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
+		var input = document.createElement('input');
+		input.type = 'checkbox';
+		input.checked = tab.visible !== false;
+		input.setAttribute('data-tab-visibility', 'true');
+		input.setAttribute('data-validation-path', path + '.visible');
+		if (adminMarkup === 'bootstrap5') {
+			input.className = 'form-check-input';
+			label.appendChild(input);
+			var caption = document.createElement('span');
+			caption.className = 'form-check-label';
+			caption.textContent = text.text_tab_visibility_toggle;
+			label.appendChild(caption);
+		} else {
+			label.appendChild(input);
+			label.appendChild(document.createTextNode(' ' + text.text_tab_visibility_toggle));
+		}
+		column.appendChild(label);
+		appendFieldHelp(column, 'tab_visibility');
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -449,23 +562,51 @@
 		card.appendChild(createUrlField(tab, path));
 		card.appendChild(createField(text.text_icon, tab.icon, 'icon', 'text', path + '.icon'));
 		card.appendChild(createField(text.text_active_icon, tab.activeIcon, 'activeIcon', 'text', path + '.activeIcon'));
+		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createPagesField(tab, path));
 		var remove = document.createElement('button');
 		remove.type = 'button';
 		remove.className = adminMarkup === 'bootstrap5' ? 'btn btn-danger btn-sm mt-2' : 'btn btn-danger btn-sm';
 		remove.textContent = text.button_remove_tab;
 		remove.addEventListener('click', function () {
+			var key = card.getAttribute('data-tab-key');
+			var button = tabNavigation.querySelector('[data-tab-target="' + key + '"]');
+			if (button && button.parentNode) {
+				button.parentNode.removeChild(button);
+			}
 			card.parentNode.removeChild(card);
+			var next = tabPanels.querySelector('.appnuno-tab');
+			if (next) {
+				activateTab(next);
+			}
 			refreshCartOptions();
+			refreshTabNavigation();
 		});
 		card.appendChild(remove);
-		card.addEventListener('input', refreshCartOptions);
+		card.addEventListener('input', function () {
+			refreshCartOptions();
+			refreshTabNavigation();
+		});
+		card.addEventListener('change', refreshTabNavigation);
 		return card;
 	}
 
 	function addTab(container, tab, pathRoot) {
-		var path = pathRoot + '[' + container.querySelectorAll('.appnuno-tab').length + ']';
-		container.appendChild(createTab(tab || {}, path));
+		var path = pathRoot + '[' + tabPanels.querySelectorAll('.appnuno-tab').length + ']';
+		var card = createTab(tab || {}, path);
+		var key = 'tab-' + tabSequence;
+		tabSequence += 1;
+		card.setAttribute('data-tab-key', key);
+		tabPanels.appendChild(card);
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'btn btn-default btn-block';
+		button.setAttribute('data-tab-target', key);
+		button.setAttribute('role', 'tab');
+		button.addEventListener('click', function () { activateTab(card); });
+		tabNavigation.appendChild(button);
+		activateTab(card);
+		refreshTabNavigation();
 		refreshCartOptions();
 	}
 
@@ -496,6 +637,8 @@
 				tab.url = destination.value;
 				delete tab.urls;
 			}
+			var visibilityField = card.querySelector('[data-tab-visibility]');
+			tab.visible = visibilityField.checked;
 			var pagesField = card.querySelector('[data-pages]');
 			if (pagesField) {
 				var pages = [];
@@ -596,6 +739,24 @@
 	setValue('dark-content', configuration.colors && configuration.colors.dark && configuration.colors.dark.contentColor || '#FFFFFF');
 	refreshCartOptions();
 	cartSelect.value = configuration.cartTabId || cartSelect.value;
+	[
+		['input-status', 'help_status'],
+		['cart-tab-id', 'help_cart_tab'],
+		['back-enabled', 'help_back_enabled'],
+		['back-placement', 'help_back_placement'],
+		['glass-enabled', 'help_glass_enabled'],
+		['glass-color-scheme', 'help_glass_color_scheme'],
+		['glass-style', 'help_glass_style'],
+		['glass-animate', 'help_glass_animate'],
+		['glass-duration', 'help_glass_duration'],
+		['glass-interactive', 'help_glass_interactive'],
+		['glass-tint-color', 'help_glass_tint'],
+		['glass-tint-alpha', 'help_glass_opacity'],
+		['light-background', 'help_background'],
+		['light-content', 'help_content'],
+		['dark-background', 'help_background'],
+		['dark-content', 'help_content']
+	].forEach(function (entry) { appendControlHelp(entry[0], entry[1]); });
 
 	function markValidationError(path) {
 		if (!path) {

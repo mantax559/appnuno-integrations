@@ -7,6 +7,7 @@ class ModelExtensionModuleAppnuno extends Model {
 				array(
 					'id' => 'home',
 					'label' => 'Home',
+					'visible' => true,
 					'url' => '/',
 					'icon' => 'home-outline',
 					'activeIcon' => 'home'
@@ -14,6 +15,7 @@ class ModelExtensionModuleAppnuno extends Model {
 				array(
 					'id' => 'cart',
 					'label' => 'Cart',
+					'visible' => true,
 					'url' => '/index.php?route=checkout/cart',
 					'icon' => 'cart-outline',
 					'activeIcon' => 'cart'
@@ -217,6 +219,10 @@ class ModelExtensionModuleAppnuno extends Model {
 
 			if (isset($tab['active']) && !is_bool($tab['active'])) {
 				return $tab_path . '.active: The selected state must be true or false.';
+			}
+
+			if (array_key_exists('visible', $tab) && !is_bool($tab['visible'])) {
+				return $tab_path . '.visible: The visibility state must be true or false.';
 			}
 
 			if (isset($tab['badge']) && (!is_int($tab['badge']) || !is_int(filter_var($tab['badge'], FILTER_VALIDATE_INT, array('options' => array('min_range' => 0)))))) {
