@@ -362,8 +362,8 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
     if first_tab.locator("xpath=following-sibling::button[@aria-label]").count() != 1:
         raise AssertionError("The remove-tab action should be next to its vertical tab button.")
-    tab_row_layout = first_tab.evaluate("link => ({ display: getComputedStyle(link.parentElement).display, flex: link.style.flex })")
-    if tab_row_layout != {"display": "flex", "flex": "1"}:
+    tab_row_layout = first_tab.evaluate("link => ({ display: getComputedStyle(link.parentElement).display, flexGrow: getComputedStyle(link).flexGrow })")
+    if tab_row_layout != {"display": "flex", "flexGrow": "1"}:
         raise AssertionError("Each vertical tab label and remove action should share one aligned row.")
     if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::ul[contains(@class, 'nav')]").count() != 1:
         raise AssertionError("The add-tab button should appear below the vertical tab list.")
