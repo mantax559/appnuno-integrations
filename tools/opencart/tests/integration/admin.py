@@ -300,8 +300,12 @@ def add_cart_page_tab(page: Page) -> None:
     visibility = page_tab.locator('[data-tab-visibility]')
     if not visibility.is_checked():
         raise AssertionError("A newly added tab should be visible by default.")
-    if page_tab.locator('[data-pages]').locator('xpath=following-sibling::button/following-sibling::div[contains(@class, "alert-info")]//strong').inner_text() != "Leave empty":
-        raise AssertionError("The page visibility explanation should be a bold lead inside an information box.")
+    page_help = page_tab.locator('[data-pages]').locator('xpath=../..').locator('label [data-toggle="tooltip"], label [data-bs-toggle="tooltip"]')
+    if not page_help.count():
+        raise AssertionError("The page visibility explanation should use an info-icon tooltip.")
+    page_help_title = page_help.get_attribute("title") or ""
+    if "Leave this empty" not in page_help_title:
+        raise AssertionError("The page visibility explanation should use an info-icon tooltip.")
     page_tab.locator("[data-pages] input[value='checkout/cart']").check()
     page_tab.locator('[data-pages]').locator('xpath=following-sibling::button').click()
     if page_tab.locator('[data-pages] input:checked').count():
@@ -341,9 +345,22 @@ def add_hidden_tab(page: Page) -> None:
 
 
 def assert_cart_badge_is_in_default_panel(page: Page) -> None:
-    default_panel = page.locator("#default-tabs").locator("xpath=../..")
+    default_panel = page.locator("#tab-navigation")
     if not default_panel.locator("#cart-tab-id").count():
         raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
+    if not page.locator("#cart-tab-id").locator("xpath=../../label").locator('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').count():
+        raise AssertionError("The cart badge help should use an info-icon tooltip.")
+    first_tab = page.locator('#default-tabs [data-tab-target="tab-0"]')
+    if first_tab.locator("xpath=..").locator("button[aria-label]").count() != 1:
+        raise AssertionError("The remove-tab action should be next to its vertical tab button.")
+    if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::div[contains(@class, 'nav-stacked')]").count() != 1:
+        raise AssertionError("The add-tab button should appear below the vertical tab list.")
+    if page.locator("#default-tabs .appnuno-tab button[aria-label]").count():
+        raise AssertionError("The remove-tab action should not be inside the tab editor panel.")
+    if page.locator("#tab-navigation .alert-info, #default-tabs .help-block, #default-tabs .form-text").count():
+        raise AssertionError("Tab help text should be shown in tooltips rather than beneath the fields.")
+    if not page.locator("#default-tabs .appnuno-tab .col-sm-4").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-8").count():
+        raise AssertionError("Tab field labels and controls should use a four/eight-column layout.")
 
 
 def assert_module_settings_persisted(page: Page) -> None:

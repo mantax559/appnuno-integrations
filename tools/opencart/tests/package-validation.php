@@ -63,7 +63,7 @@ $catalog_controller = $archive->getFromName('upload/catalog/controller/' . $modu
 $modification = $archive->getFromName('install.xml');
 $readme = $archive->getFromName('README.md');
 $archive->close();
-if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, "adminMarkup = 'bootstrap3'") || !strstr($view, 'well well-sm') || !strstr($view, "className = 'checkbox'") || !strstr($view, 'data-tab-target') || !strstr($view, 'data-tab-visibility') || !strstr($view, 'button_clear_pages')) {
+if (!is_string($view) || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, "adminMarkup = 'bootstrap3'") || !strstr($view, 'well well-sm') || !strstr($view, "className = 'checkbox'") || !strstr($view, 'data-tab-target') || !strstr($view, 'data-tab-visibility') || !strstr($view, 'button_clear_pages') || !strstr($view, 'data-bs-toggle') || !strstr($view, 'col-sm-4') || !strstr($view, 'btn btn-danger') || strstr($view, 'text.text_default_tabs_help') || strstr($view, 'alert alert-info')) {
     throw new RuntimeException('OpenCart archive is missing the updated settings controls and defaults.');
 }
 $cart_label = $line === '3.0' ? '{{ text.entry_cart_tab }}' : "\$text['entry_cart_tab']";
