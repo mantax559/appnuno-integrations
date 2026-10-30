@@ -360,6 +360,8 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     if not page.locator("#cart-tab-id").locator("xpath=../../label").locator('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').count():
         raise AssertionError("The cart badge help should use the standard OpenCart label tooltip.")
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
+    if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
+        raise AssertionError("The first default tab should be active when the settings page opens.")
     if first_tab.locator("xpath=following-sibling::button[@aria-label]").count() != 1:
         raise AssertionError("The remove-tab action should be next to its vertical tab button.")
     tab_row_layout = first_tab.evaluate("link => ({ display: getComputedStyle(link.parentElement).display, flexGrow: getComputedStyle(link).flexGrow })")
@@ -467,6 +469,8 @@ def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...
     open_module_editor(runtime, page, admin_token(runtime, page))
     first_tab = page.locator("#default-tabs .appnuno-tab").first
     first_tab.wait_for(state="attached")
+    first_tab_key = first_tab.get_attribute("data-tab-key")
+    page.locator(f'#default-tabs [data-tab-target="{first_tab_key}"]').click()
     first_tab.locator("[data-all-pages]").uncheck()
     content = page.locator("#content").inner_text()
     for href in ("#tab-back", "#tab-glass", "#tab-colors"):

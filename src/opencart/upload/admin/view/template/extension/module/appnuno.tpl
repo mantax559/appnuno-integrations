@@ -762,6 +762,10 @@
 	if (!defaultContainer.querySelector('.appnuno-tab')) {
 		addTab(defaultContainer, {}, 'defaultTabs');
 	}
+	var firstDefaultTab = tabPanels.querySelector('.appnuno-tab');
+	if (firstDefaultTab) {
+		activateTab(firstDefaultTab);
+	}
 	document.querySelectorAll('[data-add-tab]').forEach(function (button) {
 		button.addEventListener('click', function () { addTab(document.getElementById(button.getAttribute('data-add-tab')), {}, 'defaultTabs'); });
 	});
