@@ -362,14 +362,17 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
     if first_tab.locator("xpath=following-sibling::button[@aria-label]").count() != 1:
         raise AssertionError("The remove-tab action should be next to its vertical tab button.")
+    tab_row_layout = first_tab.evaluate("link => ({ display: getComputedStyle(link.parentElement).display, flex: link.style.flex })")
+    if tab_row_layout != {"display": "flex", "flex": "1"}:
+        raise AssertionError("Each vertical tab label and remove action should share one aligned row.")
     if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::ul[contains(@class, 'nav')]").count() != 1:
         raise AssertionError("The add-tab button should appear below the vertical tab list.")
     if page.locator("#default-tabs .appnuno-tab button[aria-label]").count():
         raise AssertionError("The remove-tab action should not be inside the tab editor panel.")
     if page.locator("#tab-navigation .alert-info, #default-tabs .help-block, #default-tabs .form-text").count():
         raise AssertionError("Tab help text should be shown in tooltips rather than beneath the fields.")
-    if not page.locator("#default-tabs .appnuno-tab .col-sm-2.control-label, #default-tabs .appnuno-tab .col-sm-2.col-form-label").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-10").count():
-        raise AssertionError("Tab field labels and controls should use the standard two/ten-column layout.")
+    if not page.locator("#default-tabs .appnuno-tab .col-sm-3.control-label, #default-tabs .appnuno-tab .col-sm-3.col-form-label").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-9").count():
+        raise AssertionError("Default tab fields should use the requested three/nine-column layout.")
 
 
 def assert_module_settings_persisted(page: Page) -> None:
@@ -462,7 +465,9 @@ def save_module_settings(page: Page, artifact_dir: Path) -> None:
 
 def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...]) -> None:
     open_module_editor(runtime, page, admin_token(runtime, page))
-    page.locator("#default-tabs .appnuno-tab").first.wait_for(state="attached")
+    first_tab = page.locator("#default-tabs .appnuno-tab").first
+    first_tab.wait_for(state="attached")
+    first_tab.locator("[data-all-pages]").uncheck()
     content = page.locator("#content").inner_text()
     for href in ("#tab-back", "#tab-glass", "#tab-colors"):
         page.locator(f'a[href="{href}"]').click()

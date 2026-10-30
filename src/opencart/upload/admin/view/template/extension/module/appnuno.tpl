@@ -293,7 +293,7 @@
 
 	function createGroupLabel(label, helpKey) {
 		var title = document.createElement('label');
-		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-2 col-form-label' : 'col-sm-2 control-label';
+		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-3 col-form-label' : 'col-sm-3 control-label';
 		title.textContent = label;
 		appendFieldHelp(title, helpKey || '');
 		return title;
@@ -301,7 +301,7 @@
 
 	function createGroupColumn() {
 		var column = document.createElement('div');
-		column.className = 'col-sm-10';
+		column.className = 'col-sm-9';
 		return column;
 	}
 
@@ -631,12 +631,16 @@
 		tabPanels.appendChild(card);
 		var tabRow = document.createElement('li');
 		tabRow.setAttribute('role', 'presentation');
+		tabRow.style.display = 'flex';
+		tabRow.style.alignItems = 'center';
 		var link = document.createElement('a');
 		link.href = '#' + key;
 		link.className = adminMarkup === 'bootstrap5' ? 'nav-link' : '';
 		link.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tab');
 		link.setAttribute('data-tab-target', key);
 		link.setAttribute('role', 'tab');
+		link.style.flex = '1';
+		link.style.minWidth = '0';
 		link.setAttribute('aria-controls', key);
 		link.addEventListener('click', function () { activateTab(card); });
 		var remove = document.createElement('button');
@@ -644,6 +648,7 @@
 		remove.className = adminMarkup === 'bootstrap5' ? 'btn btn-danger btn-sm' : 'btn btn-danger btn-xs';
 		remove.setAttribute('title', text.button_remove_tab);
 		remove.setAttribute('aria-label', text.button_remove_tab);
+		remove.style.flexShrink = '0';
 		remove.innerHTML = '<i class="fa fa-trash"></i>';
 		remove.addEventListener('click', function () {
 			var wasActive = card.classList.contains('active');
