@@ -8,6 +8,7 @@ class ModelExtensionModuleAppnuno extends Model {
 					'id' => 'home',
 					'label' => 'Home',
 					'visible' => true,
+					'allPages' => true,
 					'url' => '/',
 					'icon' => 'home-outline',
 					'activeIcon' => 'home'
@@ -16,6 +17,7 @@ class ModelExtensionModuleAppnuno extends Model {
 					'id' => 'cart',
 					'label' => 'Cart',
 					'visible' => true,
+					'allPages' => true,
 					'url' => '/index.php?route=checkout/cart',
 					'icon' => 'cart-outline',
 					'activeIcon' => 'cart'
@@ -227,6 +229,10 @@ class ModelExtensionModuleAppnuno extends Model {
 
 			if (isset($tab['badge']) && (!is_int($tab['badge']) || !is_int(filter_var($tab['badge'], FILTER_VALIDATE_INT, array('options' => array('min_range' => 0)))))) {
 				return $tab_path . '.badge: The badge count must be zero or a positive integer.';
+			}
+
+			if (array_key_exists('allPages', $tab) && !is_bool($tab['allPages'])) {
+				return $tab_path . '.allPages: Choose whether the tab appears on every page.';
 			}
 
 			if (isset($tab['pages'])) {

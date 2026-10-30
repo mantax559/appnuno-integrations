@@ -98,9 +98,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 				unset($tab['urls']);
 			}
 
-			if (isset($tab['pages'])) {
-				unset($tab['pages']);
-			}
+			unset($tab['allPages'], $tab['pages']);
 
 			if (isset($tab['labels']) && is_array($tab['labels'])) {
 				$language_code = $this->languageCode();
@@ -182,6 +180,14 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	private function tabShownOnRoute($tab, $route) {
+		if (array_key_exists('allPages', $tab) && is_bool($tab['allPages'])) {
+			if ($tab['allPages']) {
+				return true;
+			}
+
+			return isset($tab['pages']) && is_array($tab['pages']) && in_array($route, $tab['pages'], true);
+		}
+
 		if (!isset($tab['pages']) || !is_array($tab['pages']) || !count($tab['pages'])) {
 			return true;
 		}

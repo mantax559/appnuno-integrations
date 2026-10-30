@@ -203,13 +203,13 @@
 	defaultContainer.className = 'row';
 	var tabNavigationColumn = document.createElement('div');
 	tabNavigationColumn.className = 'col-sm-3';
-	var tabNavigation = document.createElement('div');
-	tabNavigation.className = 'nav nav-pills nav-stacked';
+	var tabNavigation = document.createElement('ul');
+	tabNavigation.className = adminMarkup === 'bootstrap5' ? 'nav nav-pills flex-column' : 'nav nav-pills nav-stacked';
 	tabNavigation.setAttribute('role', 'tablist');
 	tabNavigation.setAttribute('aria-orientation', 'vertical');
 	var tabPanels = document.createElement('div');
 	var tabSequence = 0;
-	tabPanels.className = 'col-sm-9';
+	tabPanels.className = 'col-sm-9 tab-content';
 	var addTabButton = document.createElement('button');
 	addTabButton.type = 'button';
 	addTabButton.className = 'btn btn-default btn-block';
@@ -221,35 +221,16 @@
 	defaultContainer.appendChild(tabPanels);
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
 
-	function initializeTooltip(element) {
-		if (adminMarkup === 'bootstrap5' && window.bootstrap && window.bootstrap.Tooltip) {
-			new window.bootstrap.Tooltip(element, { container: 'body' });
-		} else if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
-			window.jQuery(element).tooltip({ container: 'body' });
-		}
-	}
-
-	function createHelpIcon(message) {
-		if (!message) {
-			return null;
-		}
-		var icon = document.createElement('i');
-		icon.className = 'fa fa-question-circle text-info';
-		icon.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tooltip');
-		icon.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-container' : 'data-container', 'body');
-		icon.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-placement' : 'data-placement', 'top');
-		icon.setAttribute('title', message);
-		icon.setAttribute('aria-label', message);
-		icon.style.marginLeft = '5px';
-		initializeTooltip(icon);
-		return icon;
-	}
-
 	function appendHelp(label, message) {
-		var icon = createHelpIcon(message);
-		if (icon) {
-			label.appendChild(icon);
+		if (!message) {
+			return;
 		}
+		var tooltip = document.createElement('span');
+		tooltip.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tooltip');
+		tooltip.setAttribute('title', message);
+		tooltip.textContent = label.textContent;
+		label.textContent = '';
+		label.appendChild(tooltip);
 	}
 
 	function appendFieldHelp(label, key) {
@@ -281,13 +262,14 @@
 
 	function activateTab(card) {
 		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (panel) {
-			panel.style.display = panel === card ? '' : 'none';
-			var button = tabNavigation.querySelector('[data-tab-target="' + panel.getAttribute('data-tab-key') + '"]');
-			if (button) {
-				button.className = panel === card
-					? (adminMarkup === 'bootstrap5' ? 'btn btn-primary w-100' : 'btn btn-primary btn-block')
-					: (adminMarkup === 'bootstrap5' ? 'btn btn-default w-100' : 'btn btn-default btn-block');
-				button.setAttribute('aria-selected', panel === card ? 'true' : 'false');
+			var active = panel === card;
+			panel.classList.toggle('active', active);
+			panel.classList.toggle('show', active && adminMarkup === 'bootstrap5');
+			var link = tabNavigation.querySelector('[data-tab-target="' + panel.getAttribute('data-tab-key') + '"]');
+			if (link) {
+				link.className = adminMarkup === 'bootstrap5' ? 'nav-link' + (active ? ' active' : '') : '';
+				link.parentNode.className = active ? 'active' : '';
+				link.setAttribute('aria-selected', active ? 'true' : 'false');
 			}
 		});
 	}
@@ -311,7 +293,7 @@
 
 	function createGroupLabel(label, helpKey) {
 		var title = document.createElement('label');
-		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-4 col-form-label' : 'col-sm-4 control-label';
+		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-2 col-form-label' : 'col-sm-2 control-label';
 		title.textContent = label;
 		appendFieldHelp(title, helpKey || '');
 		return title;
@@ -319,7 +301,7 @@
 
 	function createGroupColumn() {
 		var column = document.createElement('div');
-		column.className = 'col-sm-8';
+		column.className = 'col-sm-10';
 		return column;
 	}
 
@@ -328,6 +310,8 @@
 		var title = createGroupLabel(label);
 		var column = createGroupColumn();
 		var input = document.createElement('input');
+		input.id = 'appnuno-field-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
+		title.htmlFor = input.id;
 		input.type = type || 'text';
 		input.className = 'form-control';
 		input.value = value || '';
@@ -411,6 +395,8 @@
 		var title = createGroupLabel(text.text_destination, 'tab_destination');
 		var column = createGroupColumn();
 		var select = document.createElement('select');
+		select.id = 'appnuno-destination-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
+		title.htmlFor = select.id;
 		select.className = 'form-control';
 		select.setAttribute('data-url-select', 'true');
 		select.appendChild(new Option(text.text_choose_destination, ''));
@@ -484,6 +470,7 @@
 		input.type = 'checkbox';
 		input.value = value;
 		input.checked = !!checked;
+		input.setAttribute('data-page-choice', 'true');
 		if (adminMarkup === 'bootstrap5') {
 			row.className = 'form-check';
 			input.className = 'form-check-input';
@@ -508,8 +495,30 @@
 		var group = createGroup();
 		var title = createGroupLabel(text.text_shown_on_pages, 'shown_on_pages');
 		var column = createGroupColumn();
+		var allPagesChoice = document.createElement('div');
+		allPagesChoice.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
+		var allPagesLabel = document.createElement('label');
+		var allPages = document.createElement('input');
+		allPages.type = 'checkbox';
+		allPages.id = 'appnuno-all-pages-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
+		allPagesLabel.htmlFor = allPages.id;
+		title.htmlFor = allPages.id;
+		allPages.checked = typeof tab.allPages === 'boolean' ? tab.allPages : (!Array.isArray(tab.pages) || !tab.pages.length);
+		allPages.setAttribute('data-all-pages', 'true');
+		allPages.setAttribute('data-validation-path', path + '.allPages');
+		if (adminMarkup === 'bootstrap5') {
+			allPages.className = 'form-check-input';
+			allPagesLabel.className = 'form-check-label';
+			allPagesLabel.appendChild(document.createTextNode(text.text_all_pages));
+			allPagesChoice.appendChild(allPages);
+			allPagesChoice.appendChild(allPagesLabel);
+		} else {
+			allPagesLabel.appendChild(allPages);
+			allPagesLabel.appendChild(document.createTextNode(' ' + text.text_all_pages));
+			allPagesChoice.appendChild(allPagesLabel);
+		}
 		var list = document.createElement('div');
-		list.className = adminMarkup === 'bootstrap5' ? 'form-control' : 'well well-sm';
+		list.className = adminMarkup === 'bootstrap5' ? 'border rounded p-2' : 'well well-sm';
 		list.style.height = '150px';
 		list.style.overflow = 'auto';
 		list.setAttribute('data-pages', 'true');
@@ -528,15 +537,35 @@
 				appendPageChoice(list, page, page, true, path);
 			}
 		});
+		var actions = document.createElement('div');
+		actions.className = 'btn-group';
+		var selectAll = document.createElement('button');
+		selectAll.type = 'button';
+		selectAll.className = 'btn btn-default btn-sm';
+		selectAll.setAttribute('data-page-action', 'select-all');
+		selectAll.textContent = text.button_select_all_pages;
+		selectAll.addEventListener('click', function () {
+			Array.prototype.forEach.call(list.querySelectorAll('input[type="checkbox"]'), function (input) { input.checked = true; });
+		});
 		var clearButton = document.createElement('button');
 		clearButton.type = 'button';
 		clearButton.className = 'btn btn-default btn-sm';
+		clearButton.setAttribute('data-page-action', 'deselect-all');
 		clearButton.textContent = text.button_clear_pages;
 		clearButton.addEventListener('click', function () {
 			Array.prototype.forEach.call(list.querySelectorAll('input[type="checkbox"]'), function (input) { input.checked = false; });
 		});
+		actions.appendChild(selectAll);
+		actions.appendChild(clearButton);
+		allPages.addEventListener('change', function () {
+			list.style.display = allPages.checked ? 'none' : '';
+			actions.style.display = allPages.checked ? 'none' : '';
+		});
+		list.style.display = allPages.checked ? 'none' : '';
+		actions.style.display = allPages.checked ? 'none' : '';
+		column.appendChild(allPagesChoice);
 		column.appendChild(list);
-		column.appendChild(clearButton);
+		column.appendChild(actions);
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -546,25 +575,28 @@
 		var group = createGroup();
 		var title = createGroupLabel(text.text_tab_visible, 'tab_visibility');
 		var column = createGroupColumn();
+		var choice = document.createElement('div');
+		choice.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
 		var label = document.createElement('label');
-		label.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
 		var input = document.createElement('input');
 		input.type = 'checkbox';
+		input.id = 'appnuno-visible-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
+		label.htmlFor = input.id;
 		input.checked = tab.visible !== false;
 		input.setAttribute('data-tab-visibility', 'true');
 		input.setAttribute('data-validation-path', path + '.visible');
 		if (adminMarkup === 'bootstrap5') {
 			input.className = 'form-check-input';
-			label.appendChild(input);
-			var caption = document.createElement('span');
-			caption.className = 'form-check-label';
-			caption.textContent = text.text_tab_visibility_toggle;
-			label.appendChild(caption);
+			label.className = 'form-check-label';
+			label.appendChild(document.createTextNode(text.text_tab_visibility_toggle));
+			choice.appendChild(input);
+			choice.appendChild(label);
 		} else {
 			label.appendChild(input);
 			label.appendChild(document.createTextNode(' ' + text.text_tab_visibility_toggle));
+			choice.appendChild(label);
 		}
-		column.appendChild(label);
+		column.appendChild(choice);
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -572,7 +604,7 @@
 
 	function createTab(tab, path) {
 		var card = document.createElement('div');
-		card.className = adminMarkup === 'bootstrap5' ? 'card card-body mb-3 appnuno-tab' : 'well appnuno-tab';
+		card.className = 'tab-pane appnuno-tab';
 		card.setAttribute('data-validation-path', path);
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
 		card.appendChild(createLabelFields(tab, path));
@@ -592,40 +624,39 @@
 	function addTab(container, tab, pathRoot) {
 		var path = pathRoot + '[' + tabPanels.querySelectorAll('.appnuno-tab').length + ']';
 		var card = createTab(tab || {}, path);
-		var key = 'tab-' + tabSequence;
+		var key = 'appnuno-tab-' + tabSequence;
 		tabSequence += 1;
+		card.id = key;
 		card.setAttribute('data-tab-key', key);
 		tabPanels.appendChild(card);
-		var tabRow = document.createElement('div');
-		tabRow.className = 'appnuno-tab-row';
-		tabRow.style.display = 'flex';
-		tabRow.style.marginBottom = '5px';
-		var button = document.createElement('button');
-		button.type = 'button';
-		button.className = 'btn btn-default';
-		button.style.flex = '1';
-		button.setAttribute('data-tab-target', key);
-		button.setAttribute('role', 'tab');
-		button.addEventListener('click', function () { activateTab(card); });
+		var tabRow = document.createElement('li');
+		tabRow.setAttribute('role', 'presentation');
+		var link = document.createElement('a');
+		link.href = '#' + key;
+		link.className = adminMarkup === 'bootstrap5' ? 'nav-link' : '';
+		link.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tab');
+		link.setAttribute('data-tab-target', key);
+		link.setAttribute('role', 'tab');
+		link.setAttribute('aria-controls', key);
+		link.addEventListener('click', function () { activateTab(card); });
 		var remove = document.createElement('button');
 		remove.type = 'button';
-		remove.className = 'btn btn-danger';
-		remove.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tooltip');
+		remove.className = adminMarkup === 'bootstrap5' ? 'btn btn-danger btn-sm' : 'btn btn-danger btn-xs';
 		remove.setAttribute('title', text.button_remove_tab);
 		remove.setAttribute('aria-label', text.button_remove_tab);
 		remove.innerHTML = '<i class="fa fa-trash"></i>';
-		initializeTooltip(remove);
 		remove.addEventListener('click', function () {
+			var wasActive = card.classList.contains('active');
 			tabRow.parentNode.removeChild(tabRow);
 			card.parentNode.removeChild(card);
 			var next = tabPanels.querySelector('.appnuno-tab');
-			if (next) {
+			if (next && wasActive) {
 				activateTab(next);
 			}
 			refreshCartOptions();
 			refreshTabNavigation();
 		});
-		tabRow.appendChild(button);
+		tabRow.appendChild(link);
 		tabRow.appendChild(remove);
 		tabNavigation.appendChild(tabRow);
 		activateTab(card);
@@ -663,16 +694,13 @@
 			var visibilityField = card.querySelector('[data-tab-visibility]');
 			tab.visible = visibilityField.checked;
 			var pagesField = card.querySelector('[data-pages]');
-			if (pagesField) {
-				var pages = [];
-				Array.prototype.forEach.call(pagesField.querySelectorAll('input[type="checkbox"]'), function (input) {
-					if (input.checked) {
-						pages.push(input.value);
-					}
+			var allPagesField = card.querySelector('[data-all-pages]');
+			if (pagesField && allPagesField) {
+				tab.allPages = allPagesField.checked;
+				tab.pages = [];
+				Array.prototype.forEach.call(pagesField.querySelectorAll('[data-page-choice]:checked'), function (input) {
+					tab.pages.push(input.value);
 				});
-				if (pages.length) {
-					tab.pages = pages;
-				}
 			}
 			return tab;
 		});
@@ -721,6 +749,7 @@
 			if (pages.indexOf(route) === -1) {
 				pages.push(route);
 			}
+			imported.allPages = false;
 			imported.pages = pages;
 			addTab(defaultContainer, imported, 'defaultTabs');
 		});

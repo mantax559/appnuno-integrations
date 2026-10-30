@@ -7,6 +7,9 @@ if (strlen($model->validateConfig($default))) {
     throw new RuntimeException('Expected default OpenCart navigation configuration to be valid.');
 }
 $default_values = json_decode($default, true);
+if (!$default_values['defaultTabs'][0]['allPages'] || !$default_values['defaultTabs'][1]['allPages']) {
+    throw new RuntimeException('Expected default navigation tabs to explicitly show on all pages.');
+}
 if (!in_array($default_values['glass']['colorScheme'], array('auto'), true) || !in_array($default_values['glass']['style'], array('regular'), true) || !in_array($default_values['glass']['animate'], array(true), true) || !in_array($default_values['glass']['animationDuration'], array(0.3), true) || !in_array($default_values['glass']['isInteractive'], array(true), true) || !in_array($default_values['glass']['tintColor'], array('rgba(0, 0, 0, 0.02)'), true)) {
     throw new RuntimeException('Expected native-contract glass defaults.');
 }
@@ -116,9 +119,21 @@ $invalid_back = json_encode(array('defaultTabs' => array(), 'routes' => array(),
 if (!strlen($model->validateConfig($invalid_back))) {
     throw new RuntimeException('Expected non-boolean back setting to be rejected.');
 }
-$visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart'))), 'routes' => array()));
+$visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'allPages' => false, 'pages' => array('checkout/cart'))), 'routes' => array()));
 if (strlen($model->validateConfig($visible_pages))) {
     throw new RuntimeException('Expected a tab limited to a store page to be valid.');
+}
+$empty_selected_pages = json_encode(array('defaultTabs' => array(array('id' => 'hidden-by-pages', 'label' => 'Hidden by pages', 'url' => '/', 'allPages' => false, 'pages' => array())), 'routes' => array()));
+if (strlen($model->validateConfig($empty_selected_pages))) {
+    throw new RuntimeException('Expected a tab with no selected pages to be valid when all-pages is disabled.');
+}
+$all_pages = json_encode(array('defaultTabs' => array(array('id' => 'all-pages', 'label' => 'All pages', 'url' => '/', 'allPages' => true, 'pages' => array())), 'routes' => array()));
+if (strlen($model->validateConfig($all_pages))) {
+    throw new RuntimeException('Expected a tab configured for every page to be valid.');
+}
+$invalid_all_pages = json_encode(array('defaultTabs' => array(array('id' => 'invalid-all-pages', 'label' => 'Invalid all pages', 'url' => '/', 'allPages' => 'false')), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_all_pages), 'defaultTabs[0].allPages')) {
+    throw new RuntimeException('Expected a non-boolean all-pages state to be rejected.');
 }
 $visibility_states = json_encode(array('defaultTabs' => array(array('id' => 'visible', 'label' => 'Visible', 'url' => '/', 'visible' => true), array('id' => 'hidden', 'label' => 'Hidden', 'url' => '/', 'visible' => false)), 'routes' => array()));
 if (strlen($model->validateConfig($visibility_states))) {
@@ -131,5 +146,16 @@ if (!strstr($model->validateConfig($invalid_visibility), 'defaultTabs[0].visible
 $invalid_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart?redirect=home'))), 'routes' => array()));
 if (!strstr($model->validateConfig($invalid_pages), 'defaultTabs[0].pages')) {
     throw new RuntimeException('Expected an invalid store page selection to be rejected.');
+}
+class Controller {}
+require dirname(__DIR__, 3) . '/src/opencart/upload/catalog/controller/extension/module/appnuno.php';
+$controller = new ControllerExtensionModuleAppnuno();
+$shown_on_route = new ReflectionMethod($controller, 'tabShownOnRoute');
+$shown_on_route->setAccessible(true);
+if (!$shown_on_route->invoke($controller, array('id' => 'legacy'), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'legacy', 'pages' => array()), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'checkout/cart') || $shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'common/home')) {
+    throw new RuntimeException('Expected legacy tabs to keep their previous page-visibility behavior.');
+}
+if ($shown_on_route->invoke($controller, array('id' => 'hidden', 'allPages' => false, 'pages' => array()), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'limited', 'allPages' => false, 'pages' => array('checkout/cart')), 'checkout/cart') || !$shown_on_route->invoke($controller, array('id' => 'global', 'allPages' => true, 'pages' => array()), 'common/home')) {
+    throw new RuntimeException('Expected new all-pages and selected-page visibility rules to be applied.');
 }
 echo "OpenCart navigation configuration tests passed.\n";

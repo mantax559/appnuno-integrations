@@ -302,15 +302,24 @@ def add_cart_page_tab(page: Page) -> None:
         raise AssertionError("A newly added tab should be visible by default.")
     page_help = page_tab.locator('[data-pages]').locator('xpath=../..').locator('label [data-toggle="tooltip"], label [data-bs-toggle="tooltip"]')
     if not page_help.count():
-        raise AssertionError("The page visibility explanation should use an info-icon tooltip.")
-    page_help_title = page_help.get_attribute("title") or ""
-    if "Leave this empty" not in page_help_title:
-        raise AssertionError("The page visibility explanation should use an info-icon tooltip.")
-    page_tab.locator("[data-pages] input[value='checkout/cart']").check()
-    page_tab.locator('[data-pages]').locator('xpath=following-sibling::button').click()
+        raise AssertionError("The page visibility explanation should use the standard OpenCart label tooltip.")
+    page_help_title = page_help.get_attribute("title") or page_help.get_attribute("data-original-title") or page_help.get_attribute("data-bs-original-title") or ""
+    if "Choose whether" not in page_help_title or not page_help.locator("xpath=..").get_attribute("for"):
+        raise AssertionError("The page visibility explanation should use the standard OpenCart label tooltip.")
+    all_pages = page_tab.locator('[data-all-pages]')
+    if not all_pages.is_checked() or page_tab.locator('[data-pages]').is_visible():
+        raise AssertionError("A new tab should show on all pages by default and hide its page list.")
+    all_pages.uncheck()
+    if not page_tab.locator('[data-pages]').is_visible():
+        raise AssertionError("Unchecking all-pages should reveal the page list.")
+    page_tab.locator('[data-pages] input[value="checkout/cart"]').check()
+    page_tab.locator('[data-page-action="select-all"]').click()
+    if page_tab.locator('[data-pages] input:not(:checked)').count():
+        raise AssertionError("The select-all action did not check every page.")
+    page_tab.locator('[data-page-action="deselect-all"]').click()
     if page_tab.locator('[data-pages] input:checked').count():
-        raise AssertionError("The clear-pages button did not uncheck every page.")
-    page_tab.locator("[data-pages] input[value='checkout/cart']").check()
+        raise AssertionError("The clear-pages action did not uncheck every page.")
+    page_tab.locator('[data-pages] input[value="checkout/cart"]').check()
 
 
 def add_contact_tab(page: Page) -> None:
@@ -340,7 +349,7 @@ def add_hidden_tab(page: Page) -> None:
     tab.locator('[data-language-url="en-gb"]').fill("/en/hidden")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
     tab.locator('[data-tab-visibility]').uncheck()
-    if not page.locator('#default-tabs [data-tab-target="tab-4"] .fa-eye-slash').count():
+    if not page.locator('#default-tabs [data-tab-target="appnuno-tab-4"] .fa-eye-slash').count():
         raise AssertionError("The vertical tab list did not mark a hidden tab.")
 
 
@@ -349,18 +358,18 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     if not default_panel.locator("#cart-tab-id").count():
         raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
     if not page.locator("#cart-tab-id").locator("xpath=../../label").locator('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').count():
-        raise AssertionError("The cart badge help should use an info-icon tooltip.")
-    first_tab = page.locator('#default-tabs [data-tab-target="tab-0"]')
-    if first_tab.locator("xpath=..").locator("button[aria-label]").count() != 1:
+        raise AssertionError("The cart badge help should use the standard OpenCart label tooltip.")
+    first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
+    if first_tab.locator("xpath=following-sibling::button[@aria-label]").count() != 1:
         raise AssertionError("The remove-tab action should be next to its vertical tab button.")
-    if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::div[contains(@class, 'nav-stacked')]").count() != 1:
+    if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::ul[contains(@class, 'nav')]").count() != 1:
         raise AssertionError("The add-tab button should appear below the vertical tab list.")
     if page.locator("#default-tabs .appnuno-tab button[aria-label]").count():
         raise AssertionError("The remove-tab action should not be inside the tab editor panel.")
     if page.locator("#tab-navigation .alert-info, #default-tabs .help-block, #default-tabs .form-text").count():
         raise AssertionError("Tab help text should be shown in tooltips rather than beneath the fields.")
-    if not page.locator("#default-tabs .appnuno-tab .col-sm-4").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-8").count():
-        raise AssertionError("Tab field labels and controls should use a four/eight-column layout.")
+    if not page.locator("#default-tabs .appnuno-tab .col-sm-2.control-label, #default-tabs .appnuno-tab .col-sm-2.col-form-label").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-10").count():
+        raise AssertionError("Tab field labels and controls should use the standard two/ten-column layout.")
 
 
 def assert_module_settings_persisted(page: Page) -> None:
@@ -380,7 +389,9 @@ def assert_module_settings_persisted(page: Page) -> None:
         raise AssertionError("The cart page tab label did not persist after reloading the settings page.")
     if saved_page_tab.locator('[data-language-url="lt-lt"]').input_value() != "/lt/krepselis":
         raise AssertionError("The cart page tab URL did not persist after reloading the settings page.")
-    selected_pages = saved_page_tab.locator("[data-pages]").evaluate("list => Array.from(list.querySelectorAll('input:checked')).map(input => input.value)")
+    if saved_page_tab.locator('[data-all-pages]').is_checked():
+        raise AssertionError("The cart page tab did not persist its restricted-page setting.")
+    selected_pages = saved_page_tab.locator("[data-pages]").evaluate("list => Array.from(list.querySelectorAll('[data-page-choice]:checked')).map(input => input.value)")
     if selected_pages != ["checkout/cart"]:
         raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
     hidden_tab = page.locator("#default-tabs .appnuno-tab").nth(4)
@@ -419,7 +430,7 @@ def configure_glass(page: Page) -> None:
 
 def fill_builtin_tab_labels(page: Page) -> None:
     for index, labels in enumerate((("Home", "Pradžia"), ("Cart", "Krepšelis"))):
-        page.locator(f'#default-tabs [data-tab-target="tab-{index}"]').click()
+        page.locator(f'#default-tabs [data-tab-target="appnuno-tab-{index}"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").nth(index)
         if not tab.is_visible() or page.locator("#default-tabs .appnuno-tab").nth(1 - index).is_visible():
             raise AssertionError("The vertical tab list should display only the selected tab panel.")
@@ -621,7 +632,7 @@ def reject_invalid_module_configuration(runtime: Runtime, page: Page, token: str
     original_config = setting_value(runtime, "module_appnuno_config")
     if not original_config:
         raise AssertionError("The AppNuno module configuration was not persisted.")
-    page.locator('#default-tabs [data-tab-target="tab-0"]').click()
+    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
     page.locator('#default-tabs .appnuno-tab').first.locator('[data-field="id"]').fill("")
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-danger:not(#client-validation-error)").wait_for()

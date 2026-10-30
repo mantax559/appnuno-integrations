@@ -58,8 +58,11 @@ def assert_active_navigation(payload: dict[str, Any]) -> None:
 
 def assert_cart_only_tab(payload: dict[str, Any], configuration: dict[str, Any]) -> None:
     page_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
-    if page_tab.get("pages") != ["checkout/cart"]:
+    if page_tab.get("allPages") is not False or page_tab.get("pages") != ["checkout/cart"]:
         raise AssertionError(f"The cart-only tab was not limited to the cart page: {page_tab}.")
+    default_tab = next(tab for tab in configuration["defaultTabs"] if tab["id"] == "home")
+    if default_tab.get("allPages") is not True:
+        raise AssertionError(f"The shared tab did not retain its all-pages setting: {default_tab}.")
     if page_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas"}:
         raise AssertionError(f"The cart-only tab translations were not retained: {page_tab}.")
     if configuration.get("routes"):
@@ -170,8 +173,8 @@ def check_route_bootstrap(payload: dict[str, Any]) -> None:
         raise AssertionError(f"The checkout/cart tab was not resolved correctly: {tab}.")
     if tab.get("icon") != "cart-outline" or tab.get("activeIcon") != "cart":
         raise AssertionError(f"The cart page tab icons were not preserved: {tab}.")
-    if "labels" in tab or "urls" in tab or "pages" in tab:
-        raise AssertionError("The resolved cart page tab still contains stored translations or page limits.")
+    if "labels" in tab or "urls" in tab or "pages" in tab or "allPages" in tab:
+        raise AssertionError("The resolved cart page tab still contains stored translations or page visibility settings.")
     active_ids = [tab["id"] for tab in tabs if tab.get("active") is True]
     if active_ids != ["cart"]:
         raise AssertionError(f"The cart page did not keep the Cart tab active: {tabs}.")
