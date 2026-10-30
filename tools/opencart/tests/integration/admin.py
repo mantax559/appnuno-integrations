@@ -349,7 +349,8 @@ def add_hidden_tab(page: Page) -> None:
     tab.locator('[data-language-url="en-gb"]').fill("/en/hidden")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
     tab.locator('[data-tab-visibility]').uncheck()
-    if not page.locator('#default-tabs [data-tab-target="appnuno-tab-4"] .fa-eye-slash').count():
+    tab_key = tab.get_attribute("data-tab-key")
+    if not page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .fa-eye-slash').count():
         raise AssertionError("The vertical tab list did not mark a hidden tab.")
 
 
@@ -362,15 +363,28 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
     if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
         raise AssertionError("The first default tab should be active when the settings page opens.")
-    if first_tab.locator("xpath=following-sibling::button[@aria-label]").count() != 1:
-        raise AssertionError("The remove-tab action should be next to its vertical tab button.")
-    tab_row_layout = first_tab.evaluate("link => ({ display: getComputedStyle(link.parentElement).display, flexGrow: getComputedStyle(link).flexGrow })")
-    if tab_row_layout != {"display": "flex", "flexGrow": "1"}:
-        raise AssertionError("Each vertical tab label and remove action should share one aligned row.")
-    if page.locator("#default-tabs [data-add-tab]").locator("xpath=preceding-sibling::ul[contains(@class, 'nav')]").count() != 1:
+    if first_tab.locator('[data-remove-tab].fa-minus-circle, [data-remove-tab].fa-circle-minus').count() != 1:
+        raise AssertionError("Each native-style tab link should start with its remove icon.")
+    if first_tab.locator("xpath=following-sibling::button[@aria-label]").count():
+        raise AssertionError("The remove action should use the native tab-list icon rather than a separate button.")
+    if not page.locator("#default-tabs > .col-sm-2 > ul.nav.nav-pills").count():
+        raise AssertionError("The tab navigation should use OpenCart's two-column vertical navigation layout.")
+    if not page.locator("#default-tabs > .col-sm-10.tab-content").count():
+        raise AssertionError("The tab editor should use the ten-column content layout.")
+    add_button = page.locator('#default-tabs [data-add-tab="default-tabs"]')
+    if add_button.locator("xpath=preceding-sibling::ul[contains(@class, 'nav')]").count() != 1:
         raise AssertionError("The add-tab button should appear below the vertical tab list.")
-    if page.locator("#default-tabs .appnuno-tab button[aria-label]").count():
-        raise AssertionError("The remove-tab action should not be inside the tab editor panel.")
+    if not add_button.evaluate("button => button.classList.contains('btn-primary') && !!button.querySelector('.fa-plus-circle, .fa-circle-plus')"):
+        raise AssertionError("The tab-list action should be a native primary add button with a plus-circle icon.")
+    if page.locator("#default-tabs .appnuno-tab [data-remove-tab]").count():
+        raise AssertionError("The remove-tab icon should not be inside the tab editor panel.")
+    original_tab_count = page.locator("#default-tabs .appnuno-tab").count()
+    add_button.click()
+    temporary_tab = page.locator("#default-tabs .appnuno-tab").last
+    temporary_tab_key = temporary_tab.get_attribute("data-tab-key")
+    page.locator(f'#default-tabs [data-tab-target="{temporary_tab_key}"] [data-remove-tab]').click()
+    if page.locator("#default-tabs .appnuno-tab").count() != original_tab_count:
+        raise AssertionError("The remove icon did not remove its tab and editor panel.")
     if page.locator("#tab-navigation .alert-info, #default-tabs .help-block, #default-tabs .form-text").count():
         raise AssertionError("Tab help text should be shown in tooltips rather than beneath the fields.")
     if not page.locator("#default-tabs .appnuno-tab .col-sm-3.control-label, #default-tabs .appnuno-tab .col-sm-3.col-form-label").count() or not page.locator("#default-tabs .appnuno-tab .col-sm-9").count():

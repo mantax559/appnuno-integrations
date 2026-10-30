@@ -202,19 +202,19 @@
 	var adminMarkup = 'bootstrap3';
 	defaultContainer.className = 'row';
 	var tabNavigationColumn = document.createElement('div');
-	tabNavigationColumn.className = 'col-sm-3';
+	tabNavigationColumn.className = 'col-sm-2';
 	var tabNavigation = document.createElement('ul');
 	tabNavigation.className = adminMarkup === 'bootstrap5' ? 'nav nav-pills flex-column' : 'nav nav-pills nav-stacked';
 	tabNavigation.setAttribute('role', 'tablist');
 	tabNavigation.setAttribute('aria-orientation', 'vertical');
 	var tabPanels = document.createElement('div');
 	var tabSequence = 0;
-	tabPanels.className = 'col-sm-9 tab-content';
+	tabPanels.className = 'col-sm-10 tab-content';
 	var addTabButton = document.createElement('button');
 	addTabButton.type = 'button';
-	addTabButton.className = 'btn btn-default btn-block';
+	addTabButton.className = 'btn btn-primary btn-block';
 	addTabButton.setAttribute('data-add-tab', 'default-tabs');
-	addTabButton.innerHTML = '<i class="fa fa-plus"></i> ' + text.button_add_default_tab;
+	addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
 	tabNavigationColumn.appendChild(tabNavigation);
 	tabNavigationColumn.appendChild(addTabButton);
 	defaultContainer.appendChild(tabNavigationColumn);
@@ -250,12 +250,18 @@
 			}
 			var id = card.querySelector('[data-field="id"]');
 			var title = label && label.value.trim() ? label.value.trim() : (id && id.value.trim() ? id.value.trim() : text.text_tab_list_empty);
-			button.textContent = title;
+			button.querySelector('[data-tab-title]').textContent = title;
+			var marker = button.querySelector('[data-visibility-indicator]');
 			if (!card.querySelector('[data-tab-visibility]').checked) {
-				var marker = document.createElement('span');
-				marker.className = 'pull-right fa fa-eye-slash';
+				if (!marker) {
+					marker = document.createElement('span');
+					marker.className = adminMarkup === 'bootstrap5' ? 'float-end fas fa-solid fa-eye-slash' : 'pull-right fa fa-eye-slash';
+					marker.setAttribute('data-visibility-indicator', 'true');
+					button.appendChild(marker);
+				}
 				marker.textContent = ' ' + text.text_visibility_indicator;
-				button.appendChild(marker);
+			} else if (marker) {
+				marker.parentNode.removeChild(marker);
 			}
 		});
 	}
@@ -630,27 +636,26 @@
 		card.setAttribute('data-tab-key', key);
 		tabPanels.appendChild(card);
 		var tabRow = document.createElement('li');
+		tabRow.className = adminMarkup === 'bootstrap5' ? 'nav-item' : '';
 		tabRow.setAttribute('role', 'presentation');
-		tabRow.style.display = 'flex';
-		tabRow.style.alignItems = 'center';
 		var link = document.createElement('a');
 		link.href = '#' + key;
 		link.className = adminMarkup === 'bootstrap5' ? 'nav-link' : '';
 		link.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tab');
 		link.setAttribute('data-tab-target', key);
 		link.setAttribute('role', 'tab');
-		link.style.flex = '1';
-		link.style.minWidth = '0';
 		link.setAttribute('aria-controls', key);
 		link.addEventListener('click', function () { activateTab(card); });
-		var remove = document.createElement('button');
-		remove.type = 'button';
-		remove.className = adminMarkup === 'bootstrap5' ? 'btn btn-danger btn-sm' : 'btn btn-danger btn-xs';
+		var remove = document.createElement('i');
+		remove.className = adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-minus-circle fa-circle-minus' : 'fa fa-minus-circle';
+		remove.setAttribute('data-remove-tab', 'true');
+		remove.setAttribute('role', 'button');
+		remove.setAttribute('tabindex', '0');
 		remove.setAttribute('title', text.button_remove_tab);
 		remove.setAttribute('aria-label', text.button_remove_tab);
-		remove.style.flexShrink = '0';
-		remove.innerHTML = '<i class="fa fa-trash"></i>';
-		remove.addEventListener('click', function () {
+		function removeTab(event) {
+			event.preventDefault();
+			event.stopPropagation();
 			var wasActive = card.classList.contains('active');
 			tabRow.parentNode.removeChild(tabRow);
 			card.parentNode.removeChild(card);
@@ -660,9 +665,19 @@
 			}
 			refreshCartOptions();
 			refreshTabNavigation();
+		}
+		remove.addEventListener('click', removeTab);
+		remove.addEventListener('keydown', function (event) {
+			if (event.key === 'Enter' || event.key === ' ') {
+				removeTab(event);
+			}
 		});
+		var title = document.createElement('span');
+		title.setAttribute('data-tab-title', 'true');
+		link.appendChild(remove);
+		link.appendChild(document.createTextNode(' '));
+		link.appendChild(title);
 		tabRow.appendChild(link);
-		tabRow.appendChild(remove);
 		tabNavigation.appendChild(tabRow);
 		activateTab(card);
 		refreshTabNavigation();
