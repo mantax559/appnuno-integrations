@@ -44,7 +44,7 @@ def configure_ftp(runtime: Runtime) -> None:
         with connection.cursor() as cursor:
             values = {
                 "config_ftp_status": "1",
-                "config_ftp_hostname": "127.0.0.1",
+                "config_ftp_hostname": runtime.ftp_host,
                 "config_ftp_port": str(runtime.ftp_port),
                 "config_ftp_username": runtime.ftp_user,
                 "config_ftp_password": runtime.ftp_password,

@@ -84,7 +84,10 @@ def open_browser(runtime: Runtime, artifact_dir: Path) -> Iterator[Page]:
 
 @contextmanager
 def open_php_server(web_root: Path, log_path: Path) -> Iterator[None]:
-    # OpenCart 3.0.0.0 needs an explicit session path on current PHP to avoid writing /sess_* at filesystem root.
+    if os.environ.get("OPENCART_EXTERNAL_PHP_SERVER") == "1":
+        wait_for_external_store()
+        yield
+        return
     with log_path.open("w", encoding="utf-8") as server_log:
         process = subprocess.Popen(["php", "-S", "127.0.0.1:8080", "-t", str(web_root), "-d", "session.save_path=/tmp"], stdout=server_log, stderr=subprocess.STDOUT)
         try:
@@ -93,6 +96,19 @@ def open_php_server(web_root: Path, log_path: Path) -> Iterator[None]:
         finally:
             process.terminate()
             process.wait(timeout=10)
+
+
+def wait_for_external_store() -> None:
+    deadline = time.monotonic() + 60
+    last_error: Exception | None = None
+    while time.monotonic() < deadline:
+        try:
+            with urlopen(BASE_URL, timeout=2):
+                return
+        except Exception as error:
+            last_error = error
+            time.sleep(1)
+    raise RuntimeError("The external OpenCart PHP server did not become ready.") from last_error
 
 
 def prepare_artifact_dir(runtime: Runtime) -> Path:
@@ -116,6 +132,8 @@ def prepare_store(runtime: Runtime, workspace: Path) -> Path:
     shutil.copytree(web_source, web_root, ignore=shutil.ignore_patterns(".git"))
     shutil.copyfile(web_root / "config-dist.php", web_root / "config.php")
     shutil.copyfile(web_root / "admin" / "config-dist.php", web_root / "admin" / "config.php")
+    if os.environ.get("OPENCART_EXTERNAL_PHP_SERVER") == "1":
+        (workspace.parent / "opencart-web-root").write_text(web_root.as_posix(), encoding="utf-8")
     return web_root
 
 
@@ -124,7 +142,8 @@ def start_ftp_server(runtime: Runtime, web_root: Path) -> FTPServer:
     authorizer.add_user(runtime.ftp_user, runtime.ftp_password, str(web_root), perm="elradfmwMT")
     handler = FTPHandler
     handler.authorizer = authorizer
-    server = FTPServer(("127.0.0.1", runtime.ftp_port), handler)
+    ftp_host = "0.0.0.0" if os.environ.get("OPENCART_EXTERNAL_PHP_SERVER") == "1" else "127.0.0.1"
+    server = FTPServer((ftp_host, runtime.ftp_port), handler)
     thread = threading.Thread(target=server.serve_forever, kwargs={"timeout": 0.2, "blocking": True, "handle_exit": False}, daemon=True)
     thread.start()
     return server

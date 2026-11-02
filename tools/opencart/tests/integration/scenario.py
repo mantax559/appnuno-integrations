@@ -1,3 +1,4 @@
+import os
 import tempfile
 from pathlib import Path
 
@@ -41,7 +42,8 @@ def run(runtime: Runtime) -> None:
     if not runtime.package.is_file():
         raise FileNotFoundError("Build the OCMOD package before running the integration test: " + str(runtime.package))
     artifact_dir = prepare_artifact_dir(runtime)
-    with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
+    workspace_root = Path(os.environ["OPENCART_WORKSPACE_ROOT"]) if os.environ.get("OPENCART_WORKSPACE_ROOT") else None
+    with tempfile.TemporaryDirectory(prefix="appnuno-opencart-", dir=workspace_root) as temporary:
         web_root = prepare_store(runtime, Path(temporary))
         patch_installer_directory_listing(runtime, web_root)
         patch_installer_storage_path(runtime, web_root)
