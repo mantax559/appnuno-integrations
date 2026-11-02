@@ -114,7 +114,7 @@ if (count($missing)) {
 echo "OpenCart package structure tests passed.\n";
 
 function opencart_40_package($repository) {
-    $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '4.x' . DIRECTORY_SEPARATOR . 'appnuno.ocmod.zip';
+    $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '4.x' . DIRECTORY_SEPARATOR . 'appnuno-opencart-4.x.ocmod.zip';
     $required = array(
         'install.json',
         'README.md',
@@ -175,7 +175,7 @@ function opencart_40_package($repository) {
     if (!is_string($manifest) || !strstr($manifest, '"name": "AppNuno OpenCart 4.x"') || !strstr($manifest, '"code": "appnuno"')) {
         throw new RuntimeException('OpenCart 4 archive is missing install.json.');
     }
-    if (!is_string($readme) || !strstr($readme, 'appnuno.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
+    if (!is_string($readme) || !strstr($readme, 'appnuno-opencart-4.x.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
         throw new RuntimeException('OpenCart 4 archive is missing its installation instructions.');
     }
     $missing = array_diff($required, $entries);

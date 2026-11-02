@@ -188,6 +188,22 @@
     </div>
   </div>
 </div>
+<div class="modal fade" id="icon-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="icon-picker-title">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        <h4 class="modal-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
+      </div>
+      <div class="modal-body">
+        <input type="search" id="icon-picker-search" class="form-control" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
+        <button type="button" class="btn btn-default" id="icon-picker-clear" style="margin-top:8px"><?php echo $text['text_icon_catalog_clear']; ?></button>
+        <div id="icon-picker-status" role="status" style="padding:12px 0"></div>
+        <div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px"></div>
+      </div>
+    </div>
+  </div>
+</div>
 <script type="text/javascript"><!--
 (function () {
 	var configuration = <?php echo $configuration_json; ?> || {};
@@ -197,6 +213,7 @@
 	var routeOptions = <?php echo $route_options_json; ?> || [];
 	var validationPath = <?php echo $error_config_path_json; ?>;
 	var defaultLanguageCode = <?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
 	var cartSelect = document.getElementById('cart-tab-id');
 	var adminMarkup = 'bootstrap3';
@@ -234,7 +251,7 @@
 	}
 
 	function appendFieldHelp(label, key) {
-		var aliases = { id: 'tab_id', icon: 'tab_icon', activeIcon: 'tab_active_icon' };
+		var aliases = { id: 'tab_id', icon: 'icon_catalog' };
 		appendHelp(label, text['help_' + (aliases[key] || key)]);
 	}
 
@@ -310,6 +327,171 @@
 		column.className = 'col-sm-9';
 		return column;
 	}
+
+	var iconPickerTarget = null;
+	var iconPickerStatus = document.getElementById('icon-picker-status');
+	var iconPickerGrid = document.getElementById('icon-picker-grid');
+	var iconPickerSearch = document.getElementById('icon-picker-search');
+	var iconPickerTimer = null;
+	var iconPickerRequest = 0;
+	var iconPickerDialog = document.getElementById('icon-picker-dialog');
+
+	function showIconPicker() {
+		if (window.bootstrap && window.bootstrap.Modal) {
+			window.bootstrap.Modal.getOrCreateInstance(iconPickerDialog).show();
+		} else {
+			window.jQuery(iconPickerDialog).modal('show');
+		}
+	}
+
+	function hideIconPicker() {
+		if (window.bootstrap && window.bootstrap.Modal) {
+			window.bootstrap.Modal.getOrCreateInstance(iconPickerDialog).hide();
+		} else {
+			window.jQuery(iconPickerDialog).modal('hide');
+		}
+	}
+
+	function validCatalogIcon(icon) {
+		if (!icon || typeof icon.id !== 'string' || typeof icon.uri !== 'string' || typeof icon.content_hash !== 'string' || !/^[a-f0-9]{64}$/.test(icon.content_hash)) {
+			return false;
+		}
+		var id = /^(duo|custom):([a-z0-9]+(?:-[a-z0-9]+)*)$/.exec(icon.id);
+		try {
+			var uri = new URL(icon.uri);
+			var asset = /^\/icon-assets\/(duo|custom)\/([a-z0-9]+(?:-[a-z0-9]+)*)\/([a-f0-9]{64})\.svg$/.exec(uri.pathname);
+			return !!id && !!asset && uri.protocol === 'https:' && uri.hostname === 'appnuno.com' && !uri.username && !uri.password && !uri.port && !uri.search && !uri.hash && id[1] === asset[1] && id[2] === asset[2] && icon.content_hash === asset[3];
+		} catch (error) {
+			return false;
+		}
+	}
+
+	function updateIconField(input, icon) {
+		icon = validCatalogIcon(icon) ? icon : null;
+		input.value = icon ? JSON.stringify(icon) : '';
+		var button = input.parentNode.querySelector('[data-icon-picker]');
+		button.textContent = icon ? icon.id : text.text_icon;
+		if (icon) {
+			var image = document.createElement('img');
+			image.src = icon.uri;
+			image.alt = '';
+			image.width = 24;
+			image.height = 24;
+			image.style.marginRight = '8px';
+			button.insertBefore(image, button.firstChild);
+		}
+	}
+
+	function renderIconOptions(icons) {
+		iconPickerGrid.textContent = '';
+		icons.forEach(function (icon) {
+			if (!validCatalogIcon(icon)) {
+				return;
+			}
+			var option = document.createElement('button');
+			option.type = 'button';
+			option.className = 'btn btn-default';
+			option.title = icon.id;
+			option.style.minHeight = '76px';
+			option.style.overflow = 'hidden';
+			var image = document.createElement('img');
+			image.src = icon.uri;
+			image.alt = '';
+			image.width = 28;
+			image.height = 28;
+			image.style.display = 'block';
+			image.style.margin = '0 auto 6px';
+			var label = document.createElement('span');
+			label.textContent = icon.id;
+			label.style.display = 'block';
+			label.style.fontSize = '11px';
+			label.style.overflow = 'hidden';
+			label.style.textOverflow = 'ellipsis';
+			option.appendChild(image);
+			option.appendChild(label);
+			option.addEventListener('click', function () {
+				if (iconPickerTarget) {
+					updateIconField(iconPickerTarget, { id: icon.id, uri: icon.uri, content_hash: icon.content_hash });
+					iconPickerTarget.dispatchEvent(new Event('input', { bubbles: true }));
+				}
+				hideIconPicker();
+			});
+			iconPickerGrid.appendChild(option);
+		});
+	}
+
+	function loadIconCatalog() {
+		var requestId = iconPickerRequest + 1;
+		iconPickerRequest = requestId;
+		var url = new URL(iconCatalogUrl, window.location.href);
+		var search = iconPickerSearch.value.trim().slice(0, 120);
+		if (search) {
+			url.searchParams.set('q', search);
+		}
+		iconPickerGrid.textContent = '';
+		iconPickerStatus.textContent = text.text_icon_catalog_loading;
+		fetch(url.toString(), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+			.then(function (response) {
+				if (!response.ok) {
+					throw new Error(text.text_icon_catalog_error);
+				}
+				return response.json();
+			})
+			.then(function (catalog) {
+				if (requestId !== iconPickerRequest) {
+					return;
+				}
+				var icons = catalog && Array.isArray(catalog.data) ? catalog.data : [];
+				renderIconOptions(icons);
+				iconPickerStatus.textContent = icons.length ? '' : text.text_icon_catalog_empty;
+			})
+			.catch(function () {
+				if (requestId !== iconPickerRequest) {
+					return;
+				}
+				iconPickerGrid.textContent = '';
+				iconPickerStatus.textContent = text.text_icon_catalog_error;
+			});
+	}
+
+	function createIconField(tab, path) {
+		var group = createGroup();
+		var title = createGroupLabel(text.text_icon);
+		var column = createGroupColumn();
+		var input = document.createElement('input');
+		input.type = 'hidden';
+		input.setAttribute('data-field', 'icon');
+		input.setAttribute('data-validation-path', path + '.icon');
+		var selected = validCatalogIcon(tab.icon) ? tab.icon : null;
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'btn btn-default';
+		button.setAttribute('data-icon-picker', 'true');
+		button.addEventListener('click', function () {
+			iconPickerTarget = input;
+			showIconPicker();
+			loadIconCatalog();
+		});
+		column.appendChild(input);
+		column.appendChild(button);
+		group.appendChild(title);
+		group.appendChild(column);
+		updateIconField(input, selected);
+		appendFieldHelp(title, 'icon');
+		return group;
+	}
+
+	iconPickerSearch.addEventListener('input', function () {
+		window.clearTimeout(iconPickerTimer);
+		iconPickerTimer = window.setTimeout(loadIconCatalog, 250);
+	});
+	document.getElementById('icon-picker-clear').addEventListener('click', function () {
+		if (iconPickerTarget) {
+			updateIconField(iconPickerTarget, null);
+			iconPickerTarget.dispatchEvent(new Event('input', { bubbles: true }));
+		}
+		hideIconPicker();
+	});
 
 	function createField(label, value, key, type, path) {
 		var group = createGroup();
@@ -615,8 +797,7 @@
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
 		card.appendChild(createLabelFields(tab, path));
 		card.appendChild(createUrlField(tab, path));
-		card.appendChild(createField(text.text_icon, tab.icon, 'icon', 'text', path + '.icon'));
-		card.appendChild(createField(text.text_active_icon, tab.activeIcon, 'activeIcon', 'text', path + '.activeIcon'));
+		card.appendChild(createIconField(tab, path));
 		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createPagesField(tab, path));
 		card.addEventListener('input', function () {
@@ -692,6 +873,13 @@
 					tab[field.getAttribute('data-field')] = field.value.trim();
 				}
 			});
+			if (tab.icon) {
+				try {
+					tab.icon = JSON.parse(tab.icon);
+				} catch (error) {
+					delete tab.icon;
+				}
+			}
 			var labels = {};
 			Array.prototype.forEach.call(card.querySelectorAll('[data-language-label]'), function (field) {
 				if (field.value.trim()) {

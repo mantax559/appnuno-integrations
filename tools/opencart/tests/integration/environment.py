@@ -23,7 +23,6 @@ def capture_screenshot(page: Page, artifact_dir: Path, filename: str) -> None:
 
 
 def click_install_continue(page: Page) -> None:
-    # OpenCart 4 license step continues through a link; other installer steps use a submit control.
     control = page.locator('input[type="submit"], button[type="submit"]')
     if control.count():
         control.first.click()

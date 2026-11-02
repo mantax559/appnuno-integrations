@@ -9,18 +9,14 @@ class ModelExtensionModuleAppnuno extends Model {
 					'label' => 'Home',
 					'visible' => true,
 					'allPages' => true,
-					'url' => '/',
-					'icon' => 'home-outline',
-					'activeIcon' => 'home'
+					'url' => '/'
 				),
 				array(
 					'id' => 'cart',
 					'label' => 'Cart',
 					'visible' => true,
 					'allPages' => true,
-					'url' => '/index.php?route=checkout/cart',
-					'icon' => 'cart-outline',
-					'activeIcon' => 'cart'
+					'url' => '/index.php?route=checkout/cart'
 				)
 			),
 			'routes' => (object)array(),
@@ -213,9 +209,18 @@ class ModelExtensionModuleAppnuno extends Model {
 				return $tab_path . '.labels: Enter a label for each enabled store language.';
 			}
 
-			foreach (array('icon', 'activeIcon') as $icon_key) {
-				if (isset($tab[$icon_key]) && (!is_string($tab[$icon_key]) || !preg_match('/^[a-z0-9-]{1,80}$/', $tab[$icon_key]))) {
-					return $tab_path . '.' . $icon_key . ': Use a valid Material Design Icon name.';
+			if (isset($tab['icon'])) {
+				$icon = $tab['icon'];
+
+				if (!is_array($icon) || !isset($icon['id']) || !is_string($icon['id']) || !isset($icon['uri']) || !is_string($icon['uri']) || !isset($icon['content_hash']) || !is_string($icon['content_hash']) || !preg_match('/^[a-f0-9]{64}$/', $icon['content_hash']) || !filter_var($icon['uri'], FILTER_VALIDATE_URL)) {
+					return $tab_path . '.icon: Choose an icon from the AppNuno catalog.';
+				}
+
+				$icon_parts = parse_url($icon['uri']);
+				$asset_match = array();
+
+				if (!is_array($icon_parts) || !isset($icon_parts['scheme'], $icon_parts['host'], $icon_parts['path']) || !in_array($icon_parts['scheme'], array('https'), true) || !in_array($icon_parts['host'], array('appnuno.com'), true) || isset($icon_parts['user']) || isset($icon_parts['pass']) || isset($icon_parts['port']) || isset($icon_parts['query']) || isset($icon_parts['fragment']) || !preg_match('#^/icon-assets/(duo|custom)/([a-z0-9]+(?:-[a-z0-9]+)*)/([a-f0-9]{64})\\.svg$#D', $icon_parts['path'], $asset_match) || strcmp($icon['id'], $asset_match[1] . ':' . $asset_match[2]) || strcmp($icon['content_hash'], $asset_match[3])) {
+					return $tab_path . '.icon: Choose an icon from the AppNuno catalog.';
 				}
 			}
 

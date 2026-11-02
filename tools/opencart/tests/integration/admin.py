@@ -284,6 +284,26 @@ def install_module(runtime: Runtime, page: Page, token: str) -> None:
     page.locator("#default-tabs .appnuno-tab").first.wait_for(state="attached")
 
 
+def choose_catalog_icon(page: Page, tab: Locator, icon_id: str) -> None:
+    tab.locator("[data-icon-picker]").click()
+    dialog = page.locator("#icon-picker-dialog")
+    dialog.wait_for(state="visible")
+    search = page.locator("#icon-picker-search")
+    search.fill(icon_id)
+    option = page.locator("#icon-picker-grid button").filter(has_text=icon_id).first
+    option.wait_for(state="visible", timeout=30000)
+    if option.get_attribute("title") != icon_id:
+        raise AssertionError(f"The catalog search did not return {icon_id} as the first matching icon.")
+    option.click()
+    icon = json.loads(tab.locator('[data-field="icon"]').input_value())
+    if icon.get("id") != icon_id:
+        raise AssertionError(f"The picker did not save the selected catalog icon: {icon}.")
+    if tab.locator('[data-field="activeIcon"]').count():
+        raise AssertionError("The tab editor should not expose a separate active icon field.")
+    if tab.locator("[data-icon-picker] img").count() != 1:
+        raise AssertionError("The selected catalog icon preview should contain exactly one image.")
+
+
 def add_cart_page_tab(page: Page) -> None:
     page.locator('a[href="#tab-navigation"]').click()
     page.locator("#tab-navigation").wait_for(state="visible")
@@ -295,8 +315,7 @@ def add_cart_page_tab(page: Page) -> None:
     page_tab.locator('[data-url-select]').select_option("__custom__")
     page_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
     page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
-    page_tab.locator('[data-field="icon"]').fill("cart-outline")
-    page_tab.locator('[data-field="activeIcon"]').fill("cart")
+    choose_catalog_icon(page, page_tab, "duo:shopping-bag")
     visibility = page_tab.locator('[data-tab-visibility]')
     if not visibility.is_checked():
         raise AssertionError("A newly added tab should be visible by default.")
@@ -331,8 +350,7 @@ def add_contact_tab(page: Page) -> None:
     tab.locator('[data-url-select]').select_option("__custom__")
     tab.locator('[data-language-url="en-gb"]').fill("/en/contact")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/kontaktai")
-    tab.locator('[data-field="icon"]').fill("home-outline")
-    tab.locator('[data-field="activeIcon"]').fill("home")
+    choose_catalog_icon(page, tab, "duo:user")
     if not tab.locator('[data-tab-visibility]').is_checked():
         raise AssertionError("A newly added tab should be visible by default.")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
@@ -448,13 +466,15 @@ def configure_glass(page: Page) -> None:
 
 
 def fill_builtin_tab_labels(page: Page) -> None:
-    for index, labels in enumerate((("Home", "Pradžia"), ("Cart", "Krepšelis"))):
+    tabs = (("Home", "Pradžia", "duo:dashboard"), ("Cart", "Krepšelis", "duo:shopping-bag"))
+    for index, (english, lithuanian, icon_id) in enumerate(tabs):
         page.locator(f'#default-tabs [data-tab-target="appnuno-tab-{index}"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").nth(index)
         if not tab.is_visible() or page.locator("#default-tabs .appnuno-tab").nth(1 - index).is_visible():
             raise AssertionError("The vertical tab list should display only the selected tab panel.")
-        tab.locator('[data-language-label="en-gb"]').fill(labels[0])
-        tab.locator('[data-language-label="lt-lt"]').fill(labels[1])
+        tab.locator('[data-language-label="en-gb"]').fill(english)
+        tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
+        choose_catalog_icon(page, tab, icon_id)
 
 
 def submit_module_settings(page: Page) -> None:

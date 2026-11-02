@@ -8,7 +8,7 @@ $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'ope
 $release_lines = array('3.0' => '3.x', '4' => '4.x');
 $release_line = isset($release_lines[$line]) ? $release_lines[$line] : $line . '.x';
 $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line;
-$package_file = $line === '4' ? 'appnuno.ocmod.zip' : 'appnuno-opencart-' . $release_line . '.ocmod.zip';
+$package_file = 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $package = $release . DIRECTORY_SEPARATOR . $package_file;
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
@@ -58,7 +58,7 @@ foreach ($entries as $name => $path) {
     $prepared[$name] = $body;
 }
 if ($line === '4') {
-    $prepared['install.json'] = "{\n    \"name\": \"AppNuno OpenCart 4.x\",\n    \"description\": \"AppNuno native navigation for OpenCart 4.\",\n    \"code\": \"appnuno\",\n    \"version\": \"1.2.0\",\n    \"author\": \"AppNuno\",\n    \"link\": \"https://appnuno.com\"\n}\n";
+    $prepared['install.json'] = "{\n    \"name\": \"AppNuno OpenCart 4.x\",\n    \"description\": \"AppNuno native navigation for OpenCart 4.\",\n    \"code\": \"appnuno\",\n    \"version\": \"1.3.0\",\n    \"author\": \"AppNuno\",\n    \"link\": \"https://appnuno.com\"\n}\n";
 }
 if (in_array($line, array('2.0', '2.1'), true)) {
     $prepared['upload/admin/language/english/module/appnuno.php'] = $prepared['upload/admin/language/en-gb/module/appnuno.php'];

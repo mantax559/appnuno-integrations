@@ -89,12 +89,17 @@ def assert_configured_tabs(configuration: dict[str, Any]) -> None:
         raise AssertionError(f"The bootstrap configuration did not retain all default tab URLs: {configured_tab}.")
 
 
+def assert_catalog_icon(tab: dict[str, Any], expected_id: str) -> None:
+    icon = tab.get("icon")
+    if not isinstance(icon, dict) or icon.get("id") != expected_id or "activeIcon" in tab:
+        raise AssertionError(f"The tab should publish only its selected catalog icon {expected_id}: {tab}.")
+
+
 def assert_resolved_contact_tab(payload: dict[str, Any]) -> None:
     tab = next(tab for tab in payload["navigation"]["tabs"] if tab["id"] == "ci-added-tab")
     if "labels" in tab or "urls" in tab:
         raise AssertionError("The resolved navigation tab still contains untranslated labels or URLs.")
-    if tab.get("icon") != "home-outline" or tab.get("activeIcon") != "home":
-        raise AssertionError(f"The default tab icons were not preserved in the bootstrap payload: {tab}.")
+    assert_catalog_icon(tab, "duo:user")
     if tab.get("badge") != payload["state"]["cartCount"]:
         raise AssertionError("The selected cart badge tab did not receive the server cart count.")
 
@@ -103,20 +108,19 @@ def assert_resolved_default_tabs(payload: dict[str, Any]) -> None:
     if any(tab.get("id") == "ci-hidden-tab" for tab in payload["navigation"]["tabs"]):
         raise AssertionError("The externally hidden tab appeared in storefront navigation.")
     expected_default_tabs = {
-        "home": ("Home", "/", "home-outline", "home"),
-        "cart": ("Cart", "/index.php?route=checkout/cart", "cart-outline", "cart"),
-        "ci-added-tab": ("CI Added Tab", "/en/contact", "home-outline", "home"),
+        "home": ("Home", "/", "duo:dashboard"),
+        "cart": ("Cart", "/index.php?route=checkout/cart", "duo:shopping-bag"),
+        "ci-added-tab": ("CI Added Tab", "/en/contact", "duo:user"),
     }
     if len(payload["navigation"]["tabs"]) != len(expected_default_tabs):
         raise AssertionError(f"The resolved bootstrap tab set is incomplete: {payload['navigation']['tabs']}.")
     for navigation_tab in payload["navigation"]["tabs"]:
-        label, url, icon, active_icon = expected_default_tabs[navigation_tab["id"]]
+        label, url, icon_id = expected_default_tabs[navigation_tab["id"]]
         if navigation_tab.get("label") != label:
             raise AssertionError(f"A default tab label is wrong: {navigation_tab}.")
         if navigation_tab.get("url") != url:
             raise AssertionError(f"A default tab URL is wrong: {navigation_tab}.")
-        if navigation_tab.get("icon") != icon or navigation_tab.get("activeIcon") != active_icon:
-            raise AssertionError(f"A default tab icon is wrong: {navigation_tab}.")
+        assert_catalog_icon(navigation_tab, icon_id)
 
 
 def assert_visual_configuration(payload: dict[str, Any], configuration: dict[str, Any]) -> None:
@@ -171,8 +175,7 @@ def check_route_bootstrap(payload: dict[str, Any]) -> None:
     tab = tabs[-1]
     if tab.get("label") != "Cart route tab" or tab.get("url") != "/en/cart":
         raise AssertionError(f"The checkout/cart tab was not resolved correctly: {tab}.")
-    if tab.get("icon") != "cart-outline" or tab.get("activeIcon") != "cart":
-        raise AssertionError(f"The cart page tab icons were not preserved: {tab}.")
+    assert_catalog_icon(tab, "duo:shopping-bag")
     if "labels" in tab or "urls" in tab or "pages" in tab or "allPages" in tab:
         raise AssertionError("The resolved cart page tab still contains stored translations or page visibility settings.")
     active_ids = [tab["id"] for tab in tabs if tab.get("active") is True]

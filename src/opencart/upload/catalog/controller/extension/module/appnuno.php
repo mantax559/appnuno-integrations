@@ -168,6 +168,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		foreach ($tabs as $tab) {
 			if (is_array($tab) && $this->tabVisible($tab)) {
+				if (!isset($tab['icon']) || !is_array($tab['icon']) || !isset($tab['icon']['id'], $tab['icon']['uri']) || !is_string($tab['icon']['id']) || !is_string($tab['icon']['uri'])) {
+					unset($tab['icon']);
+				}
+
+				unset($tab['activeIcon']);
 				$visible_tabs[] = $tab;
 			}
 		}

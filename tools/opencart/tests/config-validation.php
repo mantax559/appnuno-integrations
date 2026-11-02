@@ -19,7 +19,7 @@ if (!in_array($default_values['colors']['light']['backgroundColor'], array('#FFF
 $valid = json_encode(array(
     'cartTabId' => 'cart',
     'defaultTabs' => array(
-        array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/', 'icon' => 'home'),
+        array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/', 'icon' => array('id' => 'duo:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64))),
         array('id' => 'cart', 'labels' => array('en-gb' => 'Cart', 'lt-lt' => 'Krepšelis'), 'url' => '/index.php?route=checkout/cart')
     ),
     'routes' => array('checkout/cart' => array(array('id' => 'cart', 'labels' => array('en-gb' => 'Bag'), 'url' => '/index.php?route=checkout/cart'))),
@@ -91,6 +91,14 @@ $invalid_identity = json_encode(array('defaultTabs' => array(array('id' => 'cart
 if (!strlen($model->validateConfig($invalid_identity))) {
     throw new RuntimeException('Expected non-boolean active state to be rejected.');
 }
+$invalid_icon = json_encode(array('defaultTabs' => array(array('id' => 'home', 'label' => 'Home', 'url' => '/', 'icon' => array('id' => 'duo:home', 'uri' => 'https://icons.example/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64)))), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_icon), 'defaultTabs[0].icon')) {
+    throw new RuntimeException('Expected icon URLs outside the AppNuno catalog to be rejected.');
+}
+$invalid_icon_id = json_encode(array('defaultTabs' => array(array('id' => 'home', 'label' => 'Home', 'url' => '/', 'icon' => array('id' => 'custom:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64)))), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_icon_id), 'defaultTabs[0].icon')) {
+    throw new RuntimeException('Expected namespaced icon IDs to match their immutable asset URLs.');
+}
 $invalid_route = json_encode(array('defaultTabs' => array(), 'routes' => array('checkout/cart?redirect=home' => array())));
 if (!strstr($model->validateConfig($invalid_route), 'routes')) {
     throw new RuntimeException('Expected malformed OpenCart route names to be rejected.');
@@ -150,6 +158,13 @@ if (!strstr($model->validateConfig($invalid_pages), 'defaultTabs[0].pages')) {
 class Controller {}
 require dirname(__DIR__, 3) . '/src/opencart/upload/catalog/controller/extension/module/appnuno.php';
 $controller = new ControllerExtensionModuleAppnuno();
+$visible_tabs_method = new ReflectionMethod($controller, 'visibleTabs');
+$visible_tabs_method->setAccessible(true);
+$catalog_icon = array('id' => 'duo:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64));
+$published_tabs = $visible_tabs_method->invoke($controller, array(array('id' => 'legacy', 'icon' => 'home', 'activeIcon' => 'home'), array('id' => 'catalog', 'icon' => $catalog_icon, 'activeIcon' => 'home')));
+if (isset($published_tabs[0]['icon']) || isset($published_tabs[0]['activeIcon']) || !isset($published_tabs[1]['icon']['uri']) || isset($published_tabs[1]['activeIcon'])) {
+    throw new RuntimeException('Expected storefront output to publish catalog assets and omit legacy icon names.');
+}
 $shown_on_route = new ReflectionMethod($controller, 'tabShownOnRoute');
 $shown_on_route->setAccessible(true);
 if (!$shown_on_route->invoke($controller, array('id' => 'legacy'), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'legacy', 'pages' => array()), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'checkout/cart') || $shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'common/home')) {
