@@ -1,5 +1,5 @@
-﻿param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\..\.github\workflows")
+param(
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\.github\workflows")
 )
 
 $ErrorActionPreference = "Stop"
@@ -43,14 +43,26 @@ function Get-OpenCartWorkflowKey {
 }
 
 function Get-OpenCartPhpVersion {
-    param(
-        [string]$Version,
-        [hashtable]$KnownPhpVersions,
-        [string[]]$KnownVersions
-    )
+    param([string]$Version)
 
-    if ($KnownPhpVersions.ContainsKey($Version)) {
-        return $KnownPhpVersions[$Version]
+    if ($Version -match '^2\.[0-3]\.' -or $Version -match '^3\.0\.0\.' -or $Version -match '^3\.0\.[1-2]\.\d+$' -or $Version -match '^3\.0\.3\.[0-3]$') {
+        return '5.4'
+    }
+
+    if ($Version -match '^3\.0\.3\.4$') {
+        return '7.1'
+    }
+
+    if ($Version -match '^3\.0\.(3\.[5-9]|4\.[0-1])\.') {
+        return '7.3'
+    }
+
+    if ($Version -match '^3\.0\.5\.' -or $Version -match '^4\.1\.0\.4$') {
+        return '8.1'
+    }
+
+    if ($Version -match '^4\.0\.' -or $Version -match '^4\.1\.0\.[0-3]$') {
+        return '8.0'
     }
 
     try {
@@ -65,18 +77,7 @@ function Get-OpenCartPhpVersion {
     catch {
     }
 
-    $closestVersion = @(
-        $KnownVersions |
-            Where-Object { (ConvertTo-ComparableVersion $_) -le (ConvertTo-ComparableVersion $Version) } |
-            Sort-Object { ConvertTo-ComparableVersion $_ } -Descending |
-            Select-Object -First 1
-    )
-
-    if ($closestVersion.Count -gt 0 -and $KnownPhpVersions.ContainsKey($closestVersion[0])) {
-        return $KnownPhpVersions[$closestVersion[0]]
-    }
-
-    throw "Could not determine the PHP version for OpenCart $Version from release metadata or existing workflow entries."
+    throw "Could not determine the PHP version for OpenCart $Version from release metadata."
 }
 
 function Get-OpenCartReleases {
@@ -104,6 +105,13 @@ function Get-OpenCartReleases {
 $wordpressArchiveUrl = "https://wordpress.org/download/releases/"
 $woocommerceArchiveUrl = "https://developer.woocommerce.com/releases/"
 $outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
+$openCartReleases = @(Get-OpenCartReleases)
+
+if ($openCartReleases.Count -eq 0) {
+    throw "No stable OpenCart releases were found in the official GitHub release archive."
+}
+
+$openCartTemplates = @()
 
 $wordpressHtml = (Invoke-WebRequest -UseBasicParsing -Uri $wordpressArchiveUrl -TimeoutSec 30).Content
 $woocommerceHtml = (Invoke-WebRequest -UseBasicParsing -Uri $woocommerceArchiveUrl -TimeoutSec 30).Content
@@ -257,6 +265,7 @@ foreach ($release in $woocommerceMetadata) {
 }
 
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
+Get-ChildItem -Path $outputPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | Remove-Item -Force
 $generatedWordPressFiles = [System.Collections.Generic.List[string]]::new()
 
 foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Object { [int]$_ }) {
@@ -307,13 +316,136 @@ Get-ChildItem -Path $outputPath -Filter 'wordpress-woocommerce-*.x.yml' -File |
     Where-Object { $_.Name -notin $generatedWordPressFiles } |
     Remove-Item -Force
 
-$openCartReleases = @(Get-OpenCartReleases)
-if ($openCartReleases.Count -eq 0) {
-    throw "No stable OpenCart releases were found in the official GitHub release archive."
-}
-
 $generatedOpenCartFiles = [System.Collections.Generic.List[string]]::new()
-$openCartTemplates = @(Get-ChildItem -Path $outputPath -Filter 'opencart-*.yml' -File)
+$legacyOpenCartVersions = @{
+    '2.0.x' = @('2.0.0.0', '2.0.1.0', '2.0.1.1', '2.0.2.0', '2.0.3.0', '2.0.3.1')
+    '2.1.x' = @('2.1.0.0', '2.1.0.1', '2.1.0.2')
+    '2.2.x' = @('2.2.0.0')
+    '2.3.x' = @('2.3.0.0', '2.3.0.1', '2.3.0.2')
+    '3.x' = @('3.0.0.0', '3.0.0.2', '3.0.1.1', '3.0.1.2', '3.0.2.0', '3.0.3.0', '3.0.3.1', '3.0.3.2', '3.0.3.3', '3.0.3.4', '3.0.3.5', '3.0.3.6', '3.0.3.7', '3.0.3.8', '3.0.3.9', '3.0.4.0', '3.0.4.1', '3.0.5.0', '3.0.5.1')
+    '4.x' = @('4.0.0.0', '4.0.1.0', '4.0.1.1', '4.0.2.0', '4.0.2.1', '4.0.2.2', '4.0.2.3', '4.1.0.0', '4.1.0.1', '4.1.0.2', '4.1.0.3', '4.1.0.4')
+}
+$openCartTemplateDefinitions = @(
+    @{ Key = '2.0.x'; Version = '2.0.3.1'; Php = '5.4'; Build = '2.0'; Package = '2.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.1.x'; Version = '2.1.0.2'; Php = '5.4'; Build = '2.1'; Package = '2.1'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.2.x'; Version = '2.2.0.0'; Php = '5.4'; Build = '2.2'; Package = '2.2'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.3.x'; Version = '2.3.0.2'; Php = '5.4'; Build = '2.3'; Package = '2.3'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '3.x'; Version = '3.0.5.1'; Php = '8.1'; Build = '3.0'; Package = '3.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mbstring, xml' }
+    @{ Key = '4.x'; Version = '4.1.0.4'; Php = '8.1'; Build = '4'; Package = '4'; Extensions = 'curl, gd, mysqli, zip, mbstring, xml' }
+)
+
+$openCartWorkflowTemplate = @'
+name: OpenCart __KEY__ compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  integration:
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - opencart-version: '__VERSION__'
+            php-version: '__PHP__'
+    services:
+      mysql:
+        image: mysql:5.7
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: opencart
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Check out storefront SDK source
+        uses: actions/checkout@v6
+        with:
+          repository: mantax559/appnuno-platform
+          ref: production
+          path: appnuno-platform
+          token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
+
+      - name: Set up PHP for the package build
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '7.3'
+          extensions: zip, mbstring, xml
+          coverage: none
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.14'
+
+      - name: Install browser test dependencies
+        run: |
+          python -m pip install -r tools/opencart/tests/requirements-ci.txt
+          python -m playwright install --with-deps chromium
+
+      - name: Build and validate extension package reproducibly
+        env:
+          TZ: UTC
+        run: |
+          php tools/opencart/build-package.php __BUILD__
+          first_hash=$(sha256sum downloads/opencart/__KEY__/appnuno-opencart-__KEY__.ocmod.zip | cut -d ' ' -f 1)
+          php tools/opencart/build-package.php __BUILD__
+          second_hash=$(sha256sum downloads/opencart/__KEY__/appnuno-opencart-__KEY__.ocmod.zip | cut -d ' ' -f 1)
+          test "$first_hash" = "$second_hash"
+          php tools/opencart/tests/package-validation.php __PACKAGE__
+          php tools/opencart/tests/config-validation.php
+          php tools/opencart/tests/language-validation.php
+
+      - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: __EXTENSIONS__
+          coverage: none
+
+      - name: Install OpenCart ${{ matrix.opencart-version }} and run browser integration test
+        env:
+          OPENCART_VERSION: ${{ matrix.opencart-version }}
+          OPENCART_DB_HOST: 127.0.0.1
+          OPENCART_DB_USER: root
+          OPENCART_DB_PASSWORD: root
+          OPENCART_DB_NAME: opencart
+          OPENCART_ARTIFACT_DIR: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
+          APPNUNO_SDK_SOURCE: ${{ github.workspace }}/appnuno-platform/public/sdk/v1/appnuno.js
+        run: python tools/opencart/tests/integration.py
+
+      - name: Upload browser test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: opencart-${{ matrix.opencart-version }}-browser-artifacts
+          path: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
+          if-no-files-found: warn
+          retention-days: 7
+'@
+
+$openCartTemplates = [System.Collections.Generic.List[System.IO.FileInfo]]::new()
+
+foreach ($definition in $openCartTemplateDefinitions) {
+    $templateContent = $openCartWorkflowTemplate.Replace('__KEY__', $definition.Key).
+        Replace('__VERSION__', $definition.Version).
+        Replace('__PHP__', $definition.Php).
+        Replace('__BUILD__', $definition.Build).
+        Replace('__PACKAGE__', $definition.Package).
+        Replace('__EXTENSIONS__', $definition.Extensions)
+    $templatePath = Join-Path $outputPath "opencart-$($definition.Key).yml"
+    [System.IO.File]::WriteAllText($templatePath, $templateContent.TrimStart(), [System.Text.UTF8Encoding]::new($false))
+    $openCartTemplates.Add((Get-Item $templatePath))
+}
 
 foreach ($template in $openCartTemplates) {
     $workflowKey = [System.IO.Path]::GetFileNameWithoutExtension($template.Name).Substring('opencart-'.Length)
@@ -339,7 +471,7 @@ foreach ($template in $openCartTemplates) {
             }
         }
 
-        foreach ($versionMatch in [regex]::Matches($templateLines[$matrixIndex], "'([^']+)'")) {
+        foreach ($versionMatch in [regex]::Matches($templateLines[$matrixIndex], "'([^']+)'") ) {
             if ($versionMatch.Groups[1].Value -notin $versionsForWorkflow) {
                 $versionsForWorkflow.Add($versionMatch.Groups[1].Value)
             }
@@ -387,6 +519,12 @@ foreach ($template in $openCartTemplates) {
         }
     }
 
+    foreach ($version in $legacyOpenCartVersions[$workflowKey]) {
+        if ($version -notin $versionsForWorkflow) {
+            $versionsForWorkflow.Add($version)
+        }
+    }
+
     foreach ($line in $templateLines[$includeIndex..($servicesIndex - 1)]) {
         $versionMatch = [regex]::Match($line, '^\s*- opencart-version: ''([^'']+)''$')
 
@@ -406,7 +544,7 @@ foreach ($template in $openCartTemplates) {
     $workflowLines.AddRange([string[]]$prefix)
 
     foreach ($version in $sortedVersionsForWorkflow) {
-        $phpVersion = Get-OpenCartPhpVersion -Version $version -KnownPhpVersions $knownPhpVersions -KnownVersions @($knownVersions)
+        $phpVersion = Get-OpenCartPhpVersion -Version $version
         $workflowLines.Add("          - opencart-version: '$version'")
         $workflowLines.Add("            php-version: '$phpVersion'")
     }
@@ -417,7 +555,7 @@ foreach ($template in $openCartTemplates) {
 }
 
 if ($generatedOpenCartFiles.Count -eq 0) {
-    throw "No OpenCart workflow templates were updated."
+    throw "No OpenCart workflows were generated."
 }
 
-Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases and refreshed $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."
+Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases and generated $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."

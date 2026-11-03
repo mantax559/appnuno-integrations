@@ -16,5 +16,5 @@ OpenCart 1.5.x and older versions are not supported.
 Run this script from the repository root to generate the latest WordPress/WooCommerce and OpenCart GitHub Actions workflow files:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\wordpress\update-compatibility.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\update-workflows.ps1
 ```
