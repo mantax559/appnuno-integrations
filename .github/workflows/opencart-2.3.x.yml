@@ -11,7 +11,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        opencart-version: ['2.3.0.0', '2.3.0.1', '2.3.0.2']
+        include:
+          - opencart-version: '2.3.0.0'
+            php-version: '5.4'
+          - opencart-version: '2.3.0.1'
+            php-version: '5.4'
+          - opencart-version: '2.3.0.2'
+            php-version: '5.4'
     services:
       mysql:
         image: mysql:5.7
@@ -66,10 +72,10 @@ jobs:
           php tools/opencart/tests/config-validation.php
           php tools/opencart/tests/language-validation.php
 
-      - name: Set up PHP 5.4 for the OpenCart store
+      - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '5.4'
+          php-version: ${{ matrix.php-version }}
           extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
           coverage: none
 
