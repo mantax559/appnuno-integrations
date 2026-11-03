@@ -1,0 +1,66 @@
+name: appnuno-wordpress-tests
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  wordpress:
+    image: appnuno-wordpress:${WORDPRESS_VERSION:-7.1.4}
+    build:
+      context: .
+      dockerfile: Dockerfile.wordpress
+      args:
+        WORDPRESS_VERSION: ${WORDPRESS_VERSION:-7.1.4}
+        PHP_VERSION: ${PHP_VERSION:-8.3}
+    ports:
+      - "127.0.0.1:${WORDPRESS_PORT:-8080}:80"
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+    volumes:
+      - wordpress-files:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit((int) !@fsockopen('127.0.0.1', 80));"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  installer:
+    image: wordpress:cli-php${PHP_VERSION:-8.3}
+    user: "0:0"
+    entrypoint: ["/bin/sh", "/scripts/prepare-store.sh"]
+    environment:
+      WORDPRESS_VERSION: ${WORDPRESS_VERSION:-7.1.4}
+      WOOCOMMERCE_VERSION: ${WOOCOMMERCE_VERSION:-11.2.1}
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_NAME: wordpress
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_SITE_URL: http://127.0.0.1:${WORDPRESS_PORT:-8080}
+      WORDPRESS_ADMIN_USER: admin
+      WORDPRESS_ADMIN_PASSWORD: appnuno-local
+      WORDPRESS_ADMIN_EMAIL: admin@example.test
+    volumes:
+      - wordpress-files:/var/www/html
+      - ./prepare-store.sh:/scripts/prepare-store.sh:ro
+    depends_on:
+      wordpress:
+        condition: service_healthy
+
+volumes:
+  wordpress-files:

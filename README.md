@@ -9,6 +9,42 @@
 | OpenCart | 2.1.x | [Instruction](downloads/opencart/2.1.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.1.x/appnuno-opencart-2.1.x.ocmod.zip) | 2.1.0.0, 2.1.0.1 and 2.1.0.2 |
 | OpenCart | 2.0.x | [Instruction](downloads/opencart/2.0.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.0.x/appnuno-opencart-2.0.x.ocmod.zip) | 2.0.0.0, 2.0.1.0, 2.0.1.1, 2.0.2.0, 2.0.3.0 and 2.0.3.1 |
 
+OpenCart 1.5.x and older versions are not supported. AppNuno integrations are available only for the OpenCart versions listed above.
+
+## Local WordPress and WooCommerce installation check
+
+This disposable Docker environment installs WordPress 7.1.x and WooCommerce 11.2.1 on MySQL 8.4. It currently covers WordPress 7.1, 7.1.1, 7.1.2, 7.1.3 and 7.1.4; GitHub Actions runs the clean-install check for each version. WooCommerce 11.2.1 is pinned and is listed as tested up to WordPress 7.1.
+
+This is environment preparation only. It does not include an AppNuno WordPress/WooCommerce module, integration package, or module behavior tests. The runner installs WordPress and WooCommerce, checks that WordPress is installed and WooCommerce is active at the expected version, then removes the containers and temporary database.
+
+Prerequisites: Docker Desktop with Docker Compose.
+
+Run the WordPress 7.1.4 check from the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\wordpress\tests\run-docker.ps1
+```
+
+To check another currently covered 7.1.x release or use a different local port:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\wordpress\tests\run-docker.ps1 -WordPressVersion "7.1.3" -WordPressPort 8081
+```
+
+The temporary site is available at `http://127.0.0.1:8080` (or the port supplied with `-WordPressPort`) while the check is running. The runner tears it down when finished.
+
+## WordPress and WooCommerce compatibility workflows
+
+The generator reads official WordPress and WooCommerce release metadata, then creates one GitHub Actions workflow per WooCommerce major version under `.github/workflows/`, named `wordpress-woocommerce-<major>.x.yml`. Each WooCommerce release is tested against the latest patch in its `Requires at least` WordPress branch and its `Tested up to` branch, using that release's declared `Requires PHP` version. If both metadata fields point to the same WordPress branch, the release gets one test entry for that branch. For releases without a `Requires PHP` value, the workflow uses PHP 8.3.
+
+After new releases appear, regenerate the workflow files by running this command from the repository root in PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\wordpress\update-compatibility.ps1
+```
+
+The script needs an internet connection and no additional packages. It generates `.yml` files in `.github/workflows/`.
+
 ## Local OpenCart integration tests with Docker
 
 Prerequisites: Docker Desktop with Docker Compose, and sibling `appnuno-platform` checkout containing `public/sdk/v1/appnuno.js`.
