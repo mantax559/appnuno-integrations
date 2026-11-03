@@ -30,12 +30,83 @@ function ConvertTo-BranchVersion {
     return "$($parts[0]).$($parts[1])"
 }
 
+function Get-OpenCartWorkflowKey {
+    param([string]$Version)
+
+    $parts = $Version.Split('.')
+
+    if ($parts[0] -eq '2') {
+        return "$($parts[0]).$($parts[1]).x"
+    }
+
+    return "$($parts[0]).x"
+}
+
+function Get-OpenCartPhpVersion {
+    param(
+        [string]$Version,
+        [hashtable]$KnownPhpVersions,
+        [string[]]$KnownVersions
+    )
+
+    if ($KnownPhpVersions.ContainsKey($Version)) {
+        return $KnownPhpVersions[$Version]
+    }
+
+    try {
+        $composer = Invoke-RestMethod -Uri "https://raw.githubusercontent.com/opencart/opencart/$Version/composer.json" -TimeoutSec 20
+        $phpConstraint = [string]$composer.require.php
+        $phpMatch = [regex]::Match($phpConstraint, '(\d+\.\d+)')
+
+        if ($phpMatch.Success) {
+            return $phpMatch.Groups[1].Value
+        }
+    }
+    catch {
+    }
+
+    $closestVersion = @(
+        $KnownVersions |
+            Where-Object { (ConvertTo-ComparableVersion $_) -le (ConvertTo-ComparableVersion $Version) } |
+            Sort-Object { ConvertTo-ComparableVersion $_ } -Descending |
+            Select-Object -First 1
+    )
+
+    if ($closestVersion.Count -gt 0 -and $KnownPhpVersions.ContainsKey($closestVersion[0])) {
+        return $KnownPhpVersions[$closestVersion[0]]
+    }
+
+    throw "Could not determine the PHP version for OpenCart $Version from release metadata or existing workflow entries."
+}
+
+function Get-OpenCartReleases {
+    $releases = [System.Collections.Generic.List[string]]::new()
+    $page = 1
+
+    do {
+        $pageReleases = Invoke-RestMethod `
+            -Uri "https://api.github.com/repos/opencart/opencart/releases?per_page=100&page=$page" `
+            -Headers @{ 'User-Agent' = 'appnuno-workflow-generator' } `
+            -TimeoutSec 30
+
+        foreach ($release in $pageReleases) {
+            if (-not $release.draft -and -not $release.prerelease -and $release.tag_name -match '^\d+\.\d+\.\d+\.\d+$') {
+                $releases.Add([string]$release.tag_name)
+            }
+        }
+
+        $page++
+    } while ($pageReleases.Count -eq 100 -and $page -le 10)
+
+    return @($releases | Select-Object -Unique | Sort-Object { ConvertTo-ComparableVersion $_ })
+}
+
 $wordpressArchiveUrl = "https://wordpress.org/download/releases/"
 $woocommerceArchiveUrl = "https://developer.woocommerce.com/releases/"
+$outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 
 $wordpressHtml = (Invoke-WebRequest -UseBasicParsing -Uri $wordpressArchiveUrl -TimeoutSec 30).Content
 $woocommerceHtml = (Invoke-WebRequest -UseBasicParsing -Uri $woocommerceArchiveUrl -TimeoutSec 30).Content
-
 $latestWordPressByBranch = @{}
 $branchPattern = '(?s)<div class="wp-block-wporg-release-tables__section" id="branch-(\d+)"[^>]*>(.*?)(?=<div class="wp-block-wporg-release-tables__section"|$)'
 
@@ -125,7 +196,6 @@ try {
     }
 
     $metadataJobs | Wait-Job | Out-Null
-
     $failedJobs = @($metadataJobs | Where-Object { $_.State -ne 'Completed' })
 
     if ($failedJobs.Count -gt 0) {
@@ -186,13 +256,12 @@ foreach ($release in $woocommerceMetadata) {
     }
 }
 
-$outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
-$generatedFileNames = [System.Collections.Generic.List[string]]::new()
+$generatedWordPressFiles = [System.Collections.Generic.List[string]]::new()
 
 foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Object { [int]$_ }) {
     $fileName = "wordpress-woocommerce-$woocommerceMajor.x.yml"
-    $generatedFileNames.Add($fileName)
+    $generatedWordPressFiles.Add($fileName)
     $lines = [System.Collections.Generic.List[string]]::new()
     $lines.Add("name: WordPress and WooCommerce $woocommerceMajor.x compatibility")
     $lines.Add('')
@@ -225,17 +294,130 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      - uses: actions/checkout@v6')
     $lines.Add('')
     $lines.Add('      - name: Install WordPress ${{ matrix.wordpress_version }} and WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}')
-    $lines.Add('        run: docker compose -f tools/wordpress/tests/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer')
+    $lines.Add('        run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer')
     $lines.Add('')
     $lines.Add('      - name: Remove the temporary WordPress environment')
     $lines.Add('        if: always()')
-    $lines.Add('        run: docker compose -f tools/wordpress/tests/docker-compose.yml down --volumes --remove-orphans')
+    $lines.Add('        run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml down --volumes --remove-orphans')
 
     [System.IO.File]::WriteAllText((Join-Path $outputPath $fileName), ($lines -join [Environment]::NewLine) + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
 }
 
 Get-ChildItem -Path $outputPath -Filter 'wordpress-woocommerce-*.x.yml' -File |
-    Where-Object { $_.Name -notin $generatedFileNames } |
+    Where-Object { $_.Name -notin $generatedWordPressFiles } |
     Remove-Item -Force
 
-Write-Output "Generated $($generatedFileNames.Count) GitHub Actions workflow files grouped by WooCommerce major release for $($woocommerceVersions.Count) WooCommerce releases in $outputPath."
+$openCartReleases = @(Get-OpenCartReleases)
+if ($openCartReleases.Count -eq 0) {
+    throw "No stable OpenCart releases were found in the official GitHub release archive."
+}
+
+$generatedOpenCartFiles = [System.Collections.Generic.List[string]]::new()
+$openCartTemplates = @(Get-ChildItem -Path $outputPath -Filter 'opencart-*.yml' -File)
+
+foreach ($template in $openCartTemplates) {
+    $workflowKey = [System.IO.Path]::GetFileNameWithoutExtension($template.Name).Substring('opencart-'.Length)
+    $templateLines = @([System.IO.File]::ReadAllLines($template.FullName) | Where-Object { $_ -notmatch '^\s*#' })
+    $includeIndex = [Array]::FindIndex($templateLines, [Predicate[string]]{ param($line) $line -ceq '        include:' })
+    $servicesIndex = [Array]::FindIndex($templateLines, [Predicate[string]]{ param($line) $line -ceq '    services:' })
+
+    if ($servicesIndex -lt 0) {
+        throw "Could not locate the service configuration in $($template.Name)."
+    }
+
+    if ($includeIndex -lt 0) {
+        $matrixIndex = [Array]::FindIndex($templateLines, [Predicate[string]]{ param($line) $line -match '^        opencart-version:\s*\[' })
+
+        if ($matrixIndex -lt 0 -or $servicesIndex -le $matrixIndex) {
+            throw "Could not locate the OpenCart version list in $($template.Name)."
+        }
+
+        $versionsForWorkflow = [System.Collections.Generic.List[string]]::new()
+        foreach ($release in $openCartReleases) {
+            if ((Get-OpenCartWorkflowKey $release) -eq $workflowKey) {
+                $versionsForWorkflow.Add($release)
+            }
+        }
+
+        foreach ($versionMatch in [regex]::Matches($templateLines[$matrixIndex], "'([^']+)'")) {
+            if ($versionMatch.Groups[1].Value -notin $versionsForWorkflow) {
+                $versionsForWorkflow.Add($versionMatch.Groups[1].Value)
+            }
+        }
+
+        if ($versionsForWorkflow.Count -eq 0) {
+            continue
+        }
+
+        $sortedVersionsForWorkflow = @($versionsForWorkflow | Sort-Object { ConvertTo-ComparableVersion $_ })
+        $quotedVersions = @($sortedVersionsForWorkflow | ForEach-Object { "'$_'" })
+        $workflowLines = [System.Collections.Generic.List[string]]::new()
+        $workflowLines.AddRange([string[]]$templateLines[0..($matrixIndex - 1)])
+        $workflowLines.Add("        opencart-version: [$($quotedVersions -join ', ')]")
+        $workflowLines.AddRange([string[]]$templateLines[$servicesIndex..($templateLines.Count - 1)])
+        [System.IO.File]::WriteAllText($template.FullName, ($workflowLines -join [Environment]::NewLine) + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
+        $generatedOpenCartFiles.Add($template.Name)
+        continue
+    }
+
+    if ($servicesIndex -le $includeIndex) {
+        throw "Could not locate the version matrix in $($template.Name)."
+    }
+
+    $knownPhpVersions = @{}
+    $knownVersions = [System.Collections.Generic.List[string]]::new()
+
+    foreach ($lineIndex in 0..($templateLines.Count - 2)) {
+        $versionMatch = [regex]::Match($templateLines[$lineIndex], '^\s*- opencart-version: ''([^'']+)''$')
+
+        if ($versionMatch.Success) {
+            $phpMatch = [regex]::Match($templateLines[$lineIndex + 1], '^\s*php-version: ''([^'']+)''$')
+
+            if ($phpMatch.Success) {
+                $knownPhpVersions[$versionMatch.Groups[1].Value] = $phpMatch.Groups[1].Value
+                $knownVersions.Add($versionMatch.Groups[1].Value)
+            }
+        }
+    }
+
+    $versionsForWorkflow = [System.Collections.Generic.List[string]]::new()
+    foreach ($release in $openCartReleases) {
+        if ((Get-OpenCartWorkflowKey $release) -eq $workflowKey) {
+            $versionsForWorkflow.Add($release)
+        }
+    }
+
+    foreach ($line in $templateLines[$includeIndex..($servicesIndex - 1)]) {
+        $versionMatch = [regex]::Match($line, '^\s*- opencart-version: ''([^'']+)''$')
+
+        if ($versionMatch.Success -and $versionMatch.Groups[1].Value -notin $versionsForWorkflow) {
+            $versionsForWorkflow.Add($versionMatch.Groups[1].Value)
+        }
+    }
+
+    if ($versionsForWorkflow.Count -eq 0) {
+        continue
+    }
+
+    $sortedVersionsForWorkflow = @($versionsForWorkflow | Sort-Object { ConvertTo-ComparableVersion $_ })
+    $prefix = @($templateLines[0..$includeIndex])
+    $suffix = @($templateLines[$servicesIndex..($templateLines.Count - 1)])
+    $workflowLines = [System.Collections.Generic.List[string]]::new()
+    $workflowLines.AddRange([string[]]$prefix)
+
+    foreach ($version in $sortedVersionsForWorkflow) {
+        $phpVersion = Get-OpenCartPhpVersion -Version $version -KnownPhpVersions $knownPhpVersions -KnownVersions @($knownVersions)
+        $workflowLines.Add("          - opencart-version: '$version'")
+        $workflowLines.Add("            php-version: '$phpVersion'")
+    }
+
+    $workflowLines.AddRange([string[]]$suffix)
+    [System.IO.File]::WriteAllText($template.FullName, ($workflowLines -join [Environment]::NewLine) + [Environment]::NewLine, [System.Text.UTF8Encoding]::new($false))
+    $generatedOpenCartFiles.Add($template.Name)
+}
+
+if ($generatedOpenCartFiles.Count -eq 0) {
+    throw "No OpenCart workflow templates were updated."
+}
+
+Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases and refreshed $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."

@@ -373,8 +373,8 @@ jobs:
       - uses: actions/checkout@v6
 
       - name: Install WordPress ${{ matrix.wordpress_version }} and WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}
-        run: docker compose -f tools/wordpress/tests/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer
+        run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer
 
       - name: Remove the temporary WordPress environment
         if: always()
-        run: docker compose -f tools/wordpress/tests/docker-compose.yml down --volumes --remove-orphans
+        run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml down --volumes --remove-orphans

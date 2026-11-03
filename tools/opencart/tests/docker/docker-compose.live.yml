@@ -12,8 +12,8 @@ services:
       OPENCART_EXTERNAL_PHP_SERVER: "1"
       APPNUNO_SDK_SOURCE: /sdk/appnuno.js
     volumes:
-      - ../../..:/repo
-      - ../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
+      - ../../../..:/repo
+      - ../../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
       - opencart-workspace:/shared
     command: ["python", "-c", "import sys; from pathlib import Path; sys.path.insert(0, 'tools/opencart/tests'); from integration.config import load_runtime; from integration.environment import prepare_store; workspace = Path('/shared/live'); workspace.mkdir(parents=True, exist_ok=True); prepare_store(load_runtime(), workspace)"]
     depends_on:

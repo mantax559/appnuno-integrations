@@ -17,8 +17,8 @@ services:
   wordpress:
     image: appnuno-wordpress:${WORDPRESS_VERSION:-7.1.4}
     build:
-      context: .
-      dockerfile: Dockerfile.wordpress
+      context: ..
+      dockerfile: docker/Dockerfile.wordpress
       args:
         WORDPRESS_VERSION: ${WORDPRESS_VERSION:-7.1.4}
         PHP_VERSION: ${PHP_VERSION:-8.3}

@@ -14,14 +14,14 @@ services:
 
   opencart-php:
     build:
-      context: .
-      dockerfile: Dockerfile.opencart
+      context: ..
+      dockerfile: docker/Dockerfile.opencart
     working_dir: /shared
     environment:
       OPENCART_VERSION: ${OPENCART_VERSION:-2.3.0.2}
     volumes:
       - opencart-workspace:/shared
-      - ../../../artifacts/opencart-docker:/artifacts
+      - ../../../../artifacts/opencart-docker:/artifacts
     command: ["sh", "-c", "while [ ! -s /shared/opencart-web-root ]; do sleep 1; done; artifact_dir=/artifacts/${OPENCART_VERSION:-2.3.0.2}; mkdir -p \"$$artifact_dir\"; web_root=$$(cat /shared/opencart-web-root); exec php -d session.save_path=/tmp -S 0.0.0.0:8080 -t \"$$web_root\" > \"$$artifact_dir/php-server.log\" 2>&1"]
     depends_on:
       mysql:
@@ -29,8 +29,8 @@ services:
 
   runner:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
     working_dir: /repo
     environment:
       TZ: UTC
@@ -46,9 +46,9 @@ services:
       OPENCART_EXTERNAL_PHP_SERVER: "1"
       APPNUNO_SDK_SOURCE: /sdk/appnuno.js
     volumes:
-      - ../../..:/repo
-      - ../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
-      - ../../../artifacts/opencart-docker:/artifacts
+      - ../../../..:/repo
+      - ../../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
+      - ../../../../artifacts/opencart-docker:/artifacts
       - opencart-workspace:/shared
     command: ["/bin/bash", "-lc", "set -e; php tools/opencart/build-package.php 2.3; first_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); php tools/opencart/build-package.php 2.3; second_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); test \"$$first_hash\" = \"$$second_hash\"; php tools/opencart/tests/package-validation.php 2.3; php tools/opencart/tests/config-validation.php; php tools/opencart/tests/language-validation.php; python tools/opencart/tests/integration.py"]
     depends_on:
