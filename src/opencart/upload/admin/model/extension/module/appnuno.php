@@ -3,22 +3,7 @@ class ModelExtensionModuleAppnuno extends Model {
 	public function defaultConfig() {
 		return json_encode(array(
 			'cartTabId' => 'cart',
-			'defaultTabs' => array(
-				array(
-					'id' => 'home',
-					'label' => 'Home',
-					'visible' => true,
-					'allPages' => true,
-					'url' => '/'
-				),
-				array(
-					'id' => 'cart',
-					'label' => 'Cart',
-					'visible' => true,
-					'allPages' => true,
-					'url' => '/index.php?route=checkout/cart'
-				)
-			),
+			'defaultTabs' => array(),
 			'routes' => (object)array(),
 			'back' => array(
 				'enabled' => true,

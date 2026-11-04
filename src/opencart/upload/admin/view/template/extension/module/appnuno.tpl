@@ -30,11 +30,19 @@
     <?php } ?>
     <div class="panel panel-default appnuno-settings">
       <div class="panel-heading appnuno-toolbar">
+        <div class="appnuno-watermark" aria-hidden="true">
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
+        </div>
         <div class="appnuno-brand">
           <span class="appnuno-brand-mark" aria-hidden="true">n</span>
           <div><span class="appnuno-eyebrow">AppNuno</span><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
         </div>
-        <div class="appnuno-toolbar-actions">
+        <div class="appnuno-toolbar-actions appnuno-button-group">
           <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
           <button type="submit" form="form-appnuno" class="btn btn-primary"><?php echo $button_save; ?></button>
         </div>
@@ -42,7 +50,7 @@
       <div class="panel-body">
         <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno" class="form-horizontal">
           <div class="form-group">
-            <label class="col-sm-2 control-label" for="input-status"><?php echo $entry_status; ?></label>
+            <label class="col-sm-2 control-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
             <div class="col-sm-10">
               <select name="module_appnuno_status" id="input-status" class="form-control">
                 <?php if ($module_appnuno_status) { ?>
@@ -55,21 +63,24 @@
               </select>
             </div>
           </div>
+          <div class="form-group appnuno-cart-field">
+            <label class="col-sm-2 control-label" for="cart-tab-id"><?php echo $text['entry_cart_tab']; ?></label>
+            <div class="col-sm-10">
+              <select id="cart-tab-id" class="form-control"></select>
+            </div>
+          </div>
           <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
-          <ul class="nav nav-tabs">
-            <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
-            <li><a href="#tab-back" data-toggle="tab"><?php echo $text['text_back_button']; ?></a></li>
-            <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
-            <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
-          </ul>
+          <div class="appnuno-switch appnuno-section-switch">
+            <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
+              <li><a href="#tab-back" data-toggle="tab"><?php echo $text['text_back_button']; ?></a></li>
+              <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
+              <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
+            </ul>
+          </div>
           <div class="tab-content">
             <div class="tab-pane active" id="tab-navigation">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="cart-tab-id"><?php echo $text['entry_cart_tab']; ?></label>
-                <div class="col-sm-10">
-                  <select id="cart-tab-id" class="form-control"></select>
-                </div>
-              </div>
               <div id="default-tabs"></div>
             </div>
             <div class="tab-pane" id="tab-back">
@@ -201,10 +212,24 @@
         <h4 class="modal-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
       </div>
       <div class="modal-body">
-        <input type="search" id="icon-picker-search" class="form-control" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
-        <button type="button" class="btn btn-default" id="icon-picker-clear"><?php echo $text['text_icon_catalog_clear']; ?></button>
+        <div class="appnuno-icon-toolbar">
+          <input type="search" id="icon-picker-search" class="form-control" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
+          <button type="button" class="btn btn-default" id="icon-picker-clear"><?php echo $text['text_icon_catalog_clear']; ?></button>
+        </div>
+        <div class="appnuno-icon-meta">
+          <p id="icon-picker-count"></p>
+          <div class="appnuno-icon-pager appnuno-button-group" hidden></div>
+        </div>
+        <div class="appnuno-icon-stage">
+          <div id="icon-picker-grid"></div>
+          <div id="icon-picker-loading" class="appnuno-icon-loading" hidden>
+            <span class="appnuno-spinner" aria-hidden="true"></span>
+          </div>
+        </div>
         <div id="icon-picker-status" role="status"></div>
-        <div id="icon-picker-grid"></div>
+        <div class="appnuno-icon-meta appnuno-icon-meta-bottom">
+          <div class="appnuno-icon-pager appnuno-button-group" hidden></div>
+        </div>
       </div>
     </div>
   </div>
@@ -250,6 +275,10 @@
 	addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
 	tabNavigationColumn.appendChild(tabNavigation);
 	tabNavigationColumn.appendChild(addTabButton);
+	var cartField = document.querySelector('.appnuno-cart-field');
+	if (cartField) {
+		tabNavigationColumn.appendChild(cartField);
+	}
 	defaultContainer.appendChild(tabNavigationColumn);
 	defaultContainer.appendChild(tabPanels);
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
@@ -271,6 +300,74 @@
 		appendHelp(label, text['help_' + (aliases[key] || key)]);
 	}
 
+	var appnunoTooltip = document.createElement('div');
+	appnunoTooltip.id = 'appnuno-tooltip';
+	appnunoTooltip.setAttribute('role', 'tooltip');
+	appnunoTooltip.hidden = true;
+	document.body.appendChild(appnunoTooltip);
+
+	function showAppnunoTooltip(anchor) {
+		var message = anchor.getAttribute('data-appnuno-tooltip');
+		if (!message) {
+			return;
+		}
+		var rect = anchor.getBoundingClientRect();
+		appnunoTooltip.textContent = message;
+		appnunoTooltip.hidden = false;
+		appnunoTooltip.style.left = (rect.left + (rect.width / 2)) + 'px';
+		appnunoTooltip.style.top = (rect.top - 8) + 'px';
+	}
+
+	function hideAppnunoTooltip(anchor) {
+		if (!anchor || anchor.getAttribute('data-appnuno-tooltip') === appnunoTooltip.textContent) {
+			appnunoTooltip.hidden = true;
+		}
+	}
+
+	document.addEventListener('mouseover', function (event) {
+		var anchor = event.target.closest('[data-appnuno-tooltip]');
+		if (anchor) {
+			showAppnunoTooltip(anchor);
+		}
+	});
+	document.addEventListener('mouseout', function (event) {
+		var anchor = event.target.closest('[data-appnuno-tooltip]');
+		if (anchor && (!event.relatedTarget || !anchor.contains(event.relatedTarget))) {
+			hideAppnunoTooltip(anchor);
+		}
+	});
+	document.addEventListener('focusin', function (event) {
+		if (event.target.getAttribute && event.target.getAttribute('data-appnuno-tooltip')) {
+			showAppnunoTooltip(event.target);
+		}
+	});
+	document.addEventListener('focusout', function (event) {
+		if (event.target.getAttribute && event.target.getAttribute('data-appnuno-tooltip')) {
+			hideAppnunoTooltip(event.target);
+		}
+	});
+
+	function placeSwitchIndicator(control) {
+		var indicator = control.querySelector('.appnuno-switch-indicator');
+		var selected = control.querySelector('[aria-pressed="true"]') || control.querySelector('.nav-tabs > li.active > a, .nav-tabs > li > a.active');
+		if (!indicator || !selected) {
+			return;
+		}
+		var controlRect = control.getBoundingClientRect();
+		var selectedRect = selected.getBoundingClientRect();
+		indicator.style.width = selectedRect.width + 'px';
+		indicator.style.height = selectedRect.height + 'px';
+		indicator.style.transform = 'translate(' + (selectedRect.left - controlRect.left) + 'px, ' + (selectedRect.top - controlRect.top) + 'px)';
+	}
+
+	function revealSwitchMotion(control) {
+		window.requestAnimationFrame(function () {
+			window.requestAnimationFrame(function () {
+				control.setAttribute('data-placed', 'true');
+			});
+		});
+	}
+
 	function refreshTabNavigation() {
 		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
 			var button = tabNavigation.querySelector('[data-tab-target="' + card.getAttribute('data-tab-key') + '"]');
@@ -284,15 +381,34 @@
 			var id = card.querySelector('[data-field="id"]');
 			var title = label && label.value.trim() ? label.value.trim() : (id && id.value.trim() ? id.value.trim() : text.text_tab_list_empty);
 			button.querySelector('[data-tab-title]').textContent = title;
+			var slot = button.querySelector('[data-tab-icon]');
+			slot.textContent = '';
+			var iconValue = card.querySelector('[data-field="icon"]');
+			var icon = null;
+			try {
+				icon = iconValue && iconValue.value ? JSON.parse(iconValue.value) : null;
+			} catch (error) {
+				icon = null;
+			}
+			if (validCatalogIcon(icon)) {
+				var image = document.createElement('img');
+				image.src = icon.uri;
+				image.alt = '';
+				image.width = 24;
+				image.height = 24;
+				slot.appendChild(image);
+			}
 			var marker = button.querySelector('[data-visibility-indicator]');
-			if (!card.querySelector('[data-tab-visibility]').checked) {
+			var remove = button.querySelector('[data-remove-tab]');
+			if (card.querySelector('[data-tab-visibility]').value !== '1') {
 				if (!marker) {
-					marker = document.createElement('span');
-					marker.className = adminMarkup === 'bootstrap5' ? 'float-end fas fa-solid fa-eye-slash' : 'pull-right fa fa-eye-slash';
+					marker = document.createElement('i');
+					marker.className = adminMarkup === 'bootstrap5' ? 'float-end fas fa-solid fa-eye-slash' : 'fa fa-eye-slash';
 					marker.setAttribute('data-visibility-indicator', 'true');
-					button.appendChild(marker);
+					marker.setAttribute('data-appnuno-tooltip', text.text_visibility_indicator);
+					marker.setAttribute('aria-label', text.text_visibility_indicator);
+					button.insertBefore(marker, remove);
 				}
-				marker.textContent = ' ' + text.text_visibility_indicator;
 			} else if (marker) {
 				marker.parentNode.removeChild(marker);
 			}
@@ -348,6 +464,10 @@
 	var iconPickerStatus = document.getElementById('icon-picker-status');
 	var iconPickerGrid = document.getElementById('icon-picker-grid');
 	var iconPickerSearch = document.getElementById('icon-picker-search');
+	var iconPickerPage = 1;
+	var iconPickerCount = document.getElementById('icon-picker-count');
+	var iconPickerLoading = document.getElementById('icon-picker-loading');
+	var iconPickerPageSize = 15;
 	var iconPickerTimer = null;
 	var iconPickerRequest = 0;
 	var iconPickerDialog = document.getElementById('icon-picker-dialog');
@@ -407,16 +527,14 @@
 			option.type = 'button';
 			option.className = 'btn appnuno-icon-option';
 			option.title = icon.id;
+			option.setAttribute('aria-label', icon.id);
+			option.setAttribute('data-appnuno-tooltip', icon.id);
 			var image = document.createElement('img');
 			image.src = icon.uri;
 			image.alt = '';
 			image.width = 28;
 			image.height = 28;
-			var label = document.createElement('span');
-			label.textContent = icon.id;
-			label.className = 'appnuno-icon-label';
 			option.appendChild(image);
-			option.appendChild(label);
 			option.addEventListener('click', function () {
 				if (iconPickerTarget) {
 					updateIconField(iconPickerTarget, { id: icon.id, uri: icon.uri, content_hash: icon.content_hash });
@@ -428,7 +546,41 @@
 		});
 	}
 
-	function loadIconCatalog() {
+	function renderIconPager(currentPage, lastPage) {
+		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-icon-pager'), function (pager) {
+			pager.textContent = '';
+			pager.hidden = lastPage < 1;
+			if (pager.hidden) {
+				return;
+			}
+			function addButton(label, pageNumber, disabled, current) {
+				var button = document.createElement('button');
+				button.type = 'button';
+				button.className = 'btn btn-default';
+				button.textContent = label;
+				button.disabled = disabled;
+				if (current) {
+					button.setAttribute('aria-current', 'page');
+				}
+				if (!disabled && !current) {
+					button.addEventListener('click', function () { loadIconCatalog(pageNumber); });
+				}
+				pager.appendChild(button);
+			}
+			addButton(text.text_icon_page_previous, currentPage - 1, currentPage <= 1, false);
+			var start = Math.max(1, currentPage - 2);
+			var end = Math.min(lastPage, start + 4);
+			start = Math.max(1, end - 4);
+			var pageNumber;
+			for (pageNumber = start; pageNumber <= end; pageNumber += 1) {
+				addButton(String(pageNumber), pageNumber, false, pageNumber === currentPage);
+			}
+			addButton(text.text_icon_page_next, currentPage + 1, currentPage >= lastPage, false);
+		});
+	}
+
+	function loadIconCatalog(page) {
+		iconPickerPage = page || 1;
 		var requestId = iconPickerRequest + 1;
 		iconPickerRequest = requestId;
 		var url = new URL(iconCatalogUrl, window.location.href);
@@ -436,8 +588,9 @@
 		if (search) {
 			url.searchParams.set('q', search);
 		}
-		iconPickerGrid.textContent = '';
-		iconPickerStatus.textContent = text.text_icon_catalog_loading;
+		url.searchParams.set('page', String(iconPickerPage));
+		url.searchParams.set('per_page', String(iconPickerPageSize));
+		iconPickerLoading.hidden = false;
 		fetch(url.toString(), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
 			.then(function (response) {
 				if (!response.ok) {
@@ -450,14 +603,28 @@
 					return;
 				}
 				var icons = catalog && Array.isArray(catalog.data) ? catalog.data : [];
+				var meta = catalog && catalog.meta ? catalog.meta : {};
+				var lastPage = meta.last_page || 1;
+				var currentPage = meta.current_page || iconPickerPage;
+				var total = typeof meta.total === 'number' ? meta.total : icons.length;
+				if (icons.length > iconPickerPageSize && lastPage < 2) {
+					total = icons.length;
+					lastPage = Math.ceil(icons.length / iconPickerPageSize) || 1;
+					currentPage = Math.min(Math.max(iconPickerPage, 1), lastPage);
+					icons = icons.slice((currentPage - 1) * iconPickerPageSize, currentPage * iconPickerPageSize);
+				}
+				iconPickerPage = currentPage;
 				renderIconOptions(icons);
+				iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
+				renderIconPager(currentPage, total ? lastPage : 0);
+				iconPickerLoading.hidden = true;
 				iconPickerStatus.textContent = icons.length ? '' : text.text_icon_catalog_empty;
 			})
 			.catch(function () {
 				if (requestId !== iconPickerRequest) {
 					return;
 				}
-				iconPickerGrid.textContent = '';
+				iconPickerLoading.hidden = true;
 				iconPickerStatus.textContent = text.text_icon_catalog_error;
 			});
 	}
@@ -491,7 +658,7 @@
 
 	iconPickerSearch.addEventListener('input', function () {
 		window.clearTimeout(iconPickerTimer);
-		iconPickerTimer = window.setTimeout(loadIconCatalog, 250);
+		iconPickerTimer = window.setTimeout(function () { loadIconCatalog(1); }, 400);
 	});
 	document.getElementById('icon-picker-clear').addEventListener('click', function () {
 		if (iconPickerTarget) {
@@ -522,6 +689,7 @@
 
 	function createLabelFields(tab, path) {
 		var group = createGroup();
+		group.className += ' appnuno-field-wide';
 		group.setAttribute('data-validation-path', path + '.labels');
 		var title = createGroupLabel(text.text_language_labels, 'tab_labels');
 		var column = createGroupColumn();
@@ -687,6 +855,7 @@
 
 	function createPagesField(tab, path) {
 		var group = createGroup();
+		group.className += ' appnuno-field-wide';
 		var title = createGroupLabel(text.text_shown_on_pages, 'shown_on_pages');
 		var column = createGroupColumn();
 		var allPagesChoice = document.createElement('div');
@@ -730,7 +899,7 @@
 			}
 		});
 		var actions = document.createElement('div');
-		actions.className = 'btn-group';
+		actions.className = 'btn-group appnuno-button-group';
 		var selectAll = document.createElement('button');
 		selectAll.type = 'button';
 		selectAll.className = 'btn btn-default btn-sm';
@@ -756,8 +925,8 @@
 		list.style.display = allPages.checked ? 'none' : '';
 		actions.style.display = allPages.checked ? 'none' : '';
 		column.appendChild(allPagesChoice);
-		column.appendChild(list);
 		column.appendChild(actions);
+		column.appendChild(list);
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -767,28 +936,16 @@
 		var group = createGroup();
 		var title = createGroupLabel(text.text_tab_visible, 'tab_visibility');
 		var column = createGroupColumn();
-		var choice = document.createElement('div');
-		choice.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
-		var label = document.createElement('label');
-		var input = document.createElement('input');
-		input.type = 'checkbox';
+		var input = document.createElement('select');
+		input.className = 'form-control';
 		input.id = 'appnuno-visible-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
-		label.htmlFor = input.id;
-		input.checked = tab.visible !== false;
+		title.htmlFor = input.id;
+		input.appendChild(new Option(text.text_visibility_on, '1'));
+		input.appendChild(new Option(text.text_visibility_indicator, '0'));
+		input.value = tab.visible === false ? '0' : '1';
 		input.setAttribute('data-tab-visibility', 'true');
 		input.setAttribute('data-validation-path', path + '.visible');
-		if (adminMarkup === 'bootstrap5') {
-			input.className = 'form-check-input';
-			label.className = 'form-check-label';
-			label.appendChild(document.createTextNode(text.text_tab_visibility_toggle));
-			choice.appendChild(input);
-			choice.appendChild(label);
-		} else {
-			label.appendChild(input);
-			label.appendChild(document.createTextNode(' ' + text.text_tab_visibility_toggle));
-			choice.appendChild(label);
-		}
-		column.appendChild(choice);
+		column.appendChild(input);
 		group.appendChild(title);
 		group.appendChild(column);
 		return group;
@@ -798,11 +955,11 @@
 		var card = document.createElement('div');
 		card.className = 'tab-pane appnuno-tab';
 		card.setAttribute('data-validation-path', path);
+		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
 		card.appendChild(createLabelFields(tab, path));
 		card.appendChild(createUrlField(tab, path));
 		card.appendChild(createIconField(tab, path));
-		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createPagesField(tab, path));
 		card.addEventListener('input', function () {
 			refreshCartOptions();
@@ -832,11 +989,11 @@
 		link.setAttribute('aria-controls', key);
 		link.addEventListener('click', function () { activateTab(card); });
 		var remove = document.createElement('i');
-		remove.className = adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-minus-circle fa-circle-minus' : 'fa fa-minus-circle';
+		remove.className = adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-trash fa-trash-can' : 'fa fa-trash';
 		remove.setAttribute('data-remove-tab', 'true');
 		remove.setAttribute('role', 'button');
 		remove.setAttribute('tabindex', '0');
-		remove.setAttribute('title', text.button_remove_tab);
+		remove.setAttribute('data-appnuno-tooltip', text.button_remove_tab);
 		remove.setAttribute('aria-label', text.button_remove_tab);
 		function removeTab(event) {
 			event.preventDefault();
@@ -859,11 +1016,14 @@
 				removeTab(event);
 			}
 		});
+		var iconSlot = document.createElement('span');
+		iconSlot.className = 'appnuno-tab-icon';
+		iconSlot.setAttribute('data-tab-icon', 'true');
 		var title = document.createElement('span');
 		title.setAttribute('data-tab-title', 'true');
-		link.appendChild(remove);
-		link.appendChild(document.createTextNode(' '));
+		link.appendChild(iconSlot);
 		link.appendChild(title);
+		link.appendChild(remove);
 		tabRow.appendChild(link);
 		tabNavigation.appendChild(tabRow);
 		activateTab(card);
@@ -906,7 +1066,7 @@
 				delete tab.urls;
 			}
 			var visibilityField = card.querySelector('[data-tab-visibility]');
-			tab.visible = visibilityField.checked;
+			tab.visible = visibilityField.value === '1';
 			var pagesField = card.querySelector('[data-pages]');
 			var allPagesField = card.querySelector('[data-all-pages]');
 			if (pagesField && allPagesField) {
@@ -947,7 +1107,7 @@
 	function setValue(id, value) {
 		var element = document.getElementById(id);
 		if (element) {
-			element.value = value === null || typeof value === 'undefined' ? '' : value;
+			element.value = value === null || typeof value === 'undefined' ? '' : String(value);
 		}
 	}
 
@@ -968,15 +1128,55 @@
 			addTab(defaultContainer, imported, 'defaultTabs');
 		});
 	});
-	if (!defaultContainer.querySelector('.appnuno-tab')) {
-		addTab(defaultContainer, {}, 'defaultTabs');
-	}
 	var firstDefaultTab = tabPanels.querySelector('.appnuno-tab');
 	if (firstDefaultTab) {
 		activateTab(firstDefaultTab);
 	}
 	document.querySelectorAll('[data-add-tab]').forEach(function (button) {
 		button.addEventListener('click', function () { addTab(document.getElementById(button.getAttribute('data-add-tab')), {}, 'defaultTabs'); });
+	});
+
+	var sectionSwitch = document.querySelector('.appnuno-section-switch');
+	if (sectionSwitch) {
+		placeSwitchIndicator(sectionSwitch);
+		revealSwitchMotion(sectionSwitch);
+	}
+	function showSectionLink(link) {
+		var pane = document.querySelector(link.getAttribute('href'));
+		if (pane && pane.parentNode) {
+			Array.prototype.forEach.call(pane.parentNode.children, function (child) {
+				if (child.classList && child.classList.contains('tab-pane')) {
+					var selected = child === pane;
+					child.classList.toggle('active', selected);
+					child.classList.toggle('appnuno-section-open', selected);
+					child.style.setProperty('display', selected ? 'block' : 'none', 'important');
+				}
+			});
+		}
+		Array.prototype.forEach.call(link.parentNode.parentNode.children, function (item) {
+			item.classList.toggle('active', item === link.parentNode);
+		});
+		placeSwitchIndicator(link.closest('.appnuno-section-switch'));
+	}
+	var sectionTimer = 0;
+	document.addEventListener('click', function (event) {
+		var source = event.target;
+		if (source && source.nodeType !== 1) {
+			source = source.parentElement;
+		}
+		var link = source && source.closest ? source.closest('a') : null;
+		if (!link || !link.closest('.appnuno-section-switch')) {
+			return;
+		}
+		showSectionLink(link);
+		window.clearTimeout(sectionTimer);
+		sectionTimer = window.setTimeout(function () { showSectionLink(link); }, 250);
+	}, true);
+	window.addEventListener('resize', function () {
+		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
+	});
+	window.addEventListener('load', function () {
+		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
 	});
 
 	setEnabled('back-enabled', !configuration.back || configuration.back.enabled !== false);
@@ -1088,6 +1288,7 @@
 				} else {
 					window.jQuery(sectionLink).tab('show');
 				}
+				window.requestAnimationFrame(function () { placeSwitchIndicator(sectionSwitch); });
 			}
 			matched.setAttribute('aria-invalid', 'true');
 			var group = matched;

@@ -7,8 +7,8 @@ if (strlen($model->validateConfig($default))) {
     throw new RuntimeException('Expected default OpenCart navigation configuration to be valid.');
 }
 $default_values = json_decode($default, true);
-if (!$default_values['defaultTabs'][0]['allPages'] || !$default_values['defaultTabs'][1]['allPages']) {
-    throw new RuntimeException('Expected default navigation tabs to explicitly show on all pages.');
+if (count($default_values['defaultTabs'])) {
+    throw new RuntimeException('Expected a new installation to start without default tabs.');
 }
 if (!in_array($default_values['glass']['colorScheme'], array('auto'), true) || !in_array($default_values['glass']['style'], array('regular'), true) || !in_array($default_values['glass']['animate'], array(true), true) || !in_array($default_values['glass']['animationDuration'], array(0.3), true) || !in_array($default_values['glass']['isInteractive'], array(true), true) || !in_array($default_values['glass']['tintColor'], array('rgba(0, 0, 0, 0.02)'), true)) {
     throw new RuntimeException('Expected native-contract glass defaults.');

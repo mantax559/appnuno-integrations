@@ -31,6 +31,28 @@ from integration.database import (
 from integration.environment import capture_screenshot
 
 
+def choose_switch(page: Page, field_id: str, value: str) -> None:
+    page.locator(f"#{field_id}").select_option(value)
+
+
+def seed_builtin_tabs(page: Page) -> None:
+    if page.locator("#default-tabs .appnuno-tab").count():
+        return
+    specs = (
+        ("home", "/", "Home", "Pradžia"),
+        ("cart", "/index.php?route=checkout/cart", "Cart", "Krepšelis"),
+    )
+    for tab_id, url, english, lithuanian in specs:
+        page.locator('button[data-add-tab="default-tabs"]').click()
+        tab = page.locator("#default-tabs .appnuno-tab").last
+        tab.locator('[data-field="id"]').fill(tab_id)
+        tab.locator('[data-language-label="en-gb"]').fill(english)
+        if tab.locator('[data-language-label="lt-lt"]').count():
+            tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
+        tab.locator('[data-url-select]').select_option(url)
+    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
+
+
 def admin_token(runtime: Runtime, page: Page) -> str:
     token = parse_qs(urlparse(page.url).query).get(admin_token_name(runtime), [])
     if not token:
@@ -76,33 +98,41 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
     page.wait_for_function(
         "() => Array.from(document.scripts).some(script => script.src && script.src.includes('/view/javascript/appnuno/settings.js'))"
     )
-    page.locator("#default-tabs .appnuno-tab").first.wait_for()
     design = settings_shell.evaluate("""element => {
         const styles = getComputedStyle(element);
-        const tabs = element.querySelector('.nav-tabs');
+        const section = element.querySelector('.appnuno-section-switch');
         const activeTab = element.querySelector('.nav-tabs > li.active > a, .nav-tabs > li > a.active');
+        const inactiveTab = element.querySelector('.nav-tabs > li:not(.active) > a, .nav-tabs > li > a:not(.active)');
+        const indicator = section.querySelector('.appnuno-switch-indicator');
         return {
             radius: styles.borderRadius,
             primary: styles.getPropertyValue('--appnuno-primary').trim(),
-            tabSurface: getComputedStyle(tabs).backgroundColor,
-            activeTabSurface: getComputedStyle(activeTab).backgroundColor
+            tabSurface: getComputedStyle(section).backgroundColor,
+            activeTabSurface: getComputedStyle(indicator).backgroundColor,
+            activeColor: getComputedStyle(activeTab).color,
+            sameWeight: getComputedStyle(activeTab).fontWeight === getComputedStyle(inactiveTab).fontWeight,
+            compact: section.getBoundingClientRect().width < element.getBoundingClientRect().width - 120
         };
     }""")
     if design != {
         "radius": "12px",
         "primary": "#18181b",
-        "tabSurface": "rgb(244, 244, 245)",
-        "activeTabSurface": "rgb(255, 255, 255)"
+        "tabSurface": "rgb(235, 235, 235)",
+        "activeTabSurface": "rgb(24, 24, 27)",
+        "activeColor": "rgb(255, 255, 255)",
+        "sameWeight": True,
+        "compact": True
     }:
         raise AssertionError(f"The settings editor did not load the neutral AppNuno design system: {design}.")
     if not page.locator('.appnuno-toolbar button[form="form-appnuno"]').is_visible():
         raise AssertionError("The settings editor must expose its own save toolbar.")
-    field_layout = page.locator('.appnuno-tab.active [data-field-group]').first.evaluate("""element => ({
-        labelBottom: element.querySelector('label').getBoundingClientRect().bottom,
-        controlTop: element.querySelector('.form-control').getBoundingClientRect().top
-    })""")
-    if field_layout["labelBottom"] > field_layout["controlTop"]:
-        raise AssertionError(f"Settings labels must sit above their controls: {field_layout}.")
+    if page.locator("#default-tabs .appnuno-tab.active").count():
+        field_layout = page.locator('.appnuno-tab.active [data-field="id"]').locator("xpath=ancestor::*[@data-field-group][1]").evaluate("""element => ({
+            labelBottom: element.querySelector('label').getBoundingClientRect().bottom,
+            controlTop: element.querySelector('.form-control').getBoundingClientRect().top
+        })""")
+        if field_layout["labelBottom"] > field_layout["controlTop"]:
+            raise AssertionError(f"Settings labels must sit above their controls: {field_layout}.")
 
 
 def assert_responsive_layout(page: Page) -> None:
@@ -132,7 +162,7 @@ def assert_responsive_layout(page: Page) -> None:
         for width in (320, 360, 375, 390, 414, 540, 767, 768, 820, 1024, 1280, 1440, 1600, 1920):
             page.set_viewport_size({"width": width, "height": 1000})
             for section in ("#tab-navigation", "#tab-back", "#tab-glass", "#tab-colors"):
-                page.locator(f'.appnuno-settings a[href="{section}"]').click()
+                page.locator(f'.appnuno-settings a[href="{section}"]').dispatch_event("click")
                 page.locator(section).wait_for(state="visible")
                 layout = page.evaluate("""section => {
                     const sidebar = document.querySelector('#column-left');
@@ -306,7 +336,7 @@ def assert_settings_focus(page: Page) -> None:
         appearance = focus_appearance(field)
         if not appearance["focused"] or not appearance["neutralBorder"] or not appearance["neutralShadow"] or not appearance["neutralOutline"]:
             raise AssertionError(f"Input focus must use neutral borders and shadows, not Bootstrap blue: {appearance}.")
-        checkbox = page.locator('#default-tabs .appnuno-tab.active [data-tab-visibility]')
+        checkbox = page.locator('#default-tabs .appnuno-tab.active [data-all-pages]')
         decorations = checkbox.evaluate("""element => ['::before', '::after'].map(pseudo => {
             const style = getComputedStyle(element, pseudo);
             return { content: style.content, display: style.display };
@@ -542,7 +572,7 @@ def install_module(runtime: Runtime, page: Page, token: str) -> None:
     click_module_list_button(runtime, page, module_row, "a.btn-success")
     module_row.locator("a.btn-danger").wait_for()
     open_module_editor(runtime, page, token)
-    page.locator("#default-tabs .appnuno-tab").first.wait_for(state="attached")
+    seed_builtin_tabs(page)
     assert_responsive_layout(page)
     assert_settings_focus(page)
 
@@ -601,7 +631,7 @@ def choose_catalog_icon(page: Page, tab: Locator, icon_id: str) -> None:
         assert_icon_picker_viewport_bounds(page)
         search = page.locator("#icon-picker-search")
         search.fill(icon_id)
-        option = page.locator("#icon-picker-grid button").filter(has_text=icon_id).first
+        option = page.locator(f'#icon-picker-grid button[title="{icon_id}"]').first
         option.wait_for(state="visible", timeout=30000)
         if option.get_attribute("title") != icon_id:
             raise AssertionError(f"The catalog search did not return {icon_id} as the first matching icon.")
@@ -630,8 +660,7 @@ def add_cart_page_tab(page: Page) -> None:
     page_tab.locator('[data-language-url="en-gb"]').fill("/en/cart")
     page_tab.locator('[data-language-url="lt-lt"]').fill("/lt/krepselis")
     choose_catalog_icon(page, page_tab, "duo:shopping-bag")
-    visibility = page_tab.locator('[data-tab-visibility]')
-    if not visibility.is_checked():
+    if page_tab.locator('[data-tab-visibility]').input_value() != "1":
         raise AssertionError("A newly added tab should be visible by default.")
     page_help = page_tab.locator('[data-pages]').locator('xpath=../..').locator('label [data-toggle="tooltip"], label [data-bs-toggle="tooltip"]')
     if not page_help.count():
@@ -645,6 +674,13 @@ def add_cart_page_tab(page: Page) -> None:
     all_pages.uncheck()
     if not page_tab.locator('[data-pages]').is_visible():
         raise AssertionError("Unchecking all-pages should reveal the page list.")
+    page_order = page_tab.locator("[data-pages]").evaluate("""list => [...list.parentNode.children].map(child => child.querySelector('[data-all-pages]') ? 'all' : child.querySelector('[data-page-action]') ? 'actions' : child.hasAttribute('data-pages') ? 'pages' : 'other')""")
+    page_box = page_tab.locator("[data-pages]").evaluate("""list => {
+        const style = getComputedStyle(list);
+        return { border: style.borderTopWidth, background: style.backgroundColor, radius: style.borderRadius };
+    }""")
+    if page_order != ["all", "actions", "pages"] or page_box["border"] != "0px" or page_box["background"] != "rgb(235, 235, 235)" or page_box["radius"] != "8px":
+        raise AssertionError(f"Page choices should sit in a rounded gray list below one select-all group: {page_order}, {page_box}.")
     page_tab.locator('[data-pages] input[value="checkout/cart"]').check()
     page_tab.locator('[data-page-action="select-all"]').click()
     if page_tab.locator('[data-pages] input:not(:checked)').count():
@@ -665,10 +701,10 @@ def add_contact_tab(page: Page) -> None:
     tab.locator('[data-language-url="en-gb"]').fill("/en/contact")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/kontaktai")
     choose_catalog_icon(page, tab, "duo:user")
-    if not tab.locator('[data-tab-visibility]').is_checked():
+    if tab.locator('[data-tab-visibility]').input_value() != "1":
         raise AssertionError("A newly added tab should be visible by default.")
     page.locator("#cart-tab-id").select_option("ci-added-tab")
-    page.locator("#input-status").select_option("1")
+    choose_switch(page, "input-status", "1")
 
 
 def add_hidden_tab(page: Page) -> None:
@@ -680,23 +716,39 @@ def add_hidden_tab(page: Page) -> None:
     tab.locator('[data-url-select]').select_option("__custom__")
     tab.locator('[data-language-url="en-gb"]').fill("/en/hidden")
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
-    tab.locator('[data-tab-visibility]').uncheck()
+    tab.locator("[data-tab-visibility]").select_option("0")
     tab_key = tab.get_attribute("data-tab-key")
-    if not page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .fa-eye-slash').count():
-        raise AssertionError("The vertical tab list did not mark a hidden tab.")
+    hidden_marker = page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .fa-eye-slash')
+    if hidden_marker.count() != 1 or hidden_marker.evaluate("icon => icon.textContent.trim()") or hidden_marker.get_attribute("data-appnuno-tooltip") != "Hidden":
+        raise AssertionError("A hidden tab should show only the eye icon with a Hidden tooltip.")
+    if hidden_marker.evaluate("icon => icon.nextElementSibling && icon.nextElementSibling.hasAttribute('data-remove-tab')") is not True:
+        raise AssertionError("The hidden icon should sit immediately before the remove action.")
 
 
 def assert_cart_badge_is_in_default_panel(page: Page) -> None:
-    default_panel = page.locator("#tab-navigation")
-    if not default_panel.locator("#cart-tab-id").count():
-        raise AssertionError("Cart badge selection is not inside the Default tabs panel.")
+    cart_follows_add = page.locator("#default-tabs").evaluate("""element => {
+        const add = element.querySelector('[data-add-tab]');
+        const cart = element.querySelector('#cart-tab-id');
+        return !!(add && cart && add.nextElementSibling && add.nextElementSibling.contains(cart));
+    }""")
+    if not cart_follows_add:
+        raise AssertionError("Cart badge selection should sit below the add-tab button.")
     if not page.locator("#cart-tab-id").locator("xpath=../../label").locator('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').count():
         raise AssertionError("The cart badge help should use the standard OpenCart label tooltip.")
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
     if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
         raise AssertionError("The first default tab should be active when the settings page opens.")
-    if first_tab.locator('[data-remove-tab].fa-minus-circle, [data-remove-tab].fa-circle-minus').count() != 1:
-        raise AssertionError("Each native-style tab link should start with its remove icon.")
+    remove_icon = first_tab.locator("[data-remove-tab]")
+    if remove_icon.count() != 1 or "fa-trash" not in (remove_icon.get_attribute("class") or ""):
+        raise AssertionError("Each native-style tab link should contain its remove icon.")
+    if remove_icon.get_attribute("data-appnuno-tooltip") != "Remove tab":
+        raise AssertionError("The remove action should use the shared tooltip.")
+    row_order = first_tab.evaluate("""link => [...link.children].map(child => child.hasAttribute('data-tab-icon') ? 'icon' : child.hasAttribute('data-tab-title') ? 'title' : child.hasAttribute('data-remove-tab') ? 'remove' : 'other')""")
+    if row_order != ["icon", "title", "remove"]:
+        raise AssertionError(f"A tab row should show its icon, title, and remove action in that order: {row_order}.")
+    field_order = page.locator("#default-tabs .appnuno-tab").first.evaluate("""card => [...card.querySelectorAll('[data-field-group]')].slice(0, 2).map(group => group.querySelector('[data-tab-visibility]') ? 'visible' : group.querySelector('[data-field="id"]') ? 'id' : 'other')""")
+    if field_order != ["visible", "id"]:
+        raise AssertionError(f"External visibility should be the first field, above Tab ID: {field_order}.")
     if first_tab.locator("xpath=following-sibling::button[@aria-label]").count():
         raise AssertionError("The remove action should use the native tab-list icon rather than a separate button.")
     tab_layout = page.locator('#default-tabs').evaluate("""element => {
@@ -766,15 +818,15 @@ def assert_module_settings_persisted(page: Page) -> None:
     if selected_pages != ["checkout/cart"]:
         raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
     hidden_tab = page.locator("#default-tabs .appnuno-tab").nth(4)
-    if hidden_tab.locator('[data-field="id"]').input_value() != "ci-hidden-tab" or hidden_tab.locator('[data-tab-visibility]').is_checked():
+    if hidden_tab.locator('[data-field="id"]').input_value() != "ci-hidden-tab" or hidden_tab.locator('[data-tab-visibility]').input_value() != "0":
         raise AssertionError("The hidden tab did not remain saved in settings with external visibility turned off.")
 
 
 def configure_back_button(page: Page) -> None:
     page.locator('a[href="#tab-back"]').click()
     page.locator("#tab-back").wait_for(state="visible")
-    page.locator("#back-enabled").select_option("0")
-    page.locator("#back-placement").select_option("bar")
+    choose_switch(page, "back-enabled", "0")
+    choose_switch(page, "back-placement", "bar")
 
 
 def configure_colors(page: Page) -> None:
@@ -789,12 +841,12 @@ def configure_colors(page: Page) -> None:
 def configure_glass(page: Page) -> None:
     page.locator('a[href="#tab-glass"]').click()
     page.locator("#tab-glass").wait_for(state="visible")
-    page.locator("#glass-enabled").select_option("1")
-    page.locator("#glass-color-scheme").select_option("dark")
-    page.locator("#glass-style").select_option("clear")
-    page.locator("#glass-animate").select_option("0")
+    choose_switch(page, "glass-enabled", "1")
+    choose_switch(page, "glass-color-scheme", "dark")
+    choose_switch(page, "glass-style", "clear")
+    choose_switch(page, "glass-animate", "0")
     page.locator("#glass-duration").fill("0.7")
-    page.locator("#glass-interactive").select_option("0")
+    choose_switch(page, "glass-interactive", "0")
     page.locator("#glass-tint-color").fill("#123456")
     page.locator("#glass-tint-alpha").fill("0.4")
 
@@ -859,7 +911,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Rodoma puslapiuose",
         "Atžymėti visus",
         "Išorinis matomumas",
-        "Rodyti šį skirtuką lankytojams",
+        "Matomas",
         "Grįžimo mygtukas",
         "Stiklinė mygtukų juosta",
         "Navigacijos spalvos",
@@ -875,7 +927,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Shown on pages",
         "Uncheck all",
         "External visibility",
-        "Show this tab to visitors",
+        "Visible",
         "Back button",
         "Glass button bar",
         "Navigation colors",
@@ -943,7 +995,7 @@ def serialize_php_value(value: Any) -> str:
 
 
 def save_module_status(page: Page, enabled: bool) -> None:
-    page.locator("#input-status").select_option("1" if enabled else "0")
+    choose_switch(page, "input-status", "1" if enabled else "0")
     with page.expect_navigation():
         page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-success").wait_for()
@@ -1028,7 +1080,7 @@ def reject_save_without_modify_permission(runtime: Runtime, page: Page, token: s
             restricted_permissions["modify"] = [route for route in restricted_permissions.get("modify", []) if route != admin_module_route(runtime)]
             cursor.execute("UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s", (encode_permissions(original_permission_value, restricted_permissions), group_id))
     try:
-        page.locator("#input-status").select_option("0")
+        choose_switch(page, "input-status", "0")
         page.locator('button[form="form-appnuno"]').click()
         server_error = page.locator(".alert-danger:not(#client-validation-error)")
         server_error.wait_for()
