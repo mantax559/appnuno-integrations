@@ -549,7 +549,7 @@
 	function renderIconPager(currentPage, lastPage) {
 		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-icon-pager'), function (pager) {
 			pager.textContent = '';
-			pager.hidden = lastPage < 1;
+			pager.hidden = lastPage < 2;
 			if (pager.hidden) {
 				return;
 			}
@@ -1149,7 +1149,11 @@
 					var selected = child === pane;
 					child.classList.toggle('active', selected);
 					child.classList.toggle('appnuno-section-open', selected);
-					child.style.setProperty('display', selected ? 'block' : 'none', 'important');
+					var display = 'none';
+					if (selected) {
+						display = child.id === 'tab-navigation' ? 'block' : 'grid';
+					}
+					child.style.setProperty('display', display, 'important');
 				}
 			});
 		}

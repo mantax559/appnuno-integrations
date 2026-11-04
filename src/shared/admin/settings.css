@@ -31,8 +31,8 @@
   background: #fff;
   color: inherit;
 }
-.appnuno-settings .appnuno-watermark { position: absolute; z-index: 0; top: 50%; left: 50%; display: flex; flex-direction: column; justify-content: center; gap: 22px; width: 180%; pointer-events: none; user-select: none; transform: translate(-50%, -50%) rotate(-45deg); animation: appnuno-watermark 28s linear infinite; }
-.appnuno-settings .appnuno-watermark span { color: rgb(24 24 27 / 7%); font-size: 18px; font-weight: 600; letter-spacing: .22em; white-space: nowrap; }
+.appnuno-settings .appnuno-watermark { position: absolute; z-index: 0; top: 50%; left: 50%; display: flex; flex-direction: column; justify-content: center; gap: 12px; width: 240%; pointer-events: none; user-select: none; transform: translate(-50%, -50%) rotate(-45deg); animation: appnuno-watermark 18s linear infinite; }
+.appnuno-settings .appnuno-watermark span { color: rgb(24 24 27 / 14%); font-size: 20px; font-weight: 650; letter-spacing: .28em; text-transform: uppercase; white-space: nowrap; }
 .appnuno-settings .appnuno-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .appnuno-settings .appnuno-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; min-width: 0; }
 .appnuno-settings .appnuno-brand-mark { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 12px; background: #18181b; color: white; font-size: 30px; font-weight: 650; letter-spacing: -3px; padding-right: 3px; }
@@ -76,10 +76,12 @@
 .appnuno-settings label,
 .appnuno-settings .control-label,
 .appnuno-settings .col-form-label { display: block; width: auto; margin: 0; padding: 0; color: #3f3f46; font-size: 12px; font-weight: 550; text-align: left; line-height: 1.5; }
+.appnuno-settings label [data-toggle="tooltip"],
+.appnuno-settings label [data-bs-toggle="tooltip"] { color: #18181b; font-size: 13px; }
 .appnuno-settings label [data-toggle="tooltip"]::after,
-.appnuno-settings label [data-bs-toggle="tooltip"]::after { margin-left: 5px; color: #a1a1aa; font-size: 11px; }
-.appnuno-settings #form-appnuno > .form-group { flex-direction: row; align-items: center; justify-content: space-between; gap: 20px; padding-bottom: 24px; }
-.appnuno-settings #form-appnuno > .form-group > .col-sm-10 { width: auto; max-width: 100%; }
+.appnuno-settings label [data-bs-toggle="tooltip"]::after { margin-left: 5px; color: #18181b; font-size: 12px; }
+.appnuno-settings #form-appnuno > .form-group { flex-direction: row; align-items: center; justify-content: flex-start; gap: 16px; padding-bottom: 24px; }
+.appnuno-settings #form-appnuno > .form-group > .col-sm-10 { width: min(100%, 220px); max-width: 100%; }
 .appnuno-settings #form-appnuno > .appnuno-cart-field > .col-sm-10 { width: min(100%, 360px); }
 .appnuno-settings #form-appnuno > .form-group > label { width: auto; font-size: 14px; }
 .appnuno-settings .form-control,
@@ -148,7 +150,6 @@
 .appnuno-settings #default-tabs ul.nav-pills > li.active > a,
 .appnuno-settings #default-tabs ul.nav-pills > li > a.active { border-color: #e4e4e7; background: #fff; color: #18181b; box-shadow: 0 1px 3px rgb(0 0 0 / 4%); }
 .appnuno-settings #default-tabs [data-remove-tab] { color: #a1a1aa; cursor: pointer; }
-.appnuno-settings #default-tabs [data-remove-tab]:hover { color: #dc2626; }
 .appnuno-settings #default-tabs .btn[data-add-tab] { width: 100%; border: 1px dashed #d4d4d8; background: transparent; color: #52525b; }
 .appnuno-settings #default-tabs .btn[data-add-tab]:hover { border-color: #a1a1aa; background: #ebebeb; }
 .appnuno-settings .appnuno-tab { padding: 24px; border: 1px solid #e4e4e7; border-radius: 12px; background: #fff; }
@@ -176,9 +177,9 @@
 .appnuno-settings .form-check { position: relative; display: flex; align-items: center; gap: 10px; margin: 0; min-height: 44px; padding: 10px 12px; border-radius: 8px; background: #fafafa; }
 .appnuno-settings .checkbox label,
 .appnuno-settings .form-check-label { display: flex; align-items: center; flex: 1; gap: 10px; min-height: 24px; margin: 0; padding: 0; color: #52525b; font-size: 12px; font-weight: 400; cursor: pointer; }
-.appnuno-settings [data-pages] { height: auto; max-height: none; overflow: visible; margin-top: 8px; padding: 8px; border: 0; border-radius: 8px; background: #ebebeb; box-shadow: none; }
+.appnuno-settings [data-pages] { height: auto; max-height: none; overflow: visible; margin-top: 16px; padding: 4px 16px; border: 0; border-radius: 8px; background: #ebebeb; box-shadow: none; }
 .appnuno-settings [data-pages] .checkbox,
-.appnuno-settings [data-pages] .form-check { min-height: 36px; padding: 4px 0; background: transparent; }
+.appnuno-settings [data-pages] .form-check { min-height: 28px; padding: 2px 0; background: transparent; }
 .appnuno-settings [data-pages] .checkbox:hover,
 .appnuno-settings [data-pages] .form-check:hover { background: transparent; }
 .appnuno-settings .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 16px; border: 1px solid #e4e4e7; border-radius: 8px; background: #fff; color: #18181b; font: 500 13px/20px ui-sans-serif, system-ui, sans-serif; text-decoration: none; text-shadow: none; box-shadow: 0 1px 2px rgb(0 0 0 / 3%); }
@@ -198,7 +199,7 @@
 .appnuno-settings .btn-primary:active { border-color: #303035; background-color: #303035; color: #fff; }
 .appnuno-settings .btn[data-add-tab]:focus { border-color: #a1a1aa; background: #ebebeb; color: #52525b; }
 .appnuno-settings .btn-group,
-.appnuno-button-group { display: inline-flex; flex-wrap: nowrap; align-items: stretch; gap: 0; width: max-content; max-width: 100%; margin-top: 8px; }
+.appnuno-button-group { display: inline-flex; flex-wrap: nowrap; align-items: stretch; gap: 0; width: max-content; max-width: 100%; margin-top: 16px; }
 .appnuno-settings .btn-group > .btn,
 .appnuno-button-group > .btn { float: none; margin: 0 0 0 -1px; border-radius: 0; }
 .appnuno-settings .btn-group > .btn:first-child,
@@ -239,8 +240,11 @@
 .appnuno-icon-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; min-width: 0; }
 .appnuno-icon-meta-bottom { justify-content: flex-end; }
 #icon-picker-count { margin: 0; min-width: 0; color: #71717a; font-size: 13px; }
-#icon-picker-dialog .appnuno-icon-pager { flex-wrap: wrap; justify-content: flex-end; max-width: 100%; margin-top: 0; }
+#icon-picker-dialog .appnuno-icon-pager { flex-wrap: nowrap; justify-content: flex-end; max-width: 100%; margin-top: 0; }
 #icon-picker-dialog .appnuno-icon-pager[hidden] { display: none; }
+#icon-picker-dialog .appnuno-icon-pager > .btn { min-height: 32px; height: 32px; margin: 0 0 0 -1px; padding: 0 10px; border-radius: 0; font-size: 12px; line-height: 30px; white-space: nowrap; }
+#icon-picker-dialog .appnuno-icon-pager > .btn:first-child { margin-left: 0; border-radius: 8px 0 0 8px; }
+#icon-picker-dialog .appnuno-icon-pager > .btn:last-child { border-radius: 0 8px 8px 0; }
 #icon-picker-dialog .appnuno-icon-pager > .btn[aria-current="page"] { border-color: #18181b; background: #18181b; color: #fff; }
 .appnuno-icon-stage { position: relative; min-height: 52px; }
 .appnuno-icon-loading { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; background: rgb(255 255 255 / 72%); }
@@ -253,14 +257,14 @@
 #icon-picker-grid img { display: block; width: 28px; height: 28px; max-width: 28px; max-height: 28px; }
 #appnuno-tooltip { position: fixed; z-index: 20000; max-width: 280px; padding: 8px 12px; border-radius: 8px; background: #18181b; color: #fff; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; transform: translate(-50%, -100%); pointer-events: none; box-shadow: 0 8px 24px rgb(0 0 0 / 18%); }
 #appnuno-tooltip[hidden] { display: none; }
-.appnuno-settings [data-icon-picker] { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.appnuno-settings [data-icon-picker] { display: flex; width: 100%; max-width: 100%; justify-content: flex-start; white-space: normal; overflow-wrap: anywhere; }
 .appnuno-settings [data-icon-picker] img { flex: 0 0 24px; }
 .appnuno-settings .appnuno-custom-urls { margin-top: 8px; }
 .appnuno-settings [data-tab-title] { min-width: 0; overflow-wrap: anywhere; }
 .appnuno-settings [data-visibility-indicator] { float: none; margin-left: auto; font-size: 16px; line-height: 1; }
-.appnuno-settings #default-tabs .appnuno-cart-field { margin-top: 16px; }
+.appnuno-settings #default-tabs .appnuno-cart-field { margin-top: 28px; }
 .appnuno-settings #default-tabs [data-remove-tab] { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 5px; font-size: 16px; }
-.appnuno-settings #default-tabs [data-remove-tab]:hover { background: #fef2f2; }
+.appnuno-settings #default-tabs [data-remove-tab]:hover { background: transparent; color: #a1a1aa; }
 .appnuno-settings .appnuno-brand > div { min-width: 0; }
 .appnuno-settings .panel-title { overflow-wrap: anywhere; }
 .appnuno-settings .has-error .form-control,
@@ -316,8 +320,8 @@
   .appnuno-settings input[type="checkbox"] { appearance: auto; }
 }
 @keyframes appnuno-watermark {
-  from { transform: translate(-42%, -50%) rotate(-45deg); }
-  to { transform: translate(-58%, -50%) rotate(-45deg); }
+  from { transform: translate(-36%, -50%) rotate(-45deg); }
+  to { transform: translate(-64%, -50%) rotate(-45deg); }
 }
 @keyframes appnuno-spin {
   to { transform: rotate(360deg); }
