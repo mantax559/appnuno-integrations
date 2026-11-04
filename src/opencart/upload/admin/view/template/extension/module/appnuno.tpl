@@ -1,11 +1,9 @@
 <?php echo $header; ?><?php echo $column_left; ?>
 <div id="content">
-  <div class="page-header">
+  <link href="view/javascript/appnuno/settings.css" rel="stylesheet" />
+  <link href="view/javascript/appnuno/adapter.css" rel="stylesheet" />
+  <div class="page-header appnuno-host-header">
     <div class="container-fluid">
-      <div class="pull-right">
-        <button type="submit" form="form-appnuno" data-toggle="tooltip" title="<?php echo $button_save; ?>" class="btn btn-primary"><i class="fa fa-save"></i></button>
-        <a href="<?php echo $cancel; ?>" data-toggle="tooltip" title="<?php echo $button_cancel; ?>" class="btn btn-default"><i class="fa fa-reply"></i></a>
-      </div>
       <h1><?php echo $heading_title; ?></h1>
       <ul class="breadcrumb">
         <?php foreach ($breadcrumbs as $breadcrumb) { ?>
@@ -14,7 +12,7 @@
       </ul>
     </div>
   </div>
-  <div class="container-fluid">
+  <div class="container-fluid appnuno-page">
     <?php if ($success) { ?>
     <div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
       <button type="button" class="close" data-dismiss="alert">&times;</button>
@@ -30,9 +28,16 @@
       <button type="button" class="close" data-dismiss="alert">&times;</button>
     </div>
     <?php } ?>
-    <div class="panel panel-default">
-      <div class="panel-heading">
-        <h3 class="panel-title"><i class="fa fa-pencil"></i> <?php echo $text_edit; ?></h3>
+    <div class="panel panel-default appnuno-settings">
+      <div class="panel-heading appnuno-toolbar">
+        <div class="appnuno-brand">
+          <span class="appnuno-brand-mark" aria-hidden="true">n</span>
+          <div><span class="appnuno-eyebrow">AppNuno</span><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
+        </div>
+        <div class="appnuno-toolbar-actions">
+          <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
+          <button type="submit" form="form-appnuno" class="btn btn-primary"><?php echo $button_save; ?></button>
+        </div>
       </div>
       <div class="panel-body">
         <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno" class="form-horizontal">
@@ -192,31 +197,42 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="Close">&times;</button>
+        <button type="button" class="appnuno-modal-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
       </div>
       <div class="modal-body">
-        <input type="search" id="icon-picker-search" class="form-control" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
-        <button type="button" class="btn btn-default" id="icon-picker-clear" style="margin-top:8px"><?php echo $text['text_icon_catalog_clear']; ?></button>
-        <div id="icon-picker-status" role="status" style="padding:12px 0"></div>
-        <div id="icon-picker-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px"></div>
+        <input type="search" id="icon-picker-search" class="form-control" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
+        <button type="button" class="btn btn-default" id="icon-picker-clear"><?php echo $text['text_icon_catalog_clear']; ?></button>
+        <div id="icon-picker-status" role="status"></div>
+        <div id="icon-picker-grid"></div>
       </div>
     </div>
   </div>
 </div>
-<script type="text/javascript"><!--
+<script type="application/json" id="appnuno-configuration"><?php echo $configuration_json; ?></script>
+<script type="application/json" id="appnuno-text"><?php echo $text_json; ?></script>
+<script type="application/json" id="appnuno-languages"><?php echo $languages_json; ?></script>
+<script type="application/json" id="appnuno-destinations"><?php echo $destinations_json; ?></script>
+<script type="application/json" id="appnuno-route-options"><?php echo $route_options_json; ?></script>
+<script type="application/json" id="appnuno-validation-path"><?php echo $error_config_path_json; ?></script>
+<script type="application/json" id="appnuno-default-language"><?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?></script>
+<script type="text/javascript">
 (function () {
-	var configuration = <?php echo $configuration_json; ?> || {};
-	var text = <?php echo $text_json; ?> || {};
-	var languages = <?php echo $languages_json; ?> || [];
-	var destinations = <?php echo $destinations_json; ?> || [];
-	var routeOptions = <?php echo $route_options_json; ?> || [];
-	var validationPath = <?php echo $error_config_path_json; ?>;
-	var defaultLanguageCode = <?php echo json_encode($default_language_code, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT); ?>;
+	function readSettingsData(id, fallback) {
+		var element = document.getElementById(id);
+		return element ? JSON.parse(element.textContent || 'null') : fallback;
+	}
+	var configuration = readSettingsData('appnuno-configuration', {}) || {};
+	var text = readSettingsData('appnuno-text', {}) || {};
+	var languages = readSettingsData('appnuno-languages', []) || [];
+	var destinations = readSettingsData('appnuno-destinations', []) || [];
+	var routeOptions = readSettingsData('appnuno-route-options', []) || [];
+	var validationPath = readSettingsData('appnuno-validation-path', null);
+	var defaultLanguageCode = readSettingsData('appnuno-default-language', '');
 	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
 	var cartSelect = document.getElementById('cart-tab-id');
-	var adminMarkup = 'bootstrap3';
+	var adminMarkup = window.bootstrap && window.bootstrap.Modal ? 'bootstrap5' : 'bootstrap3';
 	defaultContainer.className = 'row';
 	var tabNavigationColumn = document.createElement('div');
 	tabNavigationColumn.className = 'col-sm-2';
@@ -377,7 +393,6 @@
 			image.alt = '';
 			image.width = 24;
 			image.height = 24;
-			image.style.marginRight = '8px';
 			button.insertBefore(image, button.firstChild);
 		}
 	}
@@ -390,23 +405,16 @@
 			}
 			var option = document.createElement('button');
 			option.type = 'button';
-			option.className = 'btn btn-default';
+			option.className = 'btn appnuno-icon-option';
 			option.title = icon.id;
-			option.style.minHeight = '76px';
-			option.style.overflow = 'hidden';
 			var image = document.createElement('img');
 			image.src = icon.uri;
 			image.alt = '';
 			image.width = 28;
 			image.height = 28;
-			image.style.display = 'block';
-			image.style.margin = '0 auto 6px';
 			var label = document.createElement('span');
 			label.textContent = icon.id;
-			label.style.display = 'block';
-			label.style.fontSize = '11px';
-			label.style.overflow = 'hidden';
-			label.style.textOverflow = 'ellipsis';
+			label.className = 'appnuno-icon-label';
 			option.appendChild(image);
 			option.appendChild(label);
 			option.addEventListener('click', function () {
@@ -523,7 +531,6 @@
 		languages.forEach(function (language) {
 			var inputGroup = document.createElement('div');
 			inputGroup.className = 'input-group';
-			inputGroup.style.marginBottom = '8px';
 			var flag = document.createElement('span');
 			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
 			if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
@@ -599,7 +606,6 @@
 		languageList.forEach(function (language) {
 			var inputGroup = document.createElement('div');
 			inputGroup.className = 'input-group';
-			inputGroup.style.marginTop = '8px';
 			var flag = document.createElement('span');
 			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
 			if (language.code !== 'default' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
@@ -706,9 +712,7 @@
 			allPagesChoice.appendChild(allPagesLabel);
 		}
 		var list = document.createElement('div');
-		list.className = adminMarkup === 'bootstrap5' ? 'border rounded p-2' : 'well well-sm';
-		list.style.height = '150px';
-		list.style.overflow = 'auto';
+		list.className = 'appnuno-page-list';
 		list.setAttribute('data-pages', 'true');
 		list.setAttribute('data-validation-path', path + '.pages');
 		var selected = {};
@@ -844,6 +848,8 @@
 			if (next && wasActive) {
 				activateTab(next);
 			}
+			var nextLink = tabNavigation.querySelector('[aria-selected="true"]');
+			(nextLink || addTabButton).focus();
 			refreshCartOptions();
 			refreshTabNavigation();
 		}
@@ -1070,6 +1076,20 @@
 			matched = document.getElementById('input-config-json');
 		}
 		if (matched) {
+			var card = matched.closest('.appnuno-tab');
+			if (card) {
+				activateTab(card);
+			}
+			var section = matched.closest('#form-appnuno > .tab-content > .tab-pane');
+			if (section) {
+				var sectionLink = document.querySelector('.nav-tabs a[href="#' + section.id + '"]');
+				if (adminMarkup === 'bootstrap5') {
+					window.bootstrap.Tab.getOrCreateInstance(sectionLink).show();
+				} else {
+					window.jQuery(sectionLink).tab('show');
+				}
+			}
+			matched.setAttribute('aria-invalid', 'true');
 			var group = matched;
 			while (group && group.getAttribute('data-field-group') !== 'true' && !group.classList.contains('appnuno-tab') && group.id !== 'default-tabs') {
 				group = group.parentNode;
@@ -1128,5 +1148,5 @@
 		document.getElementById('input-config-json').value = JSON.stringify(result);
 	});
 }());
-//--></script>
+</script>
 <?php echo $footer; ?>

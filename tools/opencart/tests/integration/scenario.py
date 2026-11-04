@@ -67,6 +67,12 @@ def run(runtime: Runtime) -> None:
                     add_store_language(runtime, page, web_root, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
                     install_module(runtime, page, admin_token(runtime, page))
                     capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
+                    original_viewport = page.viewport_size or {"width": 1440, "height": 1000}
+                    page.set_viewport_size({"width": 820, "height": 1000})
+                    capture_screenshot(page, artifact_dir, "admin-settings-tablet.png")
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    capture_screenshot(page, artifact_dir, "admin-settings-mobile.png")
+                    page.set_viewport_size(original_viewport)
                     save_module_settings(page, artifact_dir)
                     check_admin_module_languages(runtime, page)
                     token = admin_token(runtime, page)

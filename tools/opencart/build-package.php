@@ -16,8 +16,10 @@ if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
 }
 $entries = array(
     'install.xml' => $source . DIRECTORY_SEPARATOR . 'install.xml',
-    'README.md' => $readme
+    'README.md' => $readme,
+    'upload/admin/view/javascript/appnuno/settings.css' => $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'settings.css'
 );
+$ui_asset_version = substr(hash('sha256', hash_file('sha256', $entries['upload/admin/view/javascript/appnuno/settings.css']) . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'javascript' . DIRECTORY_SEPARATOR . 'appnuno' . DIRECTORY_SEPARATOR . 'adapter.css') . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.tpl')), 0, 12);
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source . DIRECTORY_SEPARATOR . 'upload', FilesystemIterator::SKIP_DOTS));
 foreach ($iterator as $file) {
     if ($file->isFile()) {
@@ -54,6 +56,19 @@ foreach ($entries as $name => $path) {
             $body = opencart_40_admin_template(opencart_twig_template($body));
             $name = substr($name, 0, -4) . '.twig';
         }
+    }
+    if (strpos($name, '/view/template/') !== false && preg_match('/\.(tpl|twig)$/', $name)) {
+        if (!preg_match('~<script type="text/javascript">\s*(.*?)\s*</script>~s', $body, $script)) {
+            throw new RuntimeException('The OpenCart settings template is missing its shared JavaScript entry point.');
+        }
+        $script_name = in_array($line, array('4'), true) ? 'admin/view/javascript/appnuno/settings.js' : 'upload/admin/view/javascript/appnuno/settings.js';
+        $prepared[$script_name] = trim($script[1]);
+        $body = str_replace($script[0], '<script src="view/javascript/appnuno/settings.js"></script>', $body);
+        $body = str_replace(
+            array('view/javascript/appnuno/settings.css', 'view/javascript/appnuno/adapter.css', 'view/javascript/appnuno/settings.js'),
+            array('view/javascript/appnuno/settings.css?v=' . $ui_asset_version, 'view/javascript/appnuno/adapter.css?v=' . $ui_asset_version, 'view/javascript/appnuno/settings.js?v=' . $ui_asset_version),
+            $body
+        );
     }
     $prepared[$name] = $body;
 }
@@ -374,8 +389,8 @@ function opencart_40_admin_template($content) {
         $content
     );
     $content = str_replace(
-        array('<div class="panel panel-default">', '<div class="panel-heading">', '<h3 class="panel-title">', '</h3>', '<div class="panel-body">'),
-        array('<div class="card">', '<div class="card-header">', '', '', '<div class="card-body">'),
+        array('<div class="panel panel-default appnuno-settings">', '<div class="panel panel-default">', '<div class="panel-heading appnuno-toolbar">', '<div class="panel-heading">', '<h3 class="panel-title">', '</h3>', '<div class="panel-body">'),
+        array('<div class="card appnuno-settings">', '<div class="card">', '<div class="card-header appnuno-toolbar">', '<div class="card-header">', '', '', '<div class="card-body">'),
         $content
     );
     $content = preg_replace('/(<input type="color"[^>]*class=")form-control(")/', '$1form-control form-control-color$2', $content);

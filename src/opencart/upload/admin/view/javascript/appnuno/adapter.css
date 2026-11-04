@@ -1,0 +1,10 @@
+#column-left.active ~ #content {
+  margin-left: 235px;
+}
+
+@media (max-width: 767px) {
+  #column-left.active ~ #content {
+    left: 0;
+    margin-left: 0;
+  }
+}
