@@ -82,6 +82,9 @@
               <div id="default-tabs"></div>
             </div>
             <div class="tab-pane" id="tab-glass">
+              <fieldset class="appnuno-fieldset">
+              <legend><?php echo $text['text_back_button']; ?></legend>
+              <div class="appnuno-fieldset-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10">
@@ -91,7 +94,7 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="back-enabled">
                 <label class="col-sm-2 control-label" for="back-placement"><?php echo $text['entry_back_placement']; ?></label>
                 <div class="col-sm-10">
                   <select id="back-placement" class="form-control">
@@ -100,6 +103,11 @@
                   </select>
                 </div>
               </div>
+              </div>
+              </fieldset>
+              <fieldset class="appnuno-fieldset">
+              <legend><?php echo $text['text_glass_button']; ?></legend>
+              <div class="appnuno-fieldset-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
                 <div class="col-sm-10">
@@ -109,7 +117,7 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-color-scheme"><?php echo $text['entry_glass_color_scheme']; ?></label>
                 <div class="col-sm-10">
                   <select id="glass-color-scheme" class="form-control">
@@ -119,7 +127,7 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-style"><?php echo $text['entry_glass_style']; ?></label>
                 <div class="col-sm-10">
                   <select id="glass-style" class="form-control">
@@ -129,7 +137,7 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-animate"><?php echo $text['entry_glass_animate']; ?></label>
                 <div class="col-sm-10">
                   <select id="glass-animate" class="form-control">
@@ -138,13 +146,13 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label>
                 <div class="col-sm-10">
                   <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control" required="required" />
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-interactive"><?php echo $text['entry_glass_interactive']; ?></label>
                 <div class="col-sm-10">
                   <select id="glass-interactive" class="form-control">
@@ -153,21 +161,25 @@
                   </select>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-tint-color"><?php echo $text['entry_glass_tint']; ?></label>
                 <div class="col-sm-10">
                   <input type="color" id="glass-tint-color" class="form-control" value="#000000" />
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
                 <div class="col-sm-10">
                   <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control" value="0.02" required="required" />
                 </div>
               </div>
+              </div>
+              </fieldset>
             </div>
             <div class="tab-pane" id="tab-colors">
-              <h4><?php echo $text['text_light_mode']; ?></h4>
+              <fieldset class="appnuno-fieldset">
+              <legend><?php echo $text['text_light_mode']; ?></legend>
+              <div class="appnuno-fieldset-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="light-background"><?php echo $text['entry_background']; ?></label>
                 <div class="col-sm-10">
@@ -180,7 +192,11 @@
                   <input type="color" id="light-content" class="form-control" value="#2C3136" />
                 </div>
               </div>
-              <h4><?php echo $text['text_dark_mode']; ?></h4>
+              </div>
+              </fieldset>
+              <fieldset class="appnuno-fieldset">
+              <legend><?php echo $text['text_dark_mode']; ?></legend>
+              <div class="appnuno-fieldset-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
                 <div class="col-sm-10">
@@ -193,6 +209,8 @@
                   <input type="color" id="dark-content" class="form-control" value="#FFFFFF" />
                 </div>
               </div>
+              </div>
+              </fieldset>
             </div>
           </div>
         </form>
@@ -314,7 +332,7 @@
 	}
 
 	function hideAppnunoTooltip(anchor) {
-		if (!anchor || anchor.getAttribute('data-appnuno-tooltip') === appnunoTooltip.textContent) {
+		if (!anchor || !anchor.isConnected || anchor.getAttribute('data-appnuno-tooltip') === appnunoTooltip.textContent) {
 			appnunoTooltip.hidden = true;
 		}
 	}
@@ -350,9 +368,10 @@
 		}
 		var controlRect = control.getBoundingClientRect();
 		var selectedRect = selected.getBoundingClientRect();
+		var controlStyle = window.getComputedStyle(control);
 		indicator.style.width = selectedRect.width + 'px';
 		indicator.style.height = selectedRect.height + 'px';
-		indicator.style.transform = 'translate(' + (selectedRect.left - controlRect.left) + 'px, ' + (selectedRect.top - controlRect.top) + 'px)';
+		indicator.style.transform = 'translate(' + (selectedRect.left - controlRect.left - (parseFloat(controlStyle.borderLeftWidth) || 0)) + 'px, ' + (selectedRect.top - controlRect.top - (parseFloat(controlStyle.borderTopWidth) || 0)) + 'px)';
 	}
 
 	function revealSwitchMotion(control) {
@@ -515,6 +534,7 @@
 	}
 
 	function renderIconOptions(icons) {
+		hideAppnunoTooltip();
 		iconPickerGrid.textContent = '';
 		icons.forEach(function (icon) {
 			if (!validCatalogIcon(icon)) {
@@ -584,7 +604,7 @@
 		iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
 		renderIconPager(page, total ? lastPage : 0);
 		iconPickerLoading.hidden = true;
-		iconPickerStatus.textContent = visible.length ? '' : text.text_icon_catalog_empty;
+		iconPickerStatus.textContent = '';
 	}
 
 	function revealIconPage(requestId, started, apply) {
@@ -709,6 +729,7 @@
 	}
 
 	iconPickerSearch.addEventListener('input', function () {
+		hideAppnunoTooltip();
 		iconPickerCatalog = null;
 		iconPickerCatalogQuery = null;
 		window.clearTimeout(iconPickerTimer);
@@ -1284,6 +1305,19 @@
 	setValue('light-content', configuration.colors && configuration.colors.light && configuration.colors.light.contentColor || '#2C3136');
 	setValue('dark-background', configuration.colors && configuration.colors.dark && configuration.colors.dark.backgroundColor || '#2C3136');
 	setValue('dark-content', configuration.colors && configuration.colors.dark && configuration.colors.dark.contentColor || '#FFFFFF');
+	function syncConditionalFields() {
+		Array.prototype.forEach.call(document.querySelectorAll('[data-show-when]'), function (group) {
+			var control = document.getElementById(group.getAttribute('data-show-when'));
+			group.hidden = !control || control.value !== '1';
+		});
+	}
+	['back-enabled', 'glass-enabled'].forEach(function (id) {
+		var control = document.getElementById(id);
+		if (control) {
+			control.addEventListener('change', syncConditionalFields);
+		}
+	});
+	syncConditionalFields();
 	refreshCartOptions();
 	cartSelect.value = configuration.cartTabId || cartSelect.value;
 	[

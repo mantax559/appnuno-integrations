@@ -9,7 +9,7 @@
   --appnuno-background: #ffffff;
   --appnuno-foreground: #18181b;
   --appnuno-muted: #71717a;
-  --appnuno-muted-surface: #ebebeb;
+  --appnuno-muted-surface: #f3f3f3;
   --appnuno-line: #e4e4e7;
   --appnuno-primary: #18181b;
   --appnuno-gap: 24px;
@@ -21,12 +21,12 @@
   min-width: 0;
   margin: var(--appnuno-gap) 0;
   overflow: hidden;
-  border: 0;
+  border: 1px solid var(--appnuno-line);
   border-radius: var(--appnuno-radius);
   background: #fff;
   color: var(--appnuno-foreground);
   font: 14px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  box-shadow: var(--appnuno-shadow);
+  box-shadow: none;
 }
 
 .appnuno-settings, .appnuno-settings * { box-sizing: border-box; }
@@ -47,12 +47,18 @@
 .appnuno-settings .appnuno-watermark span { flex: none; color: rgb(24 24 27 / 7%); font-size: 22px; font-weight: 650; letter-spacing: .12em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
 .appnuno-settings .appnuno-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--appnuno-gap); }
 .appnuno-settings .appnuno-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; min-width: 0; }
-.appnuno-settings .appnuno-brand-mark { display: block; flex: 0 0 auto; width: auto; height: 44px; max-height: 44px; object-fit: contain; border-radius: 12px; box-shadow: var(--appnuno-shadow); }
+.appnuno-settings .appnuno-brand-mark { display: block; flex: 0 0 auto; width: auto; height: 44px; max-height: 44px; object-fit: contain; border-radius: 12px; }
 .appnuno-settings .panel-title { margin: 0; color: #18181b; font: 600 20px/1.3 ui-sans-serif, system-ui, sans-serif; letter-spacing: -.04em; }
-.appnuno-settings .appnuno-toolbar-actions { position: relative; z-index: 1; display: inline-flex; flex: 0 0 auto; margin-top: 0; filter: drop-shadow(0px 7px 29px rgba(100, 100, 111, 0.2)); }
-.appnuno-settings .appnuno-toolbar-actions .btn { box-shadow: none; }
-.appnuno-settings .panel-body,
-.appnuno-settings .card-body { padding: var(--appnuno-gap); }
+.appnuno-settings .appnuno-toolbar-actions { position: relative; z-index: 1; display: inline-flex; flex: 0 0 auto; gap: 0; margin-top: 0; filter: drop-shadow(0px 7px 29px rgba(100, 100, 111, 0.2)); }
+.appnuno-settings .appnuno-toolbar-actions .btn { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
+.appnuno-settings .appnuno-toolbar-actions .btn:first-child { border-radius: var(--appnuno-radius-control) 0 0 var(--appnuno-radius-control); }
+.appnuno-settings .appnuno-toolbar-actions .btn:last-child { border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0; }
+.appnuno-settings .appnuno-toolbar-actions .btn:focus,
+.appnuno-settings .appnuno-toolbar-actions .btn:active { border: 0; box-shadow: none; }
+.appnuno-settings .appnuno-toolbar-actions a.btn,
+.appnuno-settings .appnuno-toolbar-actions a.btn:hover,
+.appnuno-settings .appnuno-toolbar-actions a.btn:focus,
+.appnuno-settings .appnuno-toolbar-actions a.btn:active { border: 1px solid #e4e4e7; }
 .appnuno-settings .panel-body::before,
 .appnuno-settings .panel-body::after,
 .appnuno-settings .form-group::before,
@@ -62,6 +68,7 @@
 .appnuno-settings #default-tabs::before,
 .appnuno-settings #default-tabs::after { display: none; }
 
+.appnuno-settings [hidden] { display: none !important; }
 .appnuno-settings .form-group,
 .appnuno-settings .row.mb-3,
 .appnuno-settings .appnuno-tab .form-group,
@@ -126,7 +133,7 @@
 
 .appnuno-switch { position: relative; display: inline-flex; flex-wrap: wrap; align-items: center; width: min(100%, max-content); max-width: 100%; padding: 5px; border-radius: 10px; background: var(--appnuno-muted-surface); }
 .appnuno-switch-indicator { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 5px; background: #18181b; pointer-events: none; }
-.appnuno-switch[data-placed] .appnuno-switch-indicator { transition: transform 180ms ease, width 180ms ease, height 180ms ease; }
+.appnuno-switch { position: relative; display: inline-flex; flex-wrap: wrap; align-items: center; width: min(100%, max-content); max-width: 100%; padding: 6px; border: 1px solid var(--appnuno-line); border-radius: 12px; background: transparent; }
 .appnuno-switch > button,
 .appnuno-section-switch .nav-tabs > li > a,
 .appnuno-section-switch .nav-tabs > li > a.nav-link { position: relative; z-index: 1; display: inline-flex; align-items: center; justify-content: center; min-width: 0; max-width: 100%; min-height: 32px; margin: 0; padding: 6px 12px; border: 0; border-radius: 5px; background: transparent; color: #71717a; font: 500 13px/20px ui-sans-serif, system-ui, sans-serif; text-align: center; text-decoration: none; white-space: normal; box-shadow: none; cursor: pointer; transition: color 180ms ease; }
@@ -166,22 +173,24 @@
 .appnuno-settings #default-tabs ul.nav-pills > li.active > a,
 .appnuno-settings #default-tabs ul.nav-pills > li.active > a:hover,
 .appnuno-settings #default-tabs ul.nav-pills > li > a.active,
-.appnuno-settings #default-tabs ul.nav-pills > li > a.active:hover { border-color: #e4e4e7; border-style: solid; background: #fff; color: #000; box-shadow: none; }
-.appnuno-settings #default-tabs [data-tab-title] { color: #000; font-size: 16px; font-weight: 600; }
-.appnuno-settings #default-tabs [data-remove-tab] { color: #a1a1aa; cursor: pointer; }
-.appnuno-settings #default-tabs .btn[data-add-tab] { width: 100%; min-height: 40px; border: 1px dashed #d4d4d8; background: transparent; color: #52525b; }
-.appnuno-settings #default-tabs .btn[data-add-tab]:hover { border-color: #a1a1aa; background: #ebebeb; }
-.appnuno-settings .appnuno-tab { padding: var(--appnuno-gap); border: 0; border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
-.appnuno-settings .tab-pane.appnuno-tab.active { border: 1px solid var(--appnuno-line); }
+.appnuno-settings #default-tabs ul.nav-pills > li > a.active:hover { border-color: #e4e4e7; border-style: solid; background: #f9f9f9; color: #000; box-shadow: none; }
+.appnuno-settings #default-tabs .btn[data-add-tab] { width: 100%; min-height: 40px; border: 0; background: transparent; color: #52525b; box-shadow: none; }
+.appnuno-settings #default-tabs .btn[data-add-tab]:hover,
+.appnuno-settings #default-tabs .btn[data-add-tab]:focus,
+.appnuno-settings #default-tabs .btn[data-add-tab]:active { border: 0; background: transparent; box-shadow: none; }
 .appnuno-settings .appnuno-tab.active { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--appnuno-gap); }
 .appnuno-settings .appnuno-tab > .appnuno-field-wide { grid-column: 1 / -1; }
 .appnuno-settings #tab-glass.appnuno-section-open,
 .appnuno-settings #tab-colors.appnuno-section-open { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--appnuno-gap); padding: var(--appnuno-gap); border: 0; border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
 .appnuno-settings h4 { grid-column: 1 / -1; margin: 0; padding-bottom: var(--appnuno-space); border: 0; border-bottom: 1px solid #f0f0f2; color: #71717a; font-size: 14px; font-weight: 600; }
-.appnuno-settings .input-group { display: flex; width: 100%; min-width: 0; }
-.appnuno-settings .input-group .form-control { flex: 1 1 auto; width: 0; }
+.appnuno-settings .appnuno-fieldset { grid-column: 1 / -1; min-width: 0; min-inline-size: 0; margin: 0; padding: 8px var(--appnuno-gap) var(--appnuno-gap); border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius); background: #fafafa; }
+.appnuno-settings .appnuno-fieldset legend { display: table; width: auto; margin: 0 0 var(--appnuno-gap); padding: 0 var(--appnuno-space); border: 0; background: #fff; color: #18181b; font: 600 14px/1.4 ui-sans-serif, system-ui, sans-serif; float: none; }
+.appnuno-settings .appnuno-fieldset-body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--appnuno-gap); min-width: 0; }
+.appnuno-settings #tab-colors.appnuno-section-open { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--appnuno-gap); padding: var(--appnuno-gap); border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
+.appnuno-settings .input-group { display: flex; flex-wrap: nowrap; align-items: stretch; width: 100%; min-width: 0; }
+.appnuno-settings .input-group .form-control { flex: 1 1 auto; width: auto; min-width: 0; height: 42px; float: none; }
 .appnuno-settings .input-group-addon,
-.appnuno-settings .input-group-text { display: flex; align-items: center; justify-content: center; flex: 0 0 46px; width: auto; border: 1px solid #e4e4e7; border-right: 0; border-radius: var(--appnuno-radius-control) 0 0 var(--appnuno-radius-control); background: #fafafa; color: #71717a; font-size: 11px; }
+.appnuno-settings .input-group-text { display: flex; align-items: center; justify-content: center; flex: 0 0 46px; width: 46px; height: 42px; margin: 0; padding: 0; float: none; border: 1px solid #e4e4e7; border-right: 0; border-radius: var(--appnuno-radius-control) 0 0 var(--appnuno-radius-control); background: #fafafa; color: #71717a; font-size: 11px; }
 .appnuno-settings .input-group .input-group-addon + .form-control,
 .appnuno-settings .input-group .input-group-text + .form-control { border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0; }
 .appnuno-settings .input-group + .input-group { margin-top: var(--appnuno-space); }
@@ -202,7 +211,7 @@
 .appnuno-settings [data-pages] .checkbox:hover,
 .appnuno-settings [data-pages] .form-check:hover { background: transparent; }
 .appnuno-settings .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 40px; padding: 9px 16px; border: 1px solid #e4e4e7; border-radius: var(--appnuno-radius-control); background: #fff; color: #18181b; font: 500 13px/20px ui-sans-serif, system-ui, sans-serif; text-decoration: none; text-shadow: none; box-shadow: 0 1px 2px rgb(0 0 0 / 3%); }
-.appnuno-settings .btn:hover { background: #ebebeb; }
+.appnuno-settings .btn:hover { background: #f3f3f3; }
 .appnuno-settings .btn-primary { border-color: #18181b; background: var(--appnuno-primary); color: #fafafa; }
 .appnuno-settings .btn-primary:hover { border-color: #303035; background: #303035; color: #fff; }
 .appnuno-settings :is(a, button, [role="button"]):focus,
@@ -216,7 +225,7 @@
 .appnuno-settings .btn:active { background-color: #e4e4e7; }
 .appnuno-settings .btn-primary:focus,
 .appnuno-settings .btn-primary:active { border-color: #303035; background-color: #303035; color: #fff; }
-.appnuno-settings .btn[data-add-tab]:focus { border-color: #a1a1aa; background: #ebebeb; color: #52525b; }
+.appnuno-settings .btn[data-add-tab]:focus { border: 0; background: transparent; color: #52525b; box-shadow: none; }
 .appnuno-settings .btn-group,
 .appnuno-button-group { display: inline-flex; flex-wrap: nowrap; align-items: stretch; gap: 0; width: max-content; max-width: 100%; margin-top: 16px; }
 .appnuno-settings .btn-group > .btn,
@@ -249,12 +258,11 @@
 #icon-picker-dialog .form-control:focus { border-color: #a1a1aa; box-shadow: 0 0 0 3px rgb(161 161 170 / 12%); }
 #icon-picker-dialog .form-control::placeholder { color: #a1a1aa; }
 #icon-picker-dialog .btn { min-height: 44px; padding: 10px 14px; border: 1px solid #e4e4e7; border-radius: var(--appnuno-radius-control); background: #fff; color: #3f3f46; font: 500 12px/20px ui-sans-serif, system-ui, sans-serif; text-shadow: none; white-space: normal; box-shadow: none; }
-#icon-picker-dialog .btn:hover { border-color: #a1a1aa; background: #ebebeb; }
+#icon-picker-dialog .btn:hover { border-color: #a1a1aa; background: #f3f3f3; }
 #icon-picker-dialog .btn:active { background: #e4e4e7; }
 #icon-picker-dialog .appnuno-modal-close { display: grid; place-items: center; flex: 0 0 44px; width: 44px; height: 44px; min-height: 44px; margin: 0; padding: 0; border: 0; border-radius: var(--appnuno-radius-control); background: transparent; color: #71717a; font: 400 26px/1 ui-sans-serif, system-ui, sans-serif; opacity: 1; text-shadow: none; cursor: pointer; box-shadow: none; }
-#icon-picker-dialog .appnuno-modal-close:hover { background: #ebebeb; color: #18181b; }
+#icon-picker-dialog .appnuno-modal-close:hover { background: #f3f3f3; color: #18181b; }
 #icon-picker-dialog .appnuno-icon-toolbar { display: flex; align-items: stretch; width: 100%; }
-#icon-picker-dialog .appnuno-icon-toolbar .form-control { flex: 1 1 auto; width: 100%; border-radius: var(--appnuno-radius-control); }
 .appnuno-icon-meta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; min-width: 0; }
 .appnuno-icon-meta-bottom { justify-content: flex-end; }
 #icon-picker-count { margin: 0; min-width: 0; color: #71717a; font-size: 13px; }
@@ -267,7 +275,7 @@
 .appnuno-icon-stage { position: relative; min-height: 52px; margin-top: 16px; }
 .appnuno-icon-loading { position: absolute; z-index: 2; inset: 0; display: grid; place-items: center; background: rgb(255 255 255 / 92%); }
 .appnuno-icon-loading[hidden] { display: none; }
-.appnuno-spinner { width: 28px; height: 28px; border: 2px solid #e4e4e7; border-top-color: #18181b; border-radius: 50%; animation: appnuno-spin .7s linear infinite; }
+.appnuno-spinner { width: 28px; height: 28px; border: 1px solid #e4e4e7; border-top-color: #18181b; border-radius: 50%; animation: appnuno-spin .7s linear infinite; }
 #icon-picker-status { padding: 12px 0 0; color: #71717a; font-size: 12px; }
 #icon-picker-status:empty { display: none; }
 #icon-picker-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(52px, 1fr)); gap: var(--appnuno-space); }
@@ -332,6 +340,7 @@
   .appnuno-settings .appnuno-tab.active { gap: var(--appnuno-gap); }
   .appnuno-settings #tab-glass.appnuno-section-open,
   .appnuno-settings #tab-colors.appnuno-section-open { grid-template-columns: minmax(0, 1fr); padding: var(--appnuno-gap); }
+  .appnuno-settings .appnuno-fieldset-body { grid-template-columns: minmax(0, 1fr); }
   #icon-picker-dialog .modal-dialog { width: auto; margin: 12px; }
   #icon-picker-dialog .modal-content { max-height: calc(100dvh - 24px); }
   #icon-picker-dialog .modal-header { padding: 12px 16px; }

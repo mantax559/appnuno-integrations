@@ -112,6 +112,7 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
             radius: styles.borderRadius,
             primary: styles.getPropertyValue('--appnuno-primary').trim(),
             tabSurface: getComputedStyle(section).backgroundColor,
+            tabBorder: getComputedStyle(section).borderTopWidth + ' ' + getComputedStyle(section).borderTopStyle + ' ' + getComputedStyle(section).borderTopColor,
             activeTabSurface: getComputedStyle(indicator).backgroundColor,
             activeColor: getComputedStyle(activeTab).color,
             sameWeight: getComputedStyle(activeTab).fontWeight === getComputedStyle(inactiveTab).fontWeight,
@@ -121,7 +122,8 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
     if design != {
         "radius": "12px",
         "primary": "#18181b",
-        "tabSurface": "rgb(235, 235, 235)",
+        "tabSurface": "rgba(0, 0, 0, 0)",
+        "tabBorder": "1px solid rgb(228, 228, 231)",
         "activeTabSurface": "rgb(24, 24, 27)",
         "activeColor": "rgb(255, 255, 255)",
         "sameWeight": True,
@@ -829,8 +831,8 @@ def assert_module_settings_persisted(page: Page) -> None:
 def configure_back_button(page: Page) -> None:
     page.locator('a[href="#tab-glass"]').click()
     page.locator("#tab-glass").wait_for(state="visible")
-    choose_switch(page, "back-enabled", "0")
     choose_switch(page, "back-placement", "bar")
+    choose_switch(page, "back-enabled", "0")
 
 
 def configure_colors(page: Page) -> None:
@@ -917,6 +919,8 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Išorinis matomumas",
         "Matomas",
         "Mygtukų juosta",
+        "Grįžimo mygtukas",
+        "Stiklo mygtukas",
         "Navigacijos spalvos",
         "Šviesus režimas",
         "Skirtukų pavadinimai pagal kalbą",
@@ -932,6 +936,8 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "External visibility",
         "Visible",
         "Button bar",
+        "Back button",
+        "Glass button",
         "Navigation colors",
         "Light mode",
         "Tab labels by language",
