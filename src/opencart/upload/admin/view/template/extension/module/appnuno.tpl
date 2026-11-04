@@ -30,14 +30,7 @@
     <?php } ?>
     <div class="panel panel-default appnuno-settings">
       <div class="panel-heading appnuno-toolbar">
-        <div class="appnuno-watermark" aria-hidden="true">
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-          <span>AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno AppNuno</span>
-        </div>
+        <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
           <span class="appnuno-brand-mark" aria-hidden="true">n</span>
           <div><span class="appnuno-eyebrow">AppNuno</span><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
@@ -470,6 +463,8 @@
 	var iconPickerPageSize = 15;
 	var iconPickerTimer = null;
 	var iconPickerRequest = 0;
+	var iconPickerCatalog = null;
+	var iconPickerCatalogQuery = null;
 	var iconPickerDialog = document.getElementById('icon-picker-dialog');
 
 	function showIconPicker() {
@@ -579,16 +574,32 @@
 		});
 	}
 
+	function presentIconPage(icons, currentPage, lastPage, total, local) {
+		var page = Math.min(Math.max(currentPage, 1), Math.max(lastPage, 1));
+		var visible = local ? icons.slice((page - 1) * iconPickerPageSize, page * iconPickerPageSize) : icons;
+		iconPickerPage = page;
+		renderIconOptions(visible);
+		iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
+		renderIconPager(page, total ? lastPage : 0);
+		iconPickerLoading.hidden = true;
+		iconPickerStatus.textContent = visible.length ? '' : text.text_icon_catalog_empty;
+	}
+
 	function loadIconCatalog(page) {
 		iconPickerPage = page || 1;
+		var search = iconPickerSearch.value.trim().slice(0, 120);
+		if (iconPickerCatalog && iconPickerCatalogQuery === search) {
+			var cachedLastPage = Math.ceil(iconPickerCatalog.length / iconPickerPageSize) || 1;
+			presentIconPage(iconPickerCatalog, iconPickerPage, cachedLastPage, iconPickerCatalog.length, true);
+			return;
+		}
 		var requestId = iconPickerRequest + 1;
 		iconPickerRequest = requestId;
 		var url = new URL(iconCatalogUrl, window.location.href);
-		var search = iconPickerSearch.value.trim().slice(0, 120);
 		if (search) {
 			url.searchParams.set('q', search);
 		}
-		url.searchParams.set('page', String(iconPickerPage));
+		url.searchParams.set('page', '1');
 		url.searchParams.set('per_page', String(iconPickerPageSize));
 		iconPickerLoading.hidden = false;
 		fetch(url.toString(), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -605,20 +616,37 @@
 				var icons = catalog && Array.isArray(catalog.data) ? catalog.data : [];
 				var meta = catalog && catalog.meta ? catalog.meta : {};
 				var lastPage = meta.last_page || 1;
-				var currentPage = meta.current_page || iconPickerPage;
+				var currentPage = meta.current_page || 1;
 				var total = typeof meta.total === 'number' ? meta.total : icons.length;
-				if (icons.length > iconPickerPageSize && lastPage < 2) {
-					total = icons.length;
-					lastPage = Math.ceil(icons.length / iconPickerPageSize) || 1;
-					currentPage = Math.min(Math.max(iconPickerPage, 1), lastPage);
-					icons = icons.slice((currentPage - 1) * iconPickerPageSize, currentPage * iconPickerPageSize);
+				var complete = (lastPage < 2 && icons.length === total) || icons.length > iconPickerPageSize;
+				if (complete) {
+					iconPickerCatalog = icons;
+					iconPickerCatalogQuery = search;
+					presentIconPage(icons, iconPickerPage, Math.ceil(icons.length / iconPickerPageSize) || 1, icons.length, true);
+					return;
 				}
-				iconPickerPage = currentPage;
-				renderIconOptions(icons);
-				iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
-				renderIconPager(currentPage, total ? lastPage : 0);
-				iconPickerLoading.hidden = true;
-				iconPickerStatus.textContent = icons.length ? '' : text.text_icon_catalog_empty;
+				iconPickerCatalog = null;
+				iconPickerCatalogQuery = null;
+				if (iconPickerPage < 2) {
+					presentIconPage(icons, currentPage, lastPage, total, false);
+					return;
+				}
+				url.searchParams.set('page', String(iconPickerPage));
+				return fetch(url.toString(), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+					.then(function (response) {
+						if (!response.ok) {
+							throw new Error(text.text_icon_catalog_error);
+						}
+						return response.json();
+					})
+					.then(function (pageCatalog) {
+						if (requestId !== iconPickerRequest) {
+							return;
+						}
+						var pageIcons = pageCatalog && Array.isArray(pageCatalog.data) ? pageCatalog.data : [];
+						var pageMeta = pageCatalog && pageCatalog.meta ? pageCatalog.meta : {};
+						presentIconPage(pageIcons, pageMeta.current_page || iconPickerPage, pageMeta.last_page || lastPage, typeof pageMeta.total === 'number' ? pageMeta.total : total, false);
+					});
 			})
 			.catch(function () {
 				if (requestId !== iconPickerRequest) {
@@ -657,6 +685,8 @@
 	}
 
 	iconPickerSearch.addEventListener('input', function () {
+		iconPickerCatalog = null;
+		iconPickerCatalogQuery = null;
 		window.clearTimeout(iconPickerTimer);
 		iconPickerTimer = window.setTimeout(function () { loadIconCatalog(1); }, 400);
 	});
@@ -754,6 +784,7 @@
 
 	function createUrlField(tab, path) {
 		var group = createGroup();
+		group.className += ' appnuno-field-wide';
 		group.setAttribute('data-validation-path', path + '.url');
 		var title = createGroupLabel(text.text_destination, 'tab_destination');
 		var column = createGroupColumn();
@@ -957,9 +988,9 @@
 		card.setAttribute('data-validation-path', path);
 		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
+		card.appendChild(createIconField(tab, path));
 		card.appendChild(createLabelFields(tab, path));
 		card.appendChild(createUrlField(tab, path));
-		card.appendChild(createIconField(tab, path));
 		card.appendChild(createPagesField(tab, path));
 		card.addEventListener('input', function () {
 			refreshCartOptions();
@@ -1352,6 +1383,49 @@
 		}
 		document.getElementById('input-config-json').value = JSON.stringify(result);
 	});
+
+	function fillWatermark() {
+		var host = document.querySelector('.appnuno-watermark');
+		if (!host || !host.parentElement) {
+			return;
+		}
+		var header = host.parentElement.getBoundingClientRect();
+		var cover = Math.ceil(Math.hypot(header.width, header.height));
+		var rows = Math.ceil(cover / 20) + 4;
+		var copies = Math.ceil(cover / 80) + 2;
+		var signature = String(rows) + ':' + String(copies);
+		if (host.getAttribute('data-watermark') === signature) {
+			return;
+		}
+		host.setAttribute('data-watermark', signature);
+		var plane = host.querySelector('.appnuno-watermark-plane');
+		if (!plane) {
+			plane = document.createElement('div');
+			plane.className = 'appnuno-watermark-plane';
+			host.appendChild(plane);
+		}
+		plane.textContent = '';
+		var phrase = '';
+		var copyIndex;
+		for (copyIndex = 0; copyIndex < copies; copyIndex += 1) {
+			phrase += 'APPNUNO ';
+		}
+		var rowIndex;
+		for (rowIndex = 0; rowIndex < rows; rowIndex += 1) {
+			var row = document.createElement('div');
+			row.className = 'appnuno-watermark-row';
+			var first = document.createElement('span');
+			var second = document.createElement('span');
+			first.textContent = phrase;
+			second.textContent = phrase;
+			row.appendChild(first);
+			row.appendChild(second);
+			plane.appendChild(row);
+		}
+	}
+
+	fillWatermark();
+	window.addEventListener('resize', fillWatermark);
 }());
 </script>
 <?php echo $footer; ?>
