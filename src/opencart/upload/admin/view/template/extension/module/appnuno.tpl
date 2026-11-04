@@ -1391,43 +1391,76 @@
 		}
 		var header = host.parentElement.getBoundingClientRect();
 		var cover = Math.ceil(Math.hypot(header.width, header.height));
-		var probe = document.createElement('span');
-		probe.textContent = 'APPNUNO ';
-		host.appendChild(probe);
-		var phraseWidth = Math.ceil(probe.getBoundingClientRect().width) || 120;
-		host.removeChild(probe);
-		var copies = Math.ceil(cover / phraseWidth) + 2;
-		var rows = Math.ceil(cover / 22) + 4;
-		var signature = String(rows) + ':' + String(copies) + ':' + String(phraseWidth);
-		if (host.getAttribute('data-watermark') === signature) {
-			return;
-		}
-		host.setAttribute('data-watermark', signature);
 		var plane = host.querySelector('.appnuno-watermark-plane');
 		if (!plane) {
 			plane = document.createElement('div');
 			plane.className = 'appnuno-watermark-plane';
 			host.appendChild(plane);
 		}
-		plane.textContent = '';
-		var phrase = '';
-		var copyIndex;
-		for (copyIndex = 0; copyIndex < copies; copyIndex += 1) {
-			phrase += 'APPNUNO ';
+		var probe = document.createElement('span');
+		probe.textContent = 'APPNUNO ';
+		host.appendChild(probe);
+		var phraseWidth = probe.getBoundingClientRect().width || 120;
+		host.removeChild(probe);
+		var copies = Math.ceil(cover / phraseWidth) + 4;
+		var rows = Math.ceil(cover / 22) + 4;
+		var signature = String(rows) + ':' + String(copies) + ':' + String(Math.round(phraseWidth * 100));
+		if (host.getAttribute('data-watermark') === signature) {
+			return;
 		}
+		host.setAttribute('data-watermark', signature);
+		if (host.watermarkFrame) {
+			cancelAnimationFrame(host.watermarkFrame);
+			host.watermarkFrame = 0;
+		}
+		plane.textContent = '';
+		var tracks = [];
 		var rowIndex;
 		for (rowIndex = 0; rowIndex < rows; rowIndex += 1) {
 			var row = document.createElement('div');
 			row.className = 'appnuno-watermark-row';
-			row.style.setProperty('--appnuno-watermark-shift', phraseWidth + 'px');
-			var first = document.createElement('span');
-			var second = document.createElement('span');
-			first.textContent = phrase;
-			second.textContent = phrase;
-			row.appendChild(first);
-			row.appendChild(second);
+			var copyIndex;
+			for (copyIndex = 0; copyIndex < copies; copyIndex += 1) {
+				var piece = document.createElement('span');
+				piece.textContent = 'APPNUNO ';
+				piece.style.width = phraseWidth + 'px';
+				row.appendChild(piece);
+			}
+			var track = { el: row, x: -((rowIndex * 0.6180339887) % 1) * phraseWidth };
+			row.style.transform = 'translateX(' + track.x + 'px)';
 			plane.appendChild(row);
+			tracks.push(track);
 		}
+		if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			return;
+		}
+		var last = 0;
+		function step(now) {
+			if (!last) {
+				last = now;
+			}
+			var elapsed = now - last;
+			last = now;
+			if (elapsed > 50) {
+				elapsed = 50;
+			}
+			var distance = phraseWidth * elapsed / 10000;
+			var index;
+			for (index = 0; index < tracks.length; index += 1) {
+				var track = tracks[index];
+				track.x -= distance;
+				while (track.x <= -phraseWidth) {
+					track.x += phraseWidth;
+					var first = track.el.firstElementChild;
+					if (first) {
+						track.el.appendChild(first);
+					}
+				}
+				track.el.style.transform = 'translateX(' + track.x + 'px)';
+			}
+			host.watermarkFrame = requestAnimationFrame(step);
+		}
+		host.watermarkFrame = requestAnimationFrame(step);
 	}
 
 	fillWatermark();

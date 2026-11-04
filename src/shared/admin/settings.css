@@ -33,9 +33,8 @@
 }
 .appnuno-settings .appnuno-watermark { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; user-select: none; }
 .appnuno-settings .appnuno-watermark-plane { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; gap: 0; width: max-content; transform: translate(-50%, -50%) rotate(-45deg); }
-.appnuno-settings .appnuno-watermark-row { display: flex; width: max-content; animation: appnuno-watermark 10s linear infinite; }
-.appnuno-settings .appnuno-watermark-row:nth-child(even) { margin-left: calc(var(--appnuno-watermark-shift) * -0.5); animation-direction: reverse; }
-.appnuno-settings .appnuno-watermark span { color: rgb(24 24 27 / 14%); font-size: 22px; font-weight: 650; letter-spacing: .12em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
+.appnuno-settings .appnuno-watermark-row { display: flex; width: max-content; }
+.appnuno-settings .appnuno-watermark span { flex: none; color: rgb(24 24 27 / 14%); font-size: 22px; font-weight: 650; letter-spacing: .12em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
 .appnuno-settings .appnuno-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
 .appnuno-settings .appnuno-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 14px; min-width: 0; filter: drop-shadow(0 6px 16px rgb(24 24 27 / 18%)); }
 .appnuno-settings .appnuno-brand-mark { display: grid; place-items: center; flex: 0 0 44px; height: 44px; border-radius: 12px; background: #18181b; color: white; font-size: 30px; font-weight: 650; letter-spacing: -3px; padding-right: 3px; }
@@ -321,10 +320,6 @@
 }
 @media (forced-colors: active) {
   .appnuno-settings input[type="checkbox"] { appearance: auto; }
-}
-@keyframes appnuno-watermark {
-  from { transform: translateX(0); }
-  to { transform: translateX(calc(var(--appnuno-watermark-shift, 120px) * -1)); }
 }
 @keyframes appnuno-spin {
   to { transform: rotate(360deg); }
