@@ -18,3 +18,9 @@ Run this script from the repository root to generate the latest WordPress/WooCom
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\update-workflows.ps1
 ```
+
+## OpenCart workflow secret
+
+Open [Settings → Secrets and variables → Actions → Secrets](https://github.com/mantax559/appnuno-integrations/settings/secrets/actions). Under **Repository secrets**, add:
+
+- `APPNUNO_PLATFORM_REPOSITORY_TOKEN`: create a fine-grained token named `RO for appnuno-platform` at [GitHub token settings](https://github.com/settings/personal-access-tokens), select only `mantax559/appnuno-platform`, and grant **Contents: Read-only** permissions. The OpenCart workflows use it to read `public/sdk/v1/appnuno.js` from the `production` branch. `github.token` cannot read that private repository.

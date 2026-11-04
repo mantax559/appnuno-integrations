@@ -58,7 +58,7 @@ jobs:
           repository: mantax559/appnuno-platform
           ref: production
           path: appnuno-platform
-          token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
+          token: ${{ secrets.APPNUNO_PLATFORM_REPOSITORY_TOKEN }}
 
       - name: Set up PHP for the package build
         uses: shivammathur/setup-php@v2

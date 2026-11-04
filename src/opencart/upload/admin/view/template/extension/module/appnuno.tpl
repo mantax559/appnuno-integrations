@@ -1391,9 +1391,14 @@
 		}
 		var header = host.parentElement.getBoundingClientRect();
 		var cover = Math.ceil(Math.hypot(header.width, header.height));
-		var rows = Math.ceil(cover / 20) + 4;
-		var copies = Math.ceil(cover / 80) + 2;
-		var signature = String(rows) + ':' + String(copies);
+		var probe = document.createElement('span');
+		probe.textContent = 'APPNUNO ';
+		host.appendChild(probe);
+		var phraseWidth = Math.ceil(probe.getBoundingClientRect().width) || 120;
+		host.removeChild(probe);
+		var copies = Math.ceil(cover / phraseWidth) + 2;
+		var rows = Math.ceil(cover / 22) + 4;
+		var signature = String(rows) + ':' + String(copies) + ':' + String(phraseWidth);
 		if (host.getAttribute('data-watermark') === signature) {
 			return;
 		}
@@ -1414,6 +1419,7 @@
 		for (rowIndex = 0; rowIndex < rows; rowIndex += 1) {
 			var row = document.createElement('div');
 			row.className = 'appnuno-watermark-row';
+			row.style.setProperty('--appnuno-watermark-shift', phraseWidth + 'px');
 			var first = document.createElement('span');
 			var second = document.createElement('span');
 			first.textContent = phrase;
