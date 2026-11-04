@@ -176,6 +176,7 @@ function opencart_module_layout($line, $name, $content) {
         if ($line === '2.2') {
             $content = str_replace(", 'SSL')", ', true)', $content);
         }
+        $content = preg_replace('/\s*<file path="admin\/view\/template\/extension\/extension\/module\.tpl">.*?<\/file>/s', '', $content);
     }
     $labels = array(
         'en-gb' => 'Modules',
@@ -213,6 +214,7 @@ function opencart_30_layout($name, $content) {
             array('AppNuno OpenCart 3.x', 'appnuno_opencart_3000', "\$data['scripts'] = \$this->document->getScripts('header');"),
             $content
         );
+        $content = preg_replace('/\s*<file path="admin\/view\/template\/extension\/extension\/module\.tpl">.*?<\/file>/s', '', $content);
     }
     if (substr($name, -4) === '.tpl') {
         $content = opencart_twig_template($content);

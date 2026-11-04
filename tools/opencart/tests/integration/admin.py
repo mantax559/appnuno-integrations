@@ -626,7 +626,7 @@ def choose_catalog_icon(page: Page, tab: Locator, icon_id: str) -> None:
         })""")
         if modal_design != {"radius": "12px", "gridDisplay": "grid"}:
             raise AssertionError(f"The icon picker did not load the shared modal design: {modal_design}.")
-        mobile_targets = page.locator("#icon-picker-search, #icon-picker-clear").evaluate_all(
+        mobile_targets = page.locator("#icon-picker-search").evaluate_all(
             "elements => elements.map(element => element.getBoundingClientRect().height)"
         )
         if any(height < 44 for height in mobile_targets):

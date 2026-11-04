@@ -32,7 +32,7 @@
       <div class="panel-heading appnuno-toolbar">
         <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
-          <span class="appnuno-brand-mark" aria-hidden="true">n</span>
+          <img class="appnuno-brand-mark" src="https://appnuno.com/favicon.png" alt="">
           <div><span class="appnuno-eyebrow">AppNuno</span><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
@@ -213,7 +213,6 @@
       <div class="modal-body">
         <div class="appnuno-icon-toolbar">
           <input type="search" id="icon-picker-search" class="form-control" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
-          <button type="button" class="btn btn-default" id="icon-picker-clear"><?php echo $text['text_icon_catalog_clear']; ?></button>
         </div>
         <div class="appnuno-icon-meta">
           <p id="icon-picker-count"></p>
@@ -259,7 +258,7 @@
 	var adminMarkup = window.bootstrap && window.bootstrap.Modal ? 'bootstrap5' : 'bootstrap3';
 	defaultContainer.className = 'row';
 	var tabNavigationColumn = document.createElement('div');
-	tabNavigationColumn.className = 'col-sm-2';
+	tabNavigationColumn.className = 'col-sm-3';
 	var tabNavigation = document.createElement('ul');
 	tabNavigation.className = adminMarkup === 'bootstrap5' ? 'nav nav-pills flex-column' : 'nav nav-pills nav-stacked';
 	tabNavigation.setAttribute('role', 'tablist');
@@ -466,7 +465,7 @@
 	var iconPickerPage = 1;
 	var iconPickerCount = document.getElementById('icon-picker-count');
 	var iconPickerLoading = document.getElementById('icon-picker-loading');
-	var iconPickerPageSize = 15;
+	var iconPickerPageSize = 130;
 	var iconPickerTimer = null;
 	var iconPickerRequest = 0;
 	var iconPickerCatalog = null;
@@ -717,13 +716,6 @@
 		iconPickerCatalogQuery = null;
 		window.clearTimeout(iconPickerTimer);
 		iconPickerTimer = window.setTimeout(function () { loadIconCatalog(1); }, 400);
-	});
-	document.getElementById('icon-picker-clear').addEventListener('click', function () {
-		if (iconPickerTarget) {
-			updateIconField(iconPickerTarget, null);
-			iconPickerTarget.dispatchEvent(new Event('input', { bubbles: true }));
-		}
-		hideIconPicker();
 	});
 
 	function createField(label, value, key, type, path) {
