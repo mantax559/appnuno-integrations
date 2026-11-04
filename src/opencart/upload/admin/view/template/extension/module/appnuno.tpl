@@ -42,18 +42,24 @@
       </div>
       <div class="panel-body">
         <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno" class="form-horizontal">
-          <div class="form-group">
+          <div class="form-group appnuno-status-field">
             <label class="col-sm-2 control-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
             <div class="col-sm-10">
-              <select name="module_appnuno_status" id="input-status" class="form-control">
+              <div class="appnuno-switch" data-status-switch="input-status">
+                <span class="appnuno-switch-indicator" aria-hidden="true"></span>
                 <?php if ($module_appnuno_status) { ?>
-                <option value="1" selected="selected"><?php echo $text_enabled; ?></option>
-                <option value="0"><?php echo $text_disabled; ?></option>
+                <button type="button" data-value="1" aria-pressed="true"><?php echo $text_enabled; ?></button>
+                <button type="button" data-value="0" aria-pressed="false"><?php echo $text_disabled; ?></button>
                 <?php } else { ?>
-                <option value="1"><?php echo $text_enabled; ?></option>
-                <option value="0" selected="selected"><?php echo $text_disabled; ?></option>
+                <button type="button" data-value="1" aria-pressed="false"><?php echo $text_enabled; ?></button>
+                <button type="button" data-value="0" aria-pressed="true"><?php echo $text_disabled; ?></button>
                 <?php } ?>
-              </select>
+              </div>
+              <?php if ($module_appnuno_status) { ?>
+              <input type="hidden" name="module_appnuno_status" id="input-status" value="1" />
+              <?php } else { ?>
+              <input type="hidden" name="module_appnuno_status" id="input-status" value="0" />
+              <?php } ?>
             </div>
           </div>
           <div class="form-group appnuno-cart-field">
@@ -585,23 +591,39 @@
 		iconPickerStatus.textContent = visible.length ? '' : text.text_icon_catalog_empty;
 	}
 
+	function revealIconPage(requestId, started, apply) {
+		var wait = 200 - (Date.now() - started);
+		if (wait < 0) {
+			wait = 0;
+		}
+		window.setTimeout(function () {
+			if (requestId !== iconPickerRequest) {
+				return;
+			}
+			apply();
+		}, wait);
+	}
+
 	function loadIconCatalog(page) {
 		iconPickerPage = page || 1;
 		var search = iconPickerSearch.value.trim().slice(0, 120);
-		if (iconPickerCatalog && iconPickerCatalogQuery === search) {
-			var cachedLastPage = Math.ceil(iconPickerCatalog.length / iconPickerPageSize) || 1;
-			presentIconPage(iconPickerCatalog, iconPickerPage, cachedLastPage, iconPickerCatalog.length, true);
-			return;
-		}
 		var requestId = iconPickerRequest + 1;
 		iconPickerRequest = requestId;
+		var started = Date.now();
+		iconPickerLoading.hidden = false;
+		if (iconPickerCatalog && iconPickerCatalogQuery === search) {
+			var cachedLastPage = Math.ceil(iconPickerCatalog.length / iconPickerPageSize) || 1;
+			revealIconPage(requestId, started, function () {
+				presentIconPage(iconPickerCatalog, iconPickerPage, cachedLastPage, iconPickerCatalog.length, true);
+			});
+			return;
+		}
 		var url = new URL(iconCatalogUrl, window.location.href);
 		if (search) {
 			url.searchParams.set('q', search);
 		}
 		url.searchParams.set('page', '1');
 		url.searchParams.set('per_page', String(iconPickerPageSize));
-		iconPickerLoading.hidden = false;
 		fetch(url.toString(), { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } })
 			.then(function (response) {
 				if (!response.ok) {
@@ -622,13 +644,17 @@
 				if (complete) {
 					iconPickerCatalog = icons;
 					iconPickerCatalogQuery = search;
-					presentIconPage(icons, iconPickerPage, Math.ceil(icons.length / iconPickerPageSize) || 1, icons.length, true);
+					revealIconPage(requestId, started, function () {
+						presentIconPage(icons, iconPickerPage, Math.ceil(icons.length / iconPickerPageSize) || 1, icons.length, true);
+					});
 					return;
 				}
 				iconPickerCatalog = null;
 				iconPickerCatalogQuery = null;
 				if (iconPickerPage < 2) {
-					presentIconPage(icons, currentPage, lastPage, total, false);
+					revealIconPage(requestId, started, function () {
+						presentIconPage(icons, currentPage, lastPage, total, false);
+					});
 					return;
 				}
 				url.searchParams.set('page', String(iconPickerPage));
@@ -645,7 +671,9 @@
 						}
 						var pageIcons = pageCatalog && Array.isArray(pageCatalog.data) ? pageCatalog.data : [];
 						var pageMeta = pageCatalog && pageCatalog.meta ? pageCatalog.meta : {};
-						presentIconPage(pageIcons, pageMeta.current_page || iconPickerPage, pageMeta.last_page || lastPage, typeof pageMeta.total === 'number' ? pageMeta.total : total, false);
+						revealIconPage(requestId, started, function () {
+							presentIconPage(pageIcons, pageMeta.current_page || iconPickerPage, pageMeta.last_page || lastPage, typeof pageMeta.total === 'number' ? pageMeta.total : total, false);
+						});
 					});
 			})
 			.catch(function () {
@@ -793,11 +821,10 @@
 		title.htmlFor = select.id;
 		select.className = 'form-control';
 		select.setAttribute('data-url-select', 'true');
-		select.appendChild(new Option(text.text_choose_destination, ''));
+		select.appendChild(new Option(text.text_custom_url, '__custom__'));
 		destinations.forEach(function (destination) {
 			select.appendChild(new Option(destination.label, destination.url));
 		});
-		select.appendChild(new Option(text.text_custom_url, '__custom__'));
 		var customUrls = document.createElement('div');
 		customUrls.className = 'appnuno-custom-urls';
 		var savedUrls = tab.urls || {};
@@ -837,9 +864,19 @@
 		});
 		var hasLocalizedCustomUrls = Object.keys(savedUrls).length > 0;
 		var known = !hasLocalizedCustomUrls && destinations.some(function (destination) { return destination.url === (tab.url || ''); });
-		select.value = known ? tab.url : (tab.url || hasLocalizedCustomUrls ? '__custom__' : '');
+		var chosen = known ? tab.url : (tab.url || hasLocalizedCustomUrls ? '__custom__' : '');
+		if (!chosen) {
+			var placeholder = new Option(text.text_choose_destination, '');
+			placeholder.disabled = true;
+			select.insertBefore(placeholder, select.firstChild);
+		}
+		select.value = chosen;
 		customUrls.style.display = select.value === '__custom__' ? '' : 'none';
 		select.addEventListener('change', function () {
+			var blank = select.querySelector('option[value=""]');
+			if (blank) {
+				blank.remove();
+			}
 			if (select.value === '__custom__') {
 				customUrls.style.display = '';
 				var firstInput = customUrls.querySelector('[data-language-url]');
@@ -1172,6 +1209,22 @@
 		placeSwitchIndicator(sectionSwitch);
 		revealSwitchMotion(sectionSwitch);
 	}
+	document.querySelectorAll('[data-status-switch]').forEach(function (control) {
+		var input = document.getElementById(control.getAttribute('data-status-switch'));
+		placeSwitchIndicator(control);
+		revealSwitchMotion(control);
+		control.addEventListener('click', function (event) {
+			var button = event.target.closest('button[data-value]');
+			if (!button || !input) {
+				return;
+			}
+			input.value = button.getAttribute('data-value');
+			Array.prototype.forEach.call(control.querySelectorAll('button[data-value]'), function (item) {
+				item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+			});
+			placeSwitchIndicator(control);
+		});
+	});
 	function showSectionLink(link) {
 		var pane = document.querySelector(link.getAttribute('href'));
 		if (pane && pane.parentNode) {

@@ -32,7 +32,11 @@ from integration.environment import capture_screenshot
 
 
 def choose_switch(page: Page, field_id: str, value: str) -> None:
-    page.locator(f"#{field_id}").select_option(value)
+    field = page.locator(f"#{field_id}")
+    if field.evaluate("element => element.tagName") == "SELECT":
+        field.select_option(value)
+        return
+    page.locator(f'[data-status-switch="{field_id}"] button[data-value="{value}"]').click()
 
 
 def seed_builtin_tabs(page: Page) -> None:
@@ -226,7 +230,7 @@ def assert_responsive_layout(page: Page) -> None:
         page.locator('a[href="#tab-navigation"]').click()
         page.set_viewport_size({"width": 390, "height": 844})
         touch_targets = page.evaluate("""() => [
-            document.querySelector('#input-status'),
+            document.querySelector('[data-status-switch="input-status"] button[aria-pressed="true"]'),
             document.querySelector('#default-tabs [data-add-tab="default-tabs"]'),
             document.querySelector('#default-tabs [data-tab-target]')
         ].map(element => element.getBoundingClientRect().height)""")
@@ -679,7 +683,7 @@ def add_cart_page_tab(page: Page) -> None:
         const style = getComputedStyle(list);
         return { border: style.borderTopWidth, background: style.backgroundColor, radius: style.borderRadius };
     }""")
-    if page_order != ["all", "actions", "pages"] or page_box["border"] != "0px" or page_box["background"] != "rgb(235, 235, 235)" or page_box["radius"] != "8px":
+    if page_order != ["all", "actions", "pages"] or page_box["border"] != "0px" or page_box["background"] != "rgb(250, 250, 250)" or page_box["radius"] != "8px":
         raise AssertionError(f"Page choices should sit in a rounded gray list below one select-all group: {page_order}, {page_box}.")
     page_tab.locator('[data-pages] input[value="checkout/cart"]').check()
     page_tab.locator('[data-page-action="select-all"]').click()
