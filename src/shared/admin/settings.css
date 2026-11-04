@@ -36,20 +36,21 @@
   overflow: hidden;
   padding: var(--appnuno-gap);
   border: 0;
-  border-bottom: 1px solid var(--appnuno-line);
   background: #fff;
   color: inherit;
 }
+.appnuno-settings .panel-heading.appnuno-toolbar,
+.appnuno-settings .card-header.appnuno-toolbar { box-shadow: inset rgba(100, 100, 111, 0.2) 0px 7px 29px 0px; }
 .appnuno-settings .appnuno-watermark { position: absolute; z-index: 0; inset: 0; overflow: hidden; pointer-events: none; user-select: none; }
 .appnuno-settings .appnuno-watermark-plane { position: absolute; top: 50%; left: 50%; display: flex; flex-direction: column; gap: 0; width: max-content; transform: translate(-50%, -50%) rotate(-45deg); }
 .appnuno-settings .appnuno-watermark-row { display: flex; width: max-content; }
 .appnuno-settings .appnuno-watermark span { flex: none; color: rgb(24 24 27 / 7%); font-size: 22px; font-weight: 650; letter-spacing: .12em; line-height: 1; text-transform: uppercase; white-space: nowrap; }
 .appnuno-settings .appnuno-toolbar { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--appnuno-gap); }
-.appnuno-settings .appnuno-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; min-width: 0; filter: drop-shadow(0 6px 16px rgb(24 24 27 / 18%)); }
-.appnuno-settings .appnuno-brand-mark { display: block; flex: 0 0 auto; width: auto; height: 44px; max-height: 44px; object-fit: contain; border-radius: 12px; }
-.appnuno-settings .appnuno-eyebrow { display: block; margin-bottom: 3px; color: #71717a; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.appnuno-settings .appnuno-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 16px; min-width: 0; }
+.appnuno-settings .appnuno-brand-mark { display: block; flex: 0 0 auto; width: auto; height: 44px; max-height: 44px; object-fit: contain; border-radius: 12px; box-shadow: var(--appnuno-shadow); }
 .appnuno-settings .panel-title { margin: 0; color: #18181b; font: 600 20px/1.3 ui-sans-serif, system-ui, sans-serif; letter-spacing: -.04em; }
-.appnuno-settings .appnuno-toolbar-actions { position: relative; z-index: 1; display: inline-flex; flex: 0 0 auto; margin-top: 0; filter: drop-shadow(0 6px 16px rgb(24 24 27 / 18%)); }
+.appnuno-settings .appnuno-toolbar-actions { position: relative; z-index: 1; display: inline-flex; flex: 0 0 auto; margin-top: 0; filter: drop-shadow(0px 7px 29px rgba(100, 100, 111, 0.2)); }
+.appnuno-settings .appnuno-toolbar-actions .btn { box-shadow: none; }
 .appnuno-settings .panel-body,
 .appnuno-settings .card-body { padding: var(--appnuno-gap); }
 .appnuno-settings .panel-body::before,
@@ -170,12 +171,12 @@
 .appnuno-settings #default-tabs [data-remove-tab] { color: #a1a1aa; cursor: pointer; }
 .appnuno-settings #default-tabs .btn[data-add-tab] { width: 100%; min-height: 40px; border: 1px dashed #d4d4d8; background: transparent; color: #52525b; }
 .appnuno-settings #default-tabs .btn[data-add-tab]:hover { border-color: #a1a1aa; background: #ebebeb; }
-.appnuno-settings .appnuno-tab { padding: var(--appnuno-gap); border: 0; border-radius: var(--appnuno-radius); background: #fff; box-shadow: var(--appnuno-shadow); }
+.appnuno-settings .appnuno-tab { padding: var(--appnuno-gap); border: 0; border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
+.appnuno-settings .tab-pane.appnuno-tab.active { border: 1px solid var(--appnuno-line); }
 .appnuno-settings .appnuno-tab.active { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--appnuno-gap); }
 .appnuno-settings .appnuno-tab > .appnuno-field-wide { grid-column: 1 / -1; }
-.appnuno-settings #tab-back.appnuno-section-open,
 .appnuno-settings #tab-glass.appnuno-section-open,
-.appnuno-settings #tab-colors.appnuno-section-open { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--appnuno-gap); padding: var(--appnuno-gap); border: 1px solid #e4e4e7; border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
+.appnuno-settings #tab-colors.appnuno-section-open { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--appnuno-gap); padding: var(--appnuno-gap); border: 0; border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
 .appnuno-settings h4 { grid-column: 1 / -1; margin: 0; padding-bottom: var(--appnuno-space); border: 0; border-bottom: 1px solid #f0f0f2; color: #71717a; font-size: 14px; font-weight: 600; }
 .appnuno-settings .input-group { display: flex; width: 100%; min-width: 0; }
 .appnuno-settings .input-group .form-control { flex: 1 1 auto; width: 0; }
@@ -289,7 +290,7 @@
 .appnuno-settings .has-error .control-label,
 .appnuno-settings .has-error .col-form-label { color: #b91c1c; }
 .appnuno-settings .tooltip-inner { padding: 8px 12px; border-radius: 8px; background: #27272a; font: 12px/1.5 ui-sans-serif, system-ui, sans-serif; text-align: left; }
-.appnuno-page > .alert { display: flex; align-items: center; gap: 12px; margin: 0 0 var(--appnuno-gap); padding: 16px 18px; border: 1px solid #e4e4e7; border-radius: var(--appnuno-radius); background: #fff; color: #18181b; font: 500 14px/1.5 ui-sans-serif, system-ui, sans-serif; box-shadow: none; }
+.appnuno-page > .alert { display: flex; align-items: center; gap: 12px; margin: var(--appnuno-gap) 0; padding: 16px 18px; border: 1px solid #e4e4e7; border-radius: var(--appnuno-radius); background: #fff; color: #18181b; font: 500 14px/1.5 ui-sans-serif, system-ui, sans-serif; box-shadow: none; }
 .appnuno-page > .alert + .appnuno-settings { margin-top: 0; }
 .appnuno-page > .alert > .fa { display: grid; place-items: center; flex: 0 0 28px; width: 28px; height: 28px; border-radius: 8px; background: #f4f4f5; color: #18181b; font-size: 14px; }
 .appnuno-page > .alert-success { border-color: #bbf7d0; background: #f0fdf4; color: #14532d; }
@@ -329,7 +330,6 @@
   .appnuno-settings #default-tabs { grid-template-columns: minmax(0, 1fr); gap: var(--appnuno-gap); }
   .appnuno-settings .appnuno-tab { padding: var(--appnuno-gap); }
   .appnuno-settings .appnuno-tab.active { gap: var(--appnuno-gap); }
-  .appnuno-settings #tab-back.appnuno-section-open,
   .appnuno-settings #tab-glass.appnuno-section-open,
   .appnuno-settings #tab-colors.appnuno-section-open { grid-template-columns: minmax(0, 1fr); padding: var(--appnuno-gap); }
   #icon-picker-dialog .modal-dialog { width: auto; margin: 12px; }

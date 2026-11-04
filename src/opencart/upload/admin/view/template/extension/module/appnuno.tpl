@@ -33,7 +33,7 @@
         <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
           <img class="appnuno-brand-mark" src="https://appnuno.com/favicon.png" alt="">
-          <div><span class="appnuno-eyebrow">AppNuno</span><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
+          <div><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
           <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
@@ -73,7 +73,6 @@
             <span class="appnuno-switch-indicator" aria-hidden="true"></span>
             <ul class="nav nav-tabs">
               <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
-              <li><a href="#tab-back" data-toggle="tab"><?php echo $text['text_back_button']; ?></a></li>
               <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
               <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
             </ul>
@@ -82,7 +81,7 @@
             <div class="tab-pane active" id="tab-navigation">
               <div id="default-tabs"></div>
             </div>
-            <div class="tab-pane" id="tab-back">
+            <div class="tab-pane" id="tab-glass">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10">
@@ -101,8 +100,6 @@
                   </select>
                 </div>
               </div>
-            </div>
-            <div class="tab-pane" id="tab-glass">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
                 <div class="col-sm-10">

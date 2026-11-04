@@ -165,7 +165,7 @@ def assert_responsive_layout(page: Page) -> None:
     try:
         for width in (320, 360, 375, 390, 414, 540, 767, 768, 820, 1024, 1280, 1440, 1600, 1920):
             page.set_viewport_size({"width": width, "height": 1000})
-            for section in ("#tab-navigation", "#tab-back", "#tab-glass", "#tab-colors"):
+            for section in ("#tab-navigation", "#tab-glass", "#tab-colors"):
                 page.locator(f'.appnuno-settings a[href="{section}"]').dispatch_event("click")
                 page.locator(section).wait_for(state="visible")
                 layout = page.evaluate("""section => {
@@ -331,7 +331,7 @@ def assert_settings_focus(page: Page) -> None:
         "tabs => tabs.map(tab => tab.dataset.tabKey)"
     )
     try:
-        assert_mouse_and_keyboard_focus(page, page.locator('a[href="#tab-back"]'))
+        assert_mouse_and_keyboard_focus(page, page.locator('a[href="#tab-glass"]'))
         page.locator('a[href="#tab-navigation"]').click()
         assert_mouse_and_keyboard_focus(page, page.locator('#default-tabs [data-tab-target]').first)
         assert_mouse_and_keyboard_focus(page, page.locator('#default-tabs [data-add-tab="default-tabs"]'))
@@ -827,8 +827,8 @@ def assert_module_settings_persisted(page: Page) -> None:
 
 
 def configure_back_button(page: Page) -> None:
-    page.locator('a[href="#tab-back"]').click()
-    page.locator("#tab-back").wait_for(state="visible")
+    page.locator('a[href="#tab-glass"]').click()
+    page.locator("#tab-glass").wait_for(state="visible")
     choose_switch(page, "back-enabled", "0")
     choose_switch(page, "back-placement", "bar")
 
@@ -897,7 +897,7 @@ def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...
     page.locator(f'#default-tabs [data-tab-target="{first_tab_key}"]').click()
     first_tab.locator("[data-all-pages]").uncheck()
     content = page.locator("#content").inner_text()
-    for href in ("#tab-back", "#tab-glass", "#tab-colors"):
+    for href in ("#tab-glass", "#tab-colors"):
         page.locator(f'a[href="{href}"]').click()
         page.locator(href).wait_for(state="visible")
         content += "\n" + page.locator(href).inner_text()
@@ -916,8 +916,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Atžymėti visus",
         "Išorinis matomumas",
         "Matomas",
-        "Grįžimo mygtukas",
-        "Stiklinė mygtukų juosta",
+        "Mygtukų juosta",
         "Navigacijos spalvos",
         "Šviesus režimas",
         "Skirtukų pavadinimai pagal kalbą",
@@ -932,8 +931,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Uncheck all",
         "External visibility",
         "Visible",
-        "Back button",
-        "Glass button bar",
+        "Button bar",
         "Navigation colors",
         "Light mode",
         "Tab labels by language",
