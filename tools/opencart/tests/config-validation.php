@@ -29,6 +29,10 @@ $valid = json_encode(array(
 if (strlen($model->validateConfig($valid))) {
     throw new RuntimeException('Expected valid multilingual tabs, local destinations, routes and visuals.');
 }
+$no_cart_badge = json_encode(array('cartTabId' => '', 'defaultTabs' => array(), 'routes' => array()));
+if (strlen($model->validateConfig($no_cart_badge))) {
+    throw new RuntimeException('Expected a configuration with no selected cart badge tab to be valid.');
+}
 $form_config = json_encode(array(
     'defaultTabs' => array(array('id' => 'ci-added-tab', 'labels' => array('en-gb' => 'CI "Added" & Tab'), 'url' => '/index.php?route=information/contact')),
     'routes' => (object)array()

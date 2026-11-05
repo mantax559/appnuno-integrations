@@ -1,8 +1,9 @@
 <?php
-$line = isset($argv[1]) ? $argv[1] : '2.3';
-if (!in_array($line, array('2.0', '2.1', '2.2', '2.3', '3.0', '4'), true)) {
-    throw new RuntimeException('Unsupported OpenCart package line.');
+foreach (array('4', '3.0', '2.3', '2.2', '2.1', '2.0') as $line) {
+    opencart_build_package($line);
 }
+
+function opencart_build_package($line) {
 $repository = dirname(__DIR__, 2);
 $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart';
 $release_lines = array('3.0' => '3.x', '4' => '4.x');
@@ -128,6 +129,7 @@ try {
     rmdir($staging);
 }
 echo $package . PHP_EOL;
+}
 
 function opencart_module_layout($line, $name, $content) {
     $newline = strpos($content, "\r\n") !== false ? "\r\n" : "\n";

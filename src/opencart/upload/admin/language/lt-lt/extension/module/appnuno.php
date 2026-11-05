@@ -1,8 +1,8 @@
 <?php
-$_['heading_title']                = 'AppNuno vietinė navigacija';
+$_['heading_title']                = 'AppNuno';
 $_['text_extension']               = 'Plėtiniai';
-$_['text_success']                 = 'Pavyko: pakeitėte AppNuno vietinę navigaciją!';
-$_['text_edit']                    = 'Redaguoti AppNuno vietinę navigaciją';
+$_['text_success']                 = 'Pavyko: pakeitėte AppNuno!';
+$_['text_edit']                    = 'Redaguoti AppNuno';
 $_['text_enabled']                 = 'Įjungta';
 $_['text_disabled']                = 'Išjungta';
 $_['entry_status']                 = 'Būsena';
@@ -89,7 +89,7 @@ $_['text_tab_list_empty']         = 'Naujas skirtukas';
 $_['button_save']                  = 'Išsaugoti';
 $_['button_cancel']                = 'Atšaukti';
 $_['text_home']                    = 'Pradžia';
-$_['error_permission']             = 'Įspėjimas: neturite teisės keisti AppNuno vietinės navigacijos!';
+$_['error_permission']             = 'Įspėjimas: neturite teisės keisti AppNuno!';
 $_['error_status']                 = 'Būsena turi būti įjungta arba išjungta.';
 $_['text_route_home']              = 'Pradžia';
 $_['text_route_category']          = 'Kategorijos puslapis';

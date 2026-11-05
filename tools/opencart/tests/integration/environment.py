@@ -119,15 +119,23 @@ def prepare_artifact_dir(runtime: Runtime) -> Path:
 
 
 def prepare_store(runtime: Runtime, workspace: Path) -> Path:
+    web_root = workspace / "store"
+    if web_root.is_dir():
+        if (web_root / "config.php").is_file() and (web_root / "admin" / "config.php").is_file():
+            if os.environ.get("OPENCART_EXTERNAL_PHP_SERVER") == "1":
+                (workspace.parent / "opencart-web-root").write_text(web_root.as_posix(), encoding="utf-8")
+            return web_root
+        raise RuntimeError(f"OpenCart store directory exists but is incomplete: {web_root}")
     archive_path = workspace / "opencart.zip"
     urlretrieve(runtime.archive_url, archive_path)
     extracted = workspace / "upstream"
+    if extracted.exists():
+        shutil.rmtree(extracted)
     extracted.mkdir()
     with zipfile.ZipFile(archive_path) as archive:
         archive.extractall(extracted)
     candidates = list(extracted.rglob("config-dist.php"))
     web_source = next(path.parent for path in candidates if (path.parent / "admin" / "config-dist.php").is_file() and (path.parent / "install").is_dir())
-    web_root = workspace / "store"
     shutil.copytree(web_source, web_root, ignore=shutil.ignore_patterns(".git"))
     shutil.copyfile(web_root / "config-dist.php", web_root / "config.php")
     shutil.copyfile(web_root / "admin" / "config-dist.php", web_root / "admin" / "config.php")

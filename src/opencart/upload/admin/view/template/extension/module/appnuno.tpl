@@ -32,8 +32,7 @@
       <div class="panel-heading appnuno-toolbar">
         <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
-          <img class="appnuno-brand-mark" src="https://appnuno.com/favicon.png" alt="">
-          <div><h2 class="panel-title"><?php echo $heading_title; ?></h2></div>
+          <img class="appnuno-brand-mark" src="https://appnuno.com/logo-dark.png" alt="AppNuno">
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
           <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
@@ -60,12 +59,6 @@
               <?php } else { ?>
               <input type="hidden" name="module_appnuno_status" id="input-status" value="0" />
               <?php } ?>
-            </div>
-          </div>
-          <div class="form-group appnuno-cart-field">
-            <label class="col-sm-2 control-label" for="cart-tab-id"><?php echo $text['entry_cart_tab']; ?></label>
-            <div class="col-sm-10">
-              <select id="cart-tab-id" class="form-control"></select>
             </div>
           </div>
           <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
@@ -267,9 +260,9 @@
 	var routeOptions = readSettingsData('appnuno-route-options', []) || [];
 	var validationPath = readSettingsData('appnuno-validation-path', null);
 	var defaultLanguageCode = readSettingsData('appnuno-default-language', '');
+	var cartTabId = typeof configuration.cartTabId === 'string' ? configuration.cartTabId : 'cart';
 	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
-	var cartSelect = document.getElementById('cart-tab-id');
 	var adminMarkup = window.bootstrap && window.bootstrap.Modal ? 'bootstrap5' : 'bootstrap3';
 	defaultContainer.className = 'row';
 	var tabNavigationColumn = document.createElement('div');
@@ -288,10 +281,6 @@
 	addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
 	tabNavigationColumn.appendChild(tabNavigation);
 	tabNavigationColumn.appendChild(addTabButton);
-	var cartField = document.querySelector('.appnuno-cart-field');
-	if (cartField) {
-		tabNavigationColumn.appendChild(cartField);
-	}
 	defaultContainer.appendChild(tabNavigationColumn);
 	defaultContainer.appendChild(tabPanels);
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
@@ -1029,6 +1018,64 @@
 		return group;
 	}
 
+	function createCartBadgeField(path) {
+		var group = createGroup();
+		group.className += ' appnuno-cart-field';
+		group.setAttribute('data-validation-path', path + '.cartBadge');
+		var title = createGroupLabel(text.entry_cart_tab, 'cart_tab');
+		var column = createGroupColumn();
+		var control = document.createElement('div');
+		control.className = 'appnuno-switch appnuno-cart-switch';
+		control.setAttribute('data-cart-switch', 'true');
+		control.setAttribute('role', 'group');
+		control.setAttribute('aria-label', text.entry_cart_tab);
+		var indicator = document.createElement('span');
+		indicator.className = 'appnuno-switch-indicator';
+		indicator.setAttribute('aria-hidden', 'true');
+		control.appendChild(indicator);
+		[['1', text.text_enabled], ['0', text.text_disabled]].forEach(function (option) {
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.setAttribute('data-cart-value', option[0]);
+			button.setAttribute('aria-pressed', 'false');
+			button.textContent = option[1];
+			control.appendChild(button);
+		});
+		control.addEventListener('click', function (event) {
+			var button = event.target.closest('button[data-cart-value]');
+			if (!button) {
+				return;
+			}
+			var idField = group.closest('.appnuno-tab').querySelector('[data-field="id"]');
+			var tabId = idField.value.trim();
+			if (button.getAttribute('data-cart-value') === '1') {
+				if (tabId) {
+					cartTabId = tabId;
+				}
+			} else if (cartTabId === tabId) {
+				cartTabId = '';
+			}
+			refreshCartSwitches();
+		});
+		column.appendChild(control);
+		group.appendChild(title);
+		group.appendChild(column);
+		return group;
+	}
+
+	function refreshCartSwitches() {
+		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
+			var switchControl = card.querySelector('[data-cart-switch]');
+			var idField = card.querySelector('[data-field="id"]');
+			var enabled = !!idField && idField.value.trim() === cartTabId && !!cartTabId;
+			Array.prototype.forEach.call(switchControl.querySelectorAll('button[data-cart-value]'), function (button) {
+				button.setAttribute('aria-pressed', button.getAttribute('data-cart-value') === (enabled ? '1' : '0') ? 'true' : 'false');
+			});
+			placeSwitchIndicator(switchControl);
+			revealSwitchMotion(switchControl);
+		});
+	}
+
 	function createTab(tab, path) {
 		var card = document.createElement('div');
 		card.className = 'tab-pane appnuno-tab';
@@ -1038,9 +1085,14 @@
 		card.appendChild(createIconField(tab, path));
 		card.appendChild(createLabelFields(tab, path));
 		card.appendChild(createUrlField(tab, path));
+		card.appendChild(createCartBadgeField(path));
 		card.appendChild(createPagesField(tab, path));
-		card.addEventListener('input', function () {
-			refreshCartOptions();
+		card.addEventListener('input', function (event) {
+			var switchControl = card.querySelector('[data-cart-switch]');
+			if (event.target.matches('[data-field="id"]') && switchControl.querySelector('[data-cart-value="1"][aria-pressed="true"]')) {
+				cartTabId = event.target.value.trim();
+			}
+			refreshCartSwitches();
 			refreshTabNavigation();
 		});
 		card.addEventListener('change', refreshTabNavigation);
@@ -1077,6 +1129,10 @@
 			event.preventDefault();
 			event.stopPropagation();
 			var wasActive = card.classList.contains('active');
+			var idField = card.querySelector('[data-field="id"]');
+			if (idField && cartTabId === idField.value.trim()) {
+				cartTabId = '';
+			}
 			tabRow.parentNode.removeChild(tabRow);
 			card.parentNode.removeChild(card);
 			var next = tabPanels.querySelector('.appnuno-tab');
@@ -1085,7 +1141,7 @@
 			}
 			var nextLink = tabNavigation.querySelector('[aria-selected="true"]');
 			(nextLink || addTabButton).focus();
-			refreshCartOptions();
+			refreshCartSwitches();
 			refreshTabNavigation();
 		}
 		remove.addEventListener('click', removeTab);
@@ -1106,7 +1162,7 @@
 		tabNavigation.appendChild(tabRow);
 		activateTab(card);
 		refreshTabNavigation();
-		refreshCartOptions();
+		refreshCartSwitches();
 	}
 
 	function readTabs(container) {
@@ -1156,30 +1212,6 @@
 			}
 			return tab;
 		});
-	}
-
-	function refreshCartOptions() {
-		var current = cartSelect.value || configuration.cartTabId || 'cart';
-		var ids = {};
-		readTabs(defaultContainer).forEach(function (tab) {
-			if (tab.id) {
-				ids[tab.id] = true;
-			}
-		});
-		cartSelect.textContent = '';
-		Object.keys(ids).forEach(function (id) {
-			var option = document.createElement('option');
-			option.value = id;
-			option.textContent = id;
-			cartSelect.appendChild(option);
-		});
-		if (!ids[current]) {
-			var fallback = document.createElement('option');
-			fallback.value = current;
-			fallback.textContent = text.text_tab_missing.replace('%s', current);
-			cartSelect.appendChild(fallback);
-		}
-		cartSelect.value = current;
 	}
 
 	function setValue(id, value) {
@@ -1318,11 +1350,9 @@
 		}
 	});
 	syncConditionalFields();
-	refreshCartOptions();
-	cartSelect.value = configuration.cartTabId || cartSelect.value;
+	refreshCartSwitches();
 	[
 		['input-status', 'help_status'],
-		['cart-tab-id', 'help_cart_tab'],
 		['back-enabled', 'help_back_enabled'],
 		['back-placement', 'help_back_placement'],
 		['glass-enabled', 'help_glass_enabled'],
@@ -1351,7 +1381,7 @@
 			}
 		});
 		var controlPaths = {
-			cartTabId: 'cart-tab-id',
+			cartTabId: 'default-tabs',
 			back: 'back-enabled',
 			'back.enabled': 'back-enabled',
 			'back.placement': 'back-placement',
@@ -1428,7 +1458,7 @@
 			return document.getElementById(id).value === '1';
 		}
 		var result = {
-			cartTabId: cartSelect.value || 'cart',
+			cartTabId: cartTabId,
 			defaultTabs: readTabs(defaultContainer),
 			routes: {},
 			back: {

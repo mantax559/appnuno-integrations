@@ -1,8 +1,8 @@
 <?php
-$_['heading_title']                = 'AppNuno Native Navigation';
+$_['heading_title']                = 'AppNuno';
 $_['text_extension']               = 'Extensions';
-$_['text_success']                 = 'Success: You have modified AppNuno Native Navigation!';
-$_['text_edit']                    = 'Edit AppNuno Native Navigation';
+$_['text_success']                 = 'Success: You have modified AppNuno!';
+$_['text_edit']                    = 'Edit AppNuno';
 $_['text_enabled']                 = 'Enabled';
 $_['text_disabled']                = 'Disabled';
 $_['entry_status']                 = 'Status';
@@ -89,7 +89,7 @@ $_['text_tab_list_empty']         = 'New tab';
 $_['button_save']                  = 'Save';
 $_['button_cancel']                = 'Cancel';
 $_['text_home']                    = 'Home';
-$_['error_permission']             = 'Warning: You do not have permission to modify AppNuno Native Navigation!';
+$_['error_permission']             = 'Warning: You do not have permission to modify AppNuno!';
 $_['error_status']                 = 'Status must be enabled or disabled.';
 $_['text_route_home']              = 'Home';
 $_['text_route_category']          = 'Category page';

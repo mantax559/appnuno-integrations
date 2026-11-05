@@ -23,10 +23,14 @@ fi
 
 wp core is-installed --allow-root --path=/var/www/html
 wp core version --allow-root --path=/var/www/html | grep -Fx "$WORDPRESS_VERSION"
-wp plugin install woocommerce \
-    --version="$WOOCOMMERCE_VERSION" \
-    --activate \
-    --allow-root \
-    --path=/var/www/html
+if ! wp plugin is-installed woocommerce --allow-root --path=/var/www/html >/dev/null 2>&1; then
+    wp plugin install woocommerce \
+        --version="$WOOCOMMERCE_VERSION" \
+        --activate \
+        --allow-root \
+        --path=/var/www/html
+else
+    wp plugin activate woocommerce --allow-root --path=/var/www/html
+fi
 wp plugin is-active woocommerce --allow-root --path=/var/www/html
 wp plugin get woocommerce --field=version --allow-root --path=/var/www/html | grep -Fx "$WOOCOMMERCE_VERSION"

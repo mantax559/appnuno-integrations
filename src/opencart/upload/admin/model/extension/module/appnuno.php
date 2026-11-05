@@ -127,7 +127,7 @@ class ModelExtensionModuleAppnuno extends Model {
 			}
 		}
 
-		if (isset($config['cartTabId']) && (!is_string($config['cartTabId']) || !preg_match('/^[A-Za-z0-9_-]{1,64}$/', $config['cartTabId']))) {
+		if (isset($config['cartTabId']) && (!is_string($config['cartTabId']) || (strlen($config['cartTabId']) && !preg_match('/^[A-Za-z0-9_-]{1,64}$/', $config['cartTabId'])))) {
 			return 'cartTabId: Choose a valid cart badge tab.';
 		}
 

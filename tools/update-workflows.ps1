@@ -265,7 +265,7 @@ foreach ($release in $woocommerceMetadata) {
 }
 
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
-Get-ChildItem -Path $outputPath -File | Where-Object { $_.Extension -in '.yml', '.yaml' } | Remove-Item -Force
+Get-ChildItem -Path $outputPath -Filter 'wordpress-woocommerce-*.yml' -File | Remove-Item -Force
 $generatedWordPressFiles = [System.Collections.Generic.List[string]]::new()
 
 foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Object { [int]$_ }) {
@@ -326,12 +326,12 @@ $legacyOpenCartVersions = @{
     '4.x' = @('4.0.0.0', '4.0.1.0', '4.0.1.1', '4.0.2.0', '4.0.2.1', '4.0.2.2', '4.0.2.3', '4.1.0.0', '4.1.0.1', '4.1.0.2', '4.1.0.3', '4.1.0.4')
 }
 $openCartTemplateDefinitions = @(
-    @{ Key = '2.0.x'; Version = '2.0.3.1'; Php = '5.4'; Build = '2.0'; Package = '2.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
-    @{ Key = '2.1.x'; Version = '2.1.0.2'; Php = '5.4'; Build = '2.1'; Package = '2.1'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
-    @{ Key = '2.2.x'; Version = '2.2.0.0'; Php = '5.4'; Build = '2.2'; Package = '2.2'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
-    @{ Key = '2.3.x'; Version = '2.3.0.2'; Php = '5.4'; Build = '2.3'; Package = '2.3'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
-    @{ Key = '3.x'; Version = '3.0.5.1'; Php = '8.1'; Build = '3.0'; Package = '3.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mbstring, xml' }
-    @{ Key = '4.x'; Version = '4.1.0.4'; Php = '8.1'; Build = '4'; Package = '4'; Extensions = 'curl, gd, mysqli, zip, mbstring, xml' }
+    @{ Key = '2.0.x'; Version = '2.0.3.1'; Php = '5.4'; Package = '2.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.1.x'; Version = '2.1.0.2'; Php = '5.4'; Package = '2.1'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.2.x'; Version = '2.2.0.0'; Php = '5.4'; Package = '2.2'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '2.3.x'; Version = '2.3.0.2'; Php = '5.4'; Package = '2.3'; Extensions = 'curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml' }
+    @{ Key = '3.x'; Version = '3.0.5.1'; Php = '8.1'; Package = '3.0'; Extensions = 'curl, ftp, gd, mysqli, zip, mbstring, xml' }
+    @{ Key = '4.x'; Version = '4.1.0.4'; Php = '8.1'; Package = '4'; Extensions = 'curl, gd, mysqli, zip, mbstring, xml' }
 )
 
 $openCartWorkflowTemplate = @'
@@ -396,9 +396,9 @@ jobs:
         env:
           TZ: UTC
         run: |
-          php tools/opencart/build-package.php __BUILD__
+          php tools/opencart/build-package.php
           first_hash=$(sha256sum downloads/opencart/__KEY__/appnuno-opencart-__KEY__.ocmod.zip | cut -d ' ' -f 1)
-          php tools/opencart/build-package.php __BUILD__
+          php tools/opencart/build-package.php
           second_hash=$(sha256sum downloads/opencart/__KEY__/appnuno-opencart-__KEY__.ocmod.zip | cut -d ' ' -f 1)
           test "$first_hash" = "$second_hash"
           php tools/opencart/tests/package-validation.php __PACKAGE__
@@ -439,7 +439,6 @@ foreach ($definition in $openCartTemplateDefinitions) {
     $templateContent = $openCartWorkflowTemplate.Replace('__KEY__', $definition.Key).
         Replace('__VERSION__', $definition.Version).
         Replace('__PHP__', $definition.Php).
-        Replace('__BUILD__', $definition.Build).
         Replace('__PACKAGE__', $definition.Package).
         Replace('__EXTENSIONS__', $definition.Extensions)
     $templatePath = Join-Path $outputPath "opencart-$($definition.Key).yml"

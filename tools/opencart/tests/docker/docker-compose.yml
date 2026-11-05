@@ -6,6 +6,8 @@ services:
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: opencart
+      MYSQL_USER: opencart
+      MYSQL_PASSWORD: opencart
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
       interval: 10s
@@ -20,14 +22,20 @@ services:
     environment:
       OPENCART_VERSION: ${OPENCART_VERSION:-2.3.0.2}
     volumes:
-      - opencart-workspace:/shared
+      - store-workspace:/shared
       - ../../../../artifacts/opencart-docker:/artifacts
     command: ["sh", "-c", "while [ ! -s /shared/opencart-web-root ]; do sleep 1; done; artifact_dir=/artifacts/${OPENCART_VERSION:-2.3.0.2}; mkdir -p \"$$artifact_dir\"; web_root=$$(cat /shared/opencart-web-root); exec php -d session.save_path=/tmp -S 0.0.0.0:8080 -t \"$$web_root\" > \"$$artifact_dir/php-server.log\" 2>&1"]
     depends_on:
       mysql:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit((int) !@fsockopen('127.0.0.1', 8080));"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
 
   runner:
+    image: appnuno-opencart-tests-runner:latest
     build:
       context: ..
       dockerfile: docker/Dockerfile
@@ -37,8 +45,8 @@ services:
       OPENCART_VERSION: ${OPENCART_VERSION:-2.3.0.2}
       OPENCART_BASE_URL: http://opencart-php:8080
       OPENCART_DB_HOST: mysql
-      OPENCART_DB_USER: root
-      OPENCART_DB_PASSWORD: root
+      OPENCART_DB_USER: opencart
+      OPENCART_DB_PASSWORD: opencart
       OPENCART_DB_NAME: opencart
       OPENCART_FTP_HOST: runner
       OPENCART_ARTIFACT_DIR: /artifacts/${OPENCART_VERSION:-2.3.0.2}
@@ -49,13 +57,13 @@ services:
       - ../../../..:/repo
       - ../../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
       - ../../../../artifacts/opencart-docker:/artifacts
-      - opencart-workspace:/shared
-    command: ["/bin/bash", "-lc", "set -e; php tools/opencart/build-package.php 2.3; first_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); php tools/opencart/build-package.php 2.3; second_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); test \"$$first_hash\" = \"$$second_hash\"; php tools/opencart/tests/package-validation.php 2.3; php tools/opencart/tests/config-validation.php; php tools/opencart/tests/language-validation.php; python tools/opencart/tests/integration.py"]
+      - store-workspace:/shared
+    command: ["/bin/bash", "-lc", "set -e; php tools/opencart/build-package.php; first_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); php tools/opencart/build-package.php; second_hash=$$(sha256sum downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip | cut -d ' ' -f 1); test \"$$first_hash\" = \"$$second_hash\"; php tools/opencart/tests/package-validation.php 2.3; php tools/opencart/tests/config-validation.php; php tools/opencart/tests/language-validation.php; python tools/opencart/tests/integration.py"]
     depends_on:
       mysql:
         condition: service_healthy
       opencart-php:
-        condition: service_started
+        condition: service_healthy
 
 volumes:
-  opencart-workspace:
+  store-workspace:

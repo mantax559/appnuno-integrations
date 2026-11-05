@@ -84,36 +84,53 @@ def login_admin(runtime: Runtime, page: Page, web_root: Path) -> None:
 def module_list_row(runtime: Runtime, page: Page, token: str) -> Locator:
     if legacy_module_layout(runtime):
         page.goto(admin_page(runtime, "extension/module", token))
-        return page.locator("#content table tr").filter(has_text="AppNuno Native Navigation").first
-    # OpenCart 3 moved the extension type list from extension/extension to marketplace/extension.
+        return page.locator("#content table tr").filter(has_text="AppNuno").first
     page.goto(admin_page(runtime, "marketplace/extension" if runtime.line == "3.0" or opencart4(runtime) else "extension/extension", token))
     module_filter = page.locator('select[name="type"]')
     module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
-    return page.locator("#extension tr").filter(has_text="AppNuno Native Navigation").filter(has=page.locator('a[href*="extension=appnuno"]')).first
+    module_row = page.locator("#extension tr").filter(has=page.locator('a[href*="extension=appnuno"]')).first
+    if runtime.line == "2.3":
+        module_row = module_row.filter(has=page.locator('img[src="https://appnuno.com/logo-dark.png"][alt="AppNuno"]'))
+        if "AppNuno Native Navigation" in module_row.inner_text():
+            raise AssertionError("The OpenCart 2.3 module list should not show the former product title.")
+        return module_row
+    return module_row.filter(has_text="AppNuno")
 
 
 def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
     page.goto(admin_page(runtime, admin_module_route(runtime), token))
     settings_shell = page.locator(".appnuno-settings")
     settings_shell.wait_for()
+    brand = settings_shell.locator('.appnuno-brand')
+    brand_logo = brand.locator('img.appnuno-brand-mark')
+    if brand_logo.get_attribute('src') != 'https://appnuno.com/logo-dark.png' or brand_logo.get_attribute('alt') != 'AppNuno' or brand.locator('.panel-title').count():
+        raise AssertionError("The module editor should show only the AppNuno logo with an AppNuno fallback label.")
     page.wait_for_function(
         "() => Array.from(document.styleSheets).some(sheet => sheet.href && sheet.href.includes('/view/javascript/appnuno/settings.css'))"
     )
     page.wait_for_function(
         "() => Array.from(document.scripts).some(script => script.src && script.src.includes('/view/javascript/appnuno/settings.js'))"
     )
+    page.wait_for_function("() => document.querySelector('.appnuno-section-switch').getAttribute('data-placed') === 'true'")
     design = settings_shell.evaluate("""element => {
         const styles = getComputedStyle(element);
         const section = element.querySelector('.appnuno-section-switch');
         const activeTab = element.querySelector('.nav-tabs > li.active > a, .nav-tabs > li > a.active');
         const inactiveTab = element.querySelector('.nav-tabs > li:not(.active) > a, .nav-tabs > li > a:not(.active)');
         const indicator = section.querySelector('.appnuno-switch-indicator');
+        const fieldset = element.querySelector('.appnuno-fieldset');
+        const legend = fieldset.querySelector('legend');
         return {
             radius: styles.borderRadius,
             primary: styles.getPropertyValue('--appnuno-primary').trim(),
             tabSurface: getComputedStyle(section).backgroundColor,
             tabBorder: getComputedStyle(section).borderTopWidth + ' ' + getComputedStyle(section).borderTopStyle + ' ' + getComputedStyle(section).borderTopColor,
             activeTabSurface: getComputedStyle(indicator).backgroundColor,
+            indicatorTransition: getComputedStyle(indicator).transitionProperty,
+            fieldsetBorder: getComputedStyle(fieldset).borderTopWidth,
+            legendBorder: getComputedStyle(legend).borderTopWidth,
+            legendRadius: getComputedStyle(legend).borderRadius,
+            legendPadding: getComputedStyle(legend).padding,
             activeColor: getComputedStyle(activeTab).color,
             sameWeight: getComputedStyle(activeTab).fontWeight === getComputedStyle(inactiveTab).fontWeight,
             compact: section.getBoundingClientRect().width < element.getBoundingClientRect().width - 120
@@ -125,11 +142,21 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
         "tabSurface": "rgba(0, 0, 0, 0)",
         "tabBorder": "1px solid rgb(228, 228, 231)",
         "activeTabSurface": "rgb(24, 24, 27)",
+        "indicatorTransition": "transform, width, height",
+        "fieldsetBorder": "1px",
+        "legendBorder": "1px",
+        "legendRadius": "10px",
+        "legendPadding": "2px 20px",
         "activeColor": "rgb(255, 255, 255)",
         "sameWeight": True,
         "compact": True
     }:
         raise AssertionError(f"The settings editor did not load the neutral AppNuno design system: {design}.")
+    page.emulate_media(reduced_motion="reduce")
+    reduced_motion_duration = page.locator('.appnuno-section-switch .appnuno-switch-indicator').evaluate("element => getComputedStyle(element).transitionDuration")
+    page.emulate_media(reduced_motion="no-preference")
+    if reduced_motion_duration != "0s":
+        raise AssertionError("The switch indicator should respect the reduced-motion preference.")
     if not page.locator('.appnuno-toolbar button[form="form-appnuno"]').is_visible():
         raise AssertionError("The settings editor must expose its own save toolbar.")
     if page.locator("#default-tabs .appnuno-tab.active").count():
@@ -709,7 +736,7 @@ def add_contact_tab(page: Page) -> None:
     choose_catalog_icon(page, tab, "duo:user")
     if tab.locator('[data-tab-visibility]').input_value() != "1":
         raise AssertionError("A newly added tab should be visible by default.")
-    page.locator("#cart-tab-id").select_option("ci-added-tab")
+    tab.locator('[data-cart-switch] [data-cart-value="1"]').click()
     choose_switch(page, "input-status", "1")
 
 
@@ -732,15 +759,36 @@ def add_hidden_tab(page: Page) -> None:
 
 
 def assert_cart_badge_is_in_default_panel(page: Page) -> None:
-    cart_follows_add = page.locator("#default-tabs").evaluate("""element => {
-        const add = element.querySelector('[data-add-tab]');
-        const cart = element.querySelector('#cart-tab-id');
-        return !!(add && cart && add.nextElementSibling && add.nextElementSibling.contains(cart));
+    cart_layout = page.locator("#default-tabs").evaluate("""element => {
+        const cards = Array.from(element.querySelectorAll('.appnuno-tab'));
+        return cards.map(card => {
+            const destination = card.querySelector('[data-url-select]').closest('[data-field-group]');
+            const cart = card.querySelector('[data-cart-switch]').closest('[data-field-group]');
+            return {
+                followsDestination: destination.nextElementSibling === cart,
+                hasSwitch: !!card.querySelector('[data-cart-switch]'),
+                selected: card.querySelector('[data-cart-switch] [aria-pressed="true"][data-cart-value="1"]') !== null
+            };
+        });
     }""")
-    if not cart_follows_add:
-        raise AssertionError("Cart badge selection should sit below the add-tab button.")
-    if not page.locator("#cart-tab-id").locator("xpath=../../label").locator('[data-toggle="tooltip"], [data-bs-toggle="tooltip"]').count():
-        raise AssertionError("The cart badge help should use the standard OpenCart label tooltip.")
+    if not cart_layout or any(not card["followsDestination"] or not card["hasSwitch"] for card in cart_layout):
+        raise AssertionError(f"Each tab should have its cart badge switch immediately after Destination: {cart_layout}.")
+    if page.locator('#default-tabs .appnuno-cart-field label [data-toggle="tooltip"], #default-tabs .appnuno-cart-field label [data-bs-toggle="tooltip"]').count() != len(cart_layout):
+        raise AssertionError("Cart badge help should use the standard OpenCart label tooltip in every tab card.")
+    if sum(card["selected"] for card in cart_layout) != 1:
+        raise AssertionError("Exactly one tab should have the cart badge enabled initially.")
+    first_tab = page.locator('#default-tabs .appnuno-tab').first
+    first_tab.locator('[data-cart-switch] [data-cart-value="1"]').click()
+    if first_tab.locator('[data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1 or page.locator('#default-tabs .appnuno-tab:not(:first-child) [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count():
+        raise AssertionError("Enabling the cart badge on a tab should disable it on every other tab.")
+    first_tab.locator('[data-cart-switch] [data-cart-value="0"]').click()
+    if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count():
+        raise AssertionError("Disabling the selected tab should allow no cart badge tab to be selected.")
+    page.locator('#default-tabs .appnuno-tab').nth(1).locator('[data-cart-switch] [data-cart-value="1"]').click()
+    if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
+        raise AssertionError("Re-enabling a tab should restore exactly one cart badge selection.")
+    if page.locator('#default-tabs .appnuno-tab.active').evaluate("card => getComputedStyle(card).borderTopWidth") != "1px":
+        raise AssertionError("The open default tab editor should be contained by a visible card border.")
     first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
     if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
         raise AssertionError("The first default tab should be active when the settings page opens.")
@@ -811,7 +859,7 @@ def assert_module_settings_persisted(page: Page) -> None:
         raise AssertionError("The newly added Lithuanian tab label did not persist after reloading the settings page.")
     if saved_tab.locator('[data-language-url="lt-lt"]').input_value() != "/lt/kontaktai":
         raise AssertionError("The newly added Lithuanian tab URL did not persist after reloading the settings page.")
-    if page.locator("#cart-tab-id").input_value() != "ci-added-tab":
+    if saved_tab.locator('[data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
         raise AssertionError("The cart badge tab selection did not persist after reloading the settings page.")
     saved_page_tab = page.locator("#default-tabs .appnuno-tab").nth(3)
     if saved_page_tab.locator('[data-language-label="lt-lt"]').input_value() != "Krepšelio skirtukas":
@@ -871,7 +919,7 @@ def fill_builtin_tab_labels(page: Page) -> None:
 
 def submit_module_settings(page: Page) -> None:
     page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-success").filter(has_text="modified AppNuno Native Navigation").wait_for(timeout=15000)
+    page.locator(".alert-success").filter(has_text="modified AppNuno").wait_for(timeout=15000)
     page.reload()
     page.locator("#default-tabs .appnuno-tab").nth(2).wait_for(state="attached")
 
@@ -893,6 +941,8 @@ def save_module_settings(page: Page, artifact_dir: Path) -> None:
 
 def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...]) -> None:
     open_module_editor(runtime, page, admin_token(runtime, page))
+    if page.title() != "AppNuno":
+        raise AssertionError(f"The module document title should be AppNuno: {page.title()}.")
     first_tab = page.locator("#default-tabs .appnuno-tab").first
     first_tab.wait_for(state="attached")
     first_tab_key = first_tab.get_attribute("data-tab-key")
@@ -911,7 +961,6 @@ def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...
 def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
     switch_admin_language(runtime, page, "lt-lt")
     expect_module_language(runtime, page, (
-        "AppNuno vietinė navigacija",
         "Numatytieji skirtukai",
         "Krepšelio ženkliuko skirtukas",
         "Rodoma puslapiuose",
@@ -928,7 +977,6 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
     ))
     switch_admin_language(runtime, page, "en-gb")
     expect_module_language(runtime, page, (
-        "AppNuno Native Navigation",
         "Default tabs",
         "Cart badge tab",
         "Shown on pages",

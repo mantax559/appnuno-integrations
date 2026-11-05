@@ -29,7 +29,7 @@
   <file path="admin/view/template/extension/extension/module.tpl">
     <operation>
       <search><![CDATA[<td><b><?php echo $extension['name']; ?></b></td>]]></search>
-      <add position="replace"><![CDATA[<td><b><?php if (strpos($extension['edit'], 'module/appnuno') !== false) { ?><img src="https://appnuno.com/favicon.png" alt="" style="max-height:20px;width:auto;vertical-align:middle;margin-right:8px"><span style="color:#000000"><?php echo $extension['name']; ?></span><?php } else { ?><?php echo $extension['name']; ?><?php } ?></b></td>]]></add>
+      <add position="replace"><![CDATA[<td><b><?php if (strpos($extension['edit'], 'module/appnuno') !== false) { ?><img src="https://appnuno.com/logo-dark.png" alt="AppNuno" style="max-height:20px;width:auto;vertical-align:middle"><?php } else { ?><?php echo $extension['name']; ?><?php } ?></b></td>]]></add>
     </operation>
   </file>
 </modification>
