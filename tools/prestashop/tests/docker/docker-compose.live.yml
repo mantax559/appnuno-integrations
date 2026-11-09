@@ -1,0 +1,11 @@
+name: appnuno-prestashop-live
+
+services:
+  mysql:
+    volumes:
+      - prestashop-live-db:/var/lib/mysql
+
+volumes:
+  prestashop-live-db:
+  store-workspace:
+    name: appnuno-prestashop-live_store-workspace

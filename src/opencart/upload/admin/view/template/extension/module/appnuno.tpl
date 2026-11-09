@@ -1,6 +1,6 @@
 <?php echo $header; ?><?php echo $column_left; ?>
 <div id="content">
-  <link href="view/javascript/appnuno/settings.css" rel="stylesheet" />
+  <link href="view/javascript/appnuno/settings.css?v=<?php echo $appnuno_settings_css_version; ?>" rel="stylesheet" />
   <link href="view/javascript/appnuno/adapter.css" rel="stylesheet" />
   <div class="page-header appnuno-host-header">
     <div class="container-fluid">
@@ -33,6 +33,10 @@
         <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
           <img class="appnuno-brand-mark" src="https://appnuno.com/logo-dark.png" alt="AppNuno">
+          <div class="appnuno-version-group">
+            <span class="appnuno-version">v<?php echo htmlspecialchars($appnuno_version, ENT_QUOTES, 'UTF-8'); ?></span>
+            <a class="appnuno-documentation" href="https://appnuno.com/opencart" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($text_documentation, ENT_QUOTES, 'UTF-8'); ?></a>
+          </div>
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
           <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
@@ -41,43 +45,45 @@
       </div>
       <div class="panel-body">
         <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno" class="form-horizontal">
-          <div class="form-group appnuno-status-field">
-            <label class="col-sm-2 control-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
-            <div class="col-sm-10">
-              <div class="appnuno-switch" data-status-switch="input-status">
-                <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+          <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
+          <div class="appnuno-section-toolbar">
+            <div class="appnuno-switch appnuno-section-switch">
+              <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+              <ul class="nav nav-tabs">
+                <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
+                <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
+                <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
+              </ul>
+            </div>
+            <div class="form-group appnuno-status-field">
+              <label class="col-sm-2 control-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
+              <div class="col-sm-10">
+                <div class="appnuno-switch" data-status-switch="input-status">
+                  <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+                  <?php if ($module_appnuno_status) { ?>
+                  <button type="button" data-value="1" aria-pressed="true"><?php echo $text_enabled; ?></button>
+                  <button type="button" data-value="0" aria-pressed="false"><?php echo $text_disabled; ?></button>
+                  <?php } else { ?>
+                  <button type="button" data-value="1" aria-pressed="false"><?php echo $text_enabled; ?></button>
+                  <button type="button" data-value="0" aria-pressed="true"><?php echo $text_disabled; ?></button>
+                  <?php } ?>
+                </div>
                 <?php if ($module_appnuno_status) { ?>
-                <button type="button" data-value="1" aria-pressed="true"><?php echo $text_enabled; ?></button>
-                <button type="button" data-value="0" aria-pressed="false"><?php echo $text_disabled; ?></button>
+                <input type="hidden" name="module_appnuno_status" id="input-status" value="1" />
                 <?php } else { ?>
-                <button type="button" data-value="1" aria-pressed="false"><?php echo $text_enabled; ?></button>
-                <button type="button" data-value="0" aria-pressed="true"><?php echo $text_disabled; ?></button>
+                <input type="hidden" name="module_appnuno_status" id="input-status" value="0" />
                 <?php } ?>
               </div>
-              <?php if ($module_appnuno_status) { ?>
-              <input type="hidden" name="module_appnuno_status" id="input-status" value="1" />
-              <?php } else { ?>
-              <input type="hidden" name="module_appnuno_status" id="input-status" value="0" />
-              <?php } ?>
             </div>
-          </div>
-          <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
-          <div class="appnuno-switch appnuno-section-switch">
-            <span class="appnuno-switch-indicator" aria-hidden="true"></span>
-            <ul class="nav nav-tabs">
-              <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
-              <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
-              <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
-            </ul>
           </div>
           <div class="tab-content">
             <div class="tab-pane active" id="tab-navigation">
               <div id="default-tabs"></div>
             </div>
             <div class="tab-pane" id="tab-glass">
-              <fieldset class="appnuno-fieldset">
-              <legend><?php echo $text['text_back_button']; ?></legend>
-              <div class="appnuno-fieldset-body">
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title"><?php echo $text['text_back_button']; ?></h2>
+              <div class="appnuno-setting-card-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10">
@@ -97,10 +103,10 @@
                 </div>
               </div>
               </div>
-              </fieldset>
-              <fieldset class="appnuno-fieldset">
-              <legend><?php echo $text['text_glass_button']; ?></legend>
-              <div class="appnuno-fieldset-body">
+              </section>
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title"><?php echo $text['text_glass_button']; ?></h2>
+              <div class="appnuno-setting-card-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
                 <div class="col-sm-10">
@@ -167,12 +173,12 @@
                 </div>
               </div>
               </div>
-              </fieldset>
+              </section>
             </div>
             <div class="tab-pane" id="tab-colors">
-              <fieldset class="appnuno-fieldset">
-              <legend><?php echo $text['text_light_mode']; ?></legend>
-              <div class="appnuno-fieldset-body">
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title"><?php echo $text['text_light_mode']; ?></h2>
+              <div class="appnuno-setting-card-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="light-background"><?php echo $text['entry_background']; ?></label>
                 <div class="col-sm-10">
@@ -186,10 +192,10 @@
                 </div>
               </div>
               </div>
-              </fieldset>
-              <fieldset class="appnuno-fieldset">
-              <legend><?php echo $text['text_dark_mode']; ?></legend>
-              <div class="appnuno-fieldset-body">
+              </section>
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title"><?php echo $text['text_dark_mode']; ?></h2>
+              <div class="appnuno-setting-card-body">
               <div class="form-group">
                 <label class="col-sm-2 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
                 <div class="col-sm-10">
@@ -203,10 +209,32 @@
                 </div>
               </div>
               </div>
-              </fieldset>
+              </section>
             </div>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal fade" id="page-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="page-picker-title">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="appnuno-modal-close" data-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="page-picker-title"><?php echo $text['text_shown_on_pages']; ?></h4>
+      </div>
+      <div class="modal-body">
+        <div id="page-picker-all-pages"></div>
+        <div class="appnuno-page-picker-actions">
+          <button type="button" class="btn btn-default btn-sm" id="page-picker-select-all"><?php echo $text['button_select_all_pages']; ?></button>
+          <button type="button" class="btn btn-default btn-sm" id="page-picker-clear"><?php echo $text['button_clear_pages']; ?></button>
+        </div>
+        <div id="page-picker-choices" class="appnuno-page-picker-choices"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo $text['button_cancel_pages']; ?></button>
+        <button type="button" class="btn btn-primary" id="page-picker-apply"><?php echo $text['button_apply_pages']; ?></button>
       </div>
     </div>
   </div>
@@ -215,7 +243,7 @@
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
-        <button type="button" class="appnuno-modal-close" data-dismiss="modal" data-bs-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
+        <button type="button" class="appnuno-modal-close" data-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
         <h4 class="modal-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
       </div>
       <div class="modal-body">
@@ -279,27 +307,45 @@
 	addTabButton.className = 'btn btn-primary btn-block';
 	addTabButton.setAttribute('data-add-tab', 'default-tabs');
 	addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
+	var emptyState = document.createElement('div');
+	emptyState.className = 'appnuno-default-empty-state';
+	var emptyStateTitle = document.createElement('strong');
+	emptyStateTitle.className = 'appnuno-default-empty-title';
+	emptyStateTitle.textContent = text.text_default_tabs_empty;
+	var emptyStateMessage = document.createElement('p');
+	emptyStateMessage.className = 'appnuno-default-empty-message';
+	emptyStateMessage.textContent = text.text_default_tabs_empty_help;
+	emptyState.appendChild(emptyStateTitle);
+	emptyState.appendChild(emptyStateMessage);
 	tabNavigationColumn.appendChild(tabNavigation);
 	tabNavigationColumn.appendChild(addTabButton);
 	defaultContainer.appendChild(tabNavigationColumn);
 	defaultContainer.appendChild(tabPanels);
+	defaultContainer.appendChild(emptyState);
 	defaultContainer.setAttribute('data-validation-path', 'defaultTabs');
 
-	function appendHelp(label, message) {
-		if (!message) {
-			return;
+	function appendInlineHelp(label, message) {
+		if (!label) {
+			return null;
 		}
-		var tooltip = document.createElement('span');
-		tooltip.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tooltip');
-		tooltip.setAttribute('title', message);
-		tooltip.textContent = label.textContent;
-		label.textContent = '';
-		label.appendChild(tooltip);
+		var copy = document.createElement('div');
+		copy.className = 'appnuno-field-copy';
+		if (label.parentNode) {
+			label.parentNode.insertBefore(copy, label);
+		}
+		copy.appendChild(label);
+		if (message) {
+			var description = document.createElement('p');
+			description.className = 'appnuno-field-description';
+			description.textContent = message;
+			copy.appendChild(description);
+		}
+		return copy;
 	}
 
 	function appendFieldHelp(label, key) {
 		var aliases = { id: 'tab_id', icon: 'icon_catalog' };
-		appendHelp(label, text['help_' + (aliases[key] || key)]);
+		return appendInlineHelp(label, text['help_' + (aliases[key] || key)]);
 	}
 
 	var appnunoTooltip = document.createElement('div');
@@ -349,7 +395,15 @@
 		}
 	});
 
+	var switchResizeObserver = window.ResizeObserver ? new ResizeObserver(function (entries) {
+		entries.forEach(function (entry) { placeSwitchIndicator(entry.target); });
+	}) : null;
+
 	function placeSwitchIndicator(control) {
+		if (switchResizeObserver && !control.__appnunoResizeObserved) {
+			control.__appnunoResizeObserved = true;
+			switchResizeObserver.observe(control);
+		}
 		var indicator = control.querySelector('.appnuno-switch-indicator');
 		var selected = control.querySelector('[aria-pressed="true"]') || control.querySelector('.nav-tabs > li.active > a, .nav-tabs > li > a.active');
 		if (!indicator || !selected) {
@@ -416,6 +470,15 @@
 				marker.parentNode.removeChild(marker);
 			}
 		});
+		var isEmpty = !tabPanels.querySelector('.appnuno-tab');
+		defaultContainer.classList.toggle('appnuno-default-empty', isEmpty);
+		if (isEmpty) {
+			addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_first_tab;
+			emptyState.appendChild(addTabButton);
+		} else {
+			addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
+			tabNavigationColumn.appendChild(addTabButton);
+		}
 	}
 
 	function activateTab(card) {
@@ -437,9 +500,66 @@
 		if (!control) {
 			return;
 		}
-		var group = control.parentNode.parentNode;
-		var label = group.querySelector('label');
-		appendHelp(label, text[key]);
+		var group = control.closest('.form-group');
+		var label = group && group.querySelector('label');
+		appendInlineHelp(label, text[key]);
+	}
+
+	function enhanceSelectSwitch(id) {
+		var select = document.getElementById(id);
+		if (!select || select.tagName !== 'SELECT') {
+			return;
+		}
+		var control = document.createElement('div');
+		control.className = 'appnuno-switch appnuno-select-switch';
+		control.setAttribute('data-status-switch', id);
+		control.setAttribute('role', 'group');
+		control.setAttribute('aria-label', select.parentNode.parentNode.querySelector('label').textContent.trim());
+		var indicator = document.createElement('span');
+		indicator.className = 'appnuno-switch-indicator';
+		indicator.setAttribute('aria-hidden', 'true');
+		control.appendChild(indicator);
+		Array.prototype.forEach.call(select.options, function (option) {
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.setAttribute('data-value', option.value);
+			button.setAttribute('aria-pressed', option.value === select.value ? 'true' : 'false');
+			button.textContent = option.textContent;
+			control.appendChild(button);
+		});
+		select.classList.add('appnuno-select-switch-source');
+		select.parentNode.insertBefore(control, select);
+		bindStatusSwitch(control);
+	}
+
+	function bindStatusSwitch(control) {
+		var input = document.getElementById(control.getAttribute('data-status-switch'));
+		if (!input || control.getAttribute('data-switch-bound') === 'true') {
+			return;
+		}
+		control.setAttribute('data-switch-bound', 'true');
+		control.addEventListener('click', function (event) {
+			var button = event.target.closest('button[data-value]');
+			if (!button || !input) {
+				return;
+			}
+			input.value = button.getAttribute('data-value');
+			Array.prototype.forEach.call(control.querySelectorAll('button[data-value]'), function (item) {
+				item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+			});
+			if (input.tagName === 'SELECT') {
+				input.dispatchEvent(new Event('change', { bubbles: true }));
+			}
+			placeSwitchIndicator(control);
+		});
+		if (input.tagName === 'SELECT') {
+			input.addEventListener('change', function () {
+				Array.prototype.forEach.call(control.querySelectorAll('button[data-value]'), function (item) {
+					item.setAttribute('aria-pressed', item.getAttribute('data-value') === input.value ? 'true' : 'false');
+				});
+				placeSwitchIndicator(control);
+			});
+		}
 	}
 
 	function createGroup() {
@@ -449,11 +569,10 @@
 		return group;
 	}
 
-	function createGroupLabel(label, helpKey) {
+	function createGroupLabel(label) {
 		var title = document.createElement('label');
 		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-3 col-form-label' : 'col-sm-3 control-label';
 		title.textContent = label;
-		appendFieldHelp(title, helpKey || '');
 		return title;
 	}
 
@@ -476,6 +595,8 @@
 	var iconPickerCatalog = null;
 	var iconPickerCatalogQuery = null;
 	var iconPickerDialog = document.getElementById('icon-picker-dialog');
+	var pagePickerDialog = document.getElementById('page-picker-dialog');
+	var pagePickerGroup = null;
 
 	function showIconPicker() {
 		if (window.bootstrap && window.bootstrap.Modal) {
@@ -511,8 +632,9 @@
 		icon = validCatalogIcon(icon) ? icon : null;
 		input.value = icon ? JSON.stringify(icon) : '';
 		var button = input.parentNode.querySelector('[data-icon-picker]');
-		button.textContent = icon ? icon.id : text.text_icon;
-		if (icon) {
+	button.textContent = icon ? icon.id : text.text_choose_icon;
+	button.classList.toggle('appnuno-icon-empty', !icon);
+	if (icon) {
 			var image = document.createElement('img');
 			image.src = icon.uri;
 			image.alt = '';
@@ -536,10 +658,10 @@
 			option.setAttribute('aria-label', icon.id);
 			option.setAttribute('data-appnuno-tooltip', icon.id);
 			var image = document.createElement('img');
-			image.src = icon.uri;
 			image.alt = '';
 			image.width = 28;
 			image.height = 28;
+			image.src = icon.uri;
 			option.appendChild(image);
 			option.addEventListener('click', function () {
 				if (iconPickerTarget) {
@@ -550,6 +672,21 @@
 			});
 			iconPickerGrid.appendChild(option);
 		});
+	}
+
+	function waitForIconImages() {
+		return Promise.all(Array.prototype.map.call(iconPickerGrid.querySelectorAll('img'), function (image) {
+			if (typeof image.decode === 'function') {
+				return image.decode().catch(function () {});
+			}
+			if (image.complete) {
+				return Promise.resolve();
+			}
+			return new Promise(function (resolve) {
+				image.addEventListener('load', resolve, { once: true });
+				image.addEventListener('error', resolve, { once: true });
+			});
+		}));
 	}
 
 	function renderIconPager(currentPage, lastPage) {
@@ -588,12 +725,17 @@
 	function presentIconPage(icons, currentPage, lastPage, total, local) {
 		var page = Math.min(Math.max(currentPage, 1), Math.max(lastPage, 1));
 		var visible = local ? icons.slice((page - 1) * iconPickerPageSize, page * iconPickerPageSize) : icons;
+		var requestId = iconPickerRequest;
 		iconPickerPage = page;
 		renderIconOptions(visible);
 		iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
 		renderIconPager(page, total ? lastPage : 0);
-		iconPickerLoading.hidden = true;
 		iconPickerStatus.textContent = '';
+		waitForIconImages().then(function () {
+			if (requestId === iconPickerRequest) {
+				iconPickerLoading.hidden = true;
+			}
+		});
 	}
 
 	function revealIconPage(requestId, started, apply) {
@@ -710,10 +852,9 @@
 		});
 		column.appendChild(input);
 		column.appendChild(button);
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, 'icon'));
 		group.appendChild(column);
 		updateIconField(input, selected);
-		appendFieldHelp(title, 'icon');
 		return group;
 	}
 
@@ -738,8 +879,7 @@
 		input.setAttribute('data-field', key);
 		input.setAttribute('data-validation-path', path);
 		column.appendChild(input);
-		appendFieldHelp(title, key);
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, key));
 		group.appendChild(column);
 		return group;
 	}
@@ -748,7 +888,7 @@
 		var group = createGroup();
 		group.className += ' appnuno-field-wide';
 		group.setAttribute('data-validation-path', path + '.labels');
-		var title = createGroupLabel(text.text_language_labels, 'tab_labels');
+		var title = createGroupLabel(text.text_language_labels);
 		var column = createGroupColumn();
 		var labels = tab.labels || {};
 		var legacyLabel = tab.label || '';
@@ -804,7 +944,7 @@
 			fallback.setAttribute('data-validation-path', path + '.labels.default');
 			column.appendChild(fallback);
 		}
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, 'tab_labels'));
 		group.appendChild(column);
 		return group;
 	}
@@ -813,7 +953,7 @@
 		var group = createGroup();
 		group.className += ' appnuno-field-wide';
 		group.setAttribute('data-validation-path', path + '.url');
-		var title = createGroupLabel(text.text_destination, 'tab_destination');
+		var title = createGroupLabel(text.text_destination);
 		var column = createGroupColumn();
 		var select = document.createElement('select');
 		select.id = 'appnuno-destination-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
@@ -888,7 +1028,7 @@
 		});
 		column.appendChild(select);
 		column.appendChild(customUrls);
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, 'tab_destination'));
 		group.appendChild(column);
 		return group;
 	}
@@ -923,32 +1063,20 @@
 	function createPagesField(tab, path) {
 		var group = createGroup();
 		group.className += ' appnuno-field-wide';
-		var title = createGroupLabel(text.text_shown_on_pages, 'shown_on_pages');
+		var title = createGroupLabel(text.text_shown_on_pages);
 		var column = createGroupColumn();
-		var allPagesChoice = document.createElement('div');
-		allPagesChoice.className = adminMarkup === 'bootstrap5' ? 'form-check' : 'checkbox';
-		var allPagesLabel = document.createElement('label');
 		var allPages = document.createElement('input');
 		allPages.type = 'checkbox';
 		allPages.id = 'appnuno-all-pages-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
-		allPagesLabel.htmlFor = allPages.id;
-		title.htmlFor = allPages.id;
 		allPages.checked = typeof tab.allPages === 'boolean' ? tab.allPages : (!Array.isArray(tab.pages) || !tab.pages.length);
 		allPages.setAttribute('data-all-pages', 'true');
 		allPages.setAttribute('data-validation-path', path + '.allPages');
-		if (adminMarkup === 'bootstrap5') {
-			allPages.className = 'form-check-input';
-			allPagesLabel.className = 'form-check-label';
-			allPagesLabel.appendChild(document.createTextNode(text.text_all_pages));
-			allPagesChoice.appendChild(allPages);
-			allPagesChoice.appendChild(allPagesLabel);
-		} else {
-			allPagesLabel.appendChild(allPages);
-			allPagesLabel.appendChild(document.createTextNode(' ' + text.text_all_pages));
-			allPagesChoice.appendChild(allPagesLabel);
-		}
+		var allPagesChoice = document.createElement('div');
+		allPagesChoice.hidden = true;
+		allPagesChoice.appendChild(allPages);
 		var list = document.createElement('div');
 		list.className = 'appnuno-page-list';
+		list.hidden = true;
 		list.setAttribute('data-pages', 'true');
 		list.setAttribute('data-validation-path', path + '.pages');
 		var selected = {};
@@ -965,43 +1093,125 @@
 				appendPageChoice(list, page, page, true, path);
 			}
 		});
-		var actions = document.createElement('div');
-		actions.className = 'btn-group appnuno-button-group';
-		var selectAll = document.createElement('button');
-		selectAll.type = 'button';
-		selectAll.className = 'btn btn-default btn-sm';
-		selectAll.setAttribute('data-page-action', 'select-all');
-		selectAll.textContent = text.button_select_all_pages;
-		selectAll.addEventListener('click', function () {
-			Array.prototype.forEach.call(list.querySelectorAll('input[type="checkbox"]'), function (input) { input.checked = true; });
-		});
-		var clearButton = document.createElement('button');
-		clearButton.type = 'button';
-		clearButton.className = 'btn btn-default btn-sm';
-		clearButton.setAttribute('data-page-action', 'deselect-all');
-		clearButton.textContent = text.button_clear_pages;
-		clearButton.addEventListener('click', function () {
-			Array.prototype.forEach.call(list.querySelectorAll('input[type="checkbox"]'), function (input) { input.checked = false; });
-		});
-		actions.appendChild(selectAll);
-		actions.appendChild(clearButton);
-		allPages.addEventListener('change', function () {
-			list.style.display = allPages.checked ? 'none' : '';
-			actions.style.display = allPages.checked ? 'none' : '';
-		});
-		list.style.display = allPages.checked ? 'none' : '';
-		actions.style.display = allPages.checked ? 'none' : '';
+		var button = document.createElement('button');
+		button.type = 'button';
+		button.className = 'btn btn-default appnuno-page-manage';
+		button.setAttribute('data-page-manage', 'true');
+		button.setAttribute('aria-label', text.button_manage_pages);
+		button.title = text.button_manage_pages;
+		button.setAttribute('data-validation-path', path + '.pages');
+		button.addEventListener('click', function () { showPagePicker(group); });
 		column.appendChild(allPagesChoice);
-		column.appendChild(actions);
 		column.appendChild(list);
-		group.appendChild(title);
+		column.appendChild(button);
+		group.appendChild(appendFieldHelp(title, 'shown_on_pages'));
 		group.appendChild(column);
+		updatePageSummary(group, button);
 		return group;
 	}
 
+	function updatePageSummary(group, button) {
+		var allPages = group.querySelector('[data-all-pages]');
+		var selectedCount = group.querySelectorAll('[data-pages] [data-page-choice]:checked').length;
+		if (allPages.checked) {
+			button.textContent = text.text_show_on_all_pages;
+		} else if (selectedCount) {
+			button.textContent = text.text_show_on_selected_pages.replace('%s', String(selectedCount));
+		} else {
+			button.textContent = text.text_show_on_no_pages;
+		}
+		button.setAttribute('aria-label', text.button_manage_pages + ': ' + button.textContent);
+		button.title = button.textContent;
+	}
+
+	function showPagePicker(group) {
+		var sourceList = group.querySelector('[data-pages]');
+		var sourceAllPages = group.querySelector('[data-all-pages]');
+		var choiceContainer = document.getElementById('page-picker-choices');
+		var allPagesContainer = document.getElementById('page-picker-all-pages');
+		var allPages = document.createElement('input');
+		allPages.type = 'checkbox';
+		allPages.id = 'page-picker-all';
+		allPages.checked = sourceAllPages.checked;
+		allPages.className = adminMarkup === 'bootstrap5' ? 'form-check-input' : '';
+		allPages.setAttribute('data-modal-all-pages', 'true');
+		var allPagesRow = document.createElement('div');
+		allPagesRow.className = adminMarkup === 'bootstrap5' ? 'form-check appnuno-page-all-choice' : 'checkbox appnuno-page-all-choice';
+		var allPagesLabel = document.createElement('label');
+		allPagesLabel.htmlFor = allPages.id;
+		if (adminMarkup === 'bootstrap5') {
+			allPagesLabel.className = 'form-check-label';
+			allPagesLabel.appendChild(document.createTextNode(text.text_all_pages));
+			allPagesRow.appendChild(allPages);
+			allPagesRow.appendChild(allPagesLabel);
+		} else {
+			allPagesLabel.appendChild(allPages);
+			allPagesLabel.appendChild(document.createTextNode(' ' + text.text_all_pages));
+			allPagesRow.appendChild(allPagesLabel);
+		}
+		var choices = sourceList.cloneNode(true);
+		choices.hidden = false;
+		choices.removeAttribute('data-validation-path');
+		Array.prototype.forEach.call(choices.querySelectorAll('[data-page-choice]'), function (input) {
+			input.id += '-dialog';
+			var label = choices.querySelector('label[for="' + input.id.replace(/-dialog$/, '') + '"]');
+			if (label) {
+				label.htmlFor = input.id;
+			}
+		});
+		allPages.addEventListener('change', function () { choices.hidden = allPages.checked; });
+		allPagesContainer.textContent = '';
+		allPagesContainer.appendChild(allPagesRow);
+		choiceContainer.textContent = '';
+		choiceContainer.appendChild(choices);
+		var selectAll = document.getElementById('page-picker-select-all');
+		var clear = document.getElementById('page-picker-clear');
+		selectAll.onclick = function () {
+			allPages.checked = false;
+			choices.hidden = false;
+			Array.prototype.forEach.call(choices.querySelectorAll('[data-page-choice]'), function (input) { input.checked = true; });
+		};
+		clear.onclick = function () {
+			allPages.checked = false;
+			choices.hidden = false;
+			Array.prototype.forEach.call(choices.querySelectorAll('[data-page-choice]'), function (input) { input.checked = false; });
+		};
+		choices.hidden = allPages.checked;
+		pagePickerGroup = group;
+		if (window.bootstrap && window.bootstrap.Modal) {
+			window.bootstrap.Modal.getOrCreateInstance(pagePickerDialog).show();
+		} else {
+			window.jQuery(pagePickerDialog).modal('show');
+		}
+	}
+
+	function hidePagePicker() {
+		if (window.bootstrap && window.bootstrap.Modal) {
+			window.bootstrap.Modal.getOrCreateInstance(pagePickerDialog).hide();
+		} else {
+			window.jQuery(pagePickerDialog).modal('hide');
+		}
+	}
+
+	document.getElementById('page-picker-apply').addEventListener('click', function () {
+		if (!pagePickerGroup) {
+			return;
+		}
+		var allPages = pagePickerGroup.querySelector('[data-all-pages]');
+		var sourceList = pagePickerGroup.querySelector('[data-pages]');
+		var modalAllPages = pagePickerDialog.querySelector('[data-modal-all-pages]');
+		var modalChoices = pagePickerDialog.querySelectorAll('[data-page-choice]');
+		allPages.checked = modalAllPages.checked;
+		Array.prototype.forEach.call(sourceList.querySelectorAll('[data-page-choice]'), function (input) {
+			input.checked = Array.prototype.some.call(modalChoices, function (modalInput) { return modalInput.value === input.value && modalInput.checked; });
+		});
+		updatePageSummary(pagePickerGroup, pagePickerGroup.querySelector('[data-page-manage]'));
+		hidePagePicker();
+	});
+
 	function createVisibilityField(tab, path) {
 		var group = createGroup();
-		var title = createGroupLabel(text.text_tab_visible, 'tab_visibility');
+		var title = createGroupLabel(text.text_tab_visible);
 		var column = createGroupColumn();
 		var input = document.createElement('select');
 		input.className = 'form-control';
@@ -1013,8 +1223,9 @@
 		input.setAttribute('data-tab-visibility', 'true');
 		input.setAttribute('data-validation-path', path + '.visible');
 		column.appendChild(input);
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, 'tab_visibility'));
 		group.appendChild(column);
+		enhanceSelectSwitch(input.id);
 		return group;
 	}
 
@@ -1022,7 +1233,7 @@
 		var group = createGroup();
 		group.className += ' appnuno-cart-field';
 		group.setAttribute('data-validation-path', path + '.cartBadge');
-		var title = createGroupLabel(text.entry_cart_tab, 'cart_tab');
+		var title = createGroupLabel(text.entry_cart_tab);
 		var column = createGroupColumn();
 		var control = document.createElement('div');
 		control.className = 'appnuno-switch appnuno-cart-switch';
@@ -1039,26 +1250,24 @@
 			button.setAttribute('data-cart-value', option[0]);
 			button.setAttribute('aria-pressed', 'false');
 			button.textContent = option[1];
+			button.addEventListener('click', function () {
+				var card = control.closest('.appnuno-tab');
+				var idField = card && card.querySelector('[data-field="id"]');
+				var tabId = idField ? idField.value.trim() : '';
+				if (option[0] === '1') {
+					if (!tabId) {
+						return;
+					}
+					cartTabId = tabId;
+				} else if (cartTabId === tabId) {
+					cartTabId = '';
+				}
+				refreshCartSwitches();
+			});
 			control.appendChild(button);
 		});
-		control.addEventListener('click', function (event) {
-			var button = event.target.closest('button[data-cart-value]');
-			if (!button) {
-				return;
-			}
-			var idField = group.closest('.appnuno-tab').querySelector('[data-field="id"]');
-			var tabId = idField.value.trim();
-			if (button.getAttribute('data-cart-value') === '1') {
-				if (tabId) {
-					cartTabId = tabId;
-				}
-			} else if (cartTabId === tabId) {
-				cartTabId = '';
-			}
-			refreshCartSwitches();
-		});
 		column.appendChild(control);
-		group.appendChild(title);
+		group.appendChild(appendFieldHelp(title, 'cart_tab'));
 		group.appendChild(column);
 		return group;
 	}
@@ -1067,7 +1276,10 @@
 		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
 			var switchControl = card.querySelector('[data-cart-switch]');
 			var idField = card.querySelector('[data-field="id"]');
-			var enabled = !!idField && idField.value.trim() === cartTabId && !!cartTabId;
+			if (!switchControl || !idField) {
+				return;
+			}
+			var enabled = idField.value.trim() === cartTabId && !!cartTabId;
 			Array.prototype.forEach.call(switchControl.querySelectorAll('button[data-cart-value]'), function (button) {
 				button.setAttribute('aria-pressed', button.getAttribute('data-cart-value') === (enabled ? '1' : '0') ? 'true' : 'false');
 			});
@@ -1113,11 +1325,13 @@
 		var link = document.createElement('a');
 		link.href = '#' + key;
 		link.className = adminMarkup === 'bootstrap5' ? 'nav-link' : '';
-		link.setAttribute(adminMarkup === 'bootstrap5' ? 'data-bs-toggle' : 'data-toggle', 'tab');
-		link.setAttribute('data-tab-target', key);
-		link.setAttribute('role', 'tab');
-		link.setAttribute('aria-controls', key);
-		link.addEventListener('click', function () { activateTab(card); });
+	link.setAttribute('data-tab-target', key);
+	link.setAttribute('role', 'tab');
+	link.setAttribute('aria-controls', key);
+	link.addEventListener('click', function (event) {
+		event.preventDefault();
+		activateTab(card);
+	});
 		var remove = document.createElement('i');
 		remove.className = adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-trash fa-trash-can' : 'fa fa-trash';
 		remove.setAttribute('data-remove-tab', 'true');
@@ -1161,6 +1375,11 @@
 		tabRow.appendChild(link);
 		tabNavigation.appendChild(tabRow);
 		activateTab(card);
+		Array.prototype.forEach.call(card.querySelectorAll('[data-status-switch]'), function (control) {
+			bindStatusSwitch(control);
+			placeSwitchIndicator(control);
+			revealSwitchMotion(control);
+		});
 		refreshTabNavigation();
 		refreshCartSwitches();
 	}
@@ -1242,6 +1461,7 @@
 	if (firstDefaultTab) {
 		activateTab(firstDefaultTab);
 	}
+	refreshTabNavigation();
 	document.querySelectorAll('[data-add-tab]').forEach(function (button) {
 		button.addEventListener('click', function () { addTab(document.getElementById(button.getAttribute('data-add-tab')), {}, 'defaultTabs'); });
 	});
@@ -1251,22 +1471,16 @@
 		placeSwitchIndicator(sectionSwitch);
 		revealSwitchMotion(sectionSwitch);
 	}
-	document.querySelectorAll('[data-status-switch]').forEach(function (control) {
-		var input = document.getElementById(control.getAttribute('data-status-switch'));
-		placeSwitchIndicator(control);
-		revealSwitchMotion(control);
-		control.addEventListener('click', function (event) {
-			var button = event.target.closest('button[data-value]');
-			if (!button || !input) {
-				return;
-			}
-			input.value = button.getAttribute('data-value');
-			Array.prototype.forEach.call(control.querySelectorAll('button[data-value]'), function (item) {
-				item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
+	if (window.ResizeObserver) {
+		var switchResizeObserver = new ResizeObserver(function (entries) {
+			Array.prototype.forEach.call(entries, function (entry) {
+				placeSwitchIndicator(entry.target);
 			});
-			placeSwitchIndicator(control);
 		});
-	});
+		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), function (control) {
+			switchResizeObserver.observe(control);
+		});
+	}
 	function showSectionLink(link) {
 		var pane = document.querySelector(link.getAttribute('href'));
 		if (pane && pane.parentNode) {
@@ -1281,6 +1495,10 @@
 					}
 					child.style.setProperty('display', display, 'important');
 				}
+			});
+			Array.prototype.forEach.call(pane.querySelectorAll('.appnuno-switch'), function (control) {
+				placeSwitchIndicator(control);
+				revealSwitchMotion(control);
 			});
 		}
 		Array.prototype.forEach.call(link.parentNode.parentNode.children, function (item) {
@@ -1303,7 +1521,9 @@
 		sectionTimer = window.setTimeout(function () { showSectionLink(link); }, 250);
 	}, true);
 	window.addEventListener('resize', function () {
-		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
+		window.requestAnimationFrame(function () {
+			Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
+		});
 	});
 	window.addEventListener('load', function () {
 		Array.prototype.forEach.call(document.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
@@ -1337,10 +1557,15 @@
 	setValue('light-content', configuration.colors && configuration.colors.light && configuration.colors.light.contentColor || '#2C3136');
 	setValue('dark-background', configuration.colors && configuration.colors.dark && configuration.colors.dark.backgroundColor || '#2C3136');
 	setValue('dark-content', configuration.colors && configuration.colors.dark && configuration.colors.dark.contentColor || '#FFFFFF');
+	['back-enabled', 'back-placement', 'glass-enabled', 'glass-color-scheme', 'glass-style', 'glass-animate', 'glass-interactive'].forEach(enhanceSelectSwitch);
+
 	function syncConditionalFields() {
 		Array.prototype.forEach.call(document.querySelectorAll('[data-show-when]'), function (group) {
 			var control = document.getElementById(group.getAttribute('data-show-when'));
 			group.hidden = !control || control.value !== '1';
+			if (!group.hidden) {
+				Array.prototype.forEach.call(group.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
+			}
 		});
 	}
 	['back-enabled', 'glass-enabled'].forEach(function (id) {
@@ -1352,7 +1577,6 @@
 	syncConditionalFields();
 	refreshCartSwitches();
 	[
-		['input-status', 'help_status'],
 		['back-enabled', 'help_back_enabled'],
 		['back-placement', 'help_back_placement'],
 		['glass-enabled', 'help_glass_enabled'],
@@ -1368,6 +1592,13 @@
 		['dark-background', 'help_background'],
 		['dark-content', 'help_content']
 	].forEach(function (entry) { appendControlHelp(entry[0], entry[1]); });
+	document.querySelectorAll('[data-status-switch]').forEach(function (control) {
+		placeSwitchIndicator(control);
+		revealSwitchMotion(control);
+		if (document.getElementById(control.getAttribute('data-status-switch')).tagName !== 'SELECT') {
+			bindStatusSwitch(control);
+		}
+	});
 
 	function markValidationError(path) {
 		if (!path) {

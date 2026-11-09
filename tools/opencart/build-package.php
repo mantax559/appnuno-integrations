@@ -9,6 +9,10 @@ $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'ope
 $release_lines = array('3.0' => '3.x', '4' => '4.x');
 $release_line = isset($release_lines[$line]) ? $release_lines[$line] : $line . '.x';
 $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line;
+$platform_versions = json_decode(file_get_contents($repository . DIRECTORY_SEPARATOR . 'platform-versions.json'), true);
+if (!is_array($platform_versions) || empty($platform_versions['opencart'])) {
+    throw new RuntimeException('The OpenCart integration version is missing from platform-versions.json.');
+}
 $package_file = 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $package = $release . DIRECTORY_SEPARATOR . $package_file;
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
@@ -34,6 +38,7 @@ foreach ($entries as $name => $path) {
     if ($body === false) {
         throw new RuntimeException('Unable to read an OpenCart package file.');
     }
+    $body = str_replace('__APPNUNO_VERSION__', $platform_versions['opencart'], $body);
     if (in_array($line, array('2.0', '2.1', '2.2'), true) && $name !== 'README.md') {
         $name = str_replace('/extension/module/', '/module/', $name);
         $body = opencart_module_layout($line, $name, $body);
@@ -74,7 +79,7 @@ foreach ($entries as $name => $path) {
     $prepared[$name] = $body;
 }
 if ($line === '4') {
-    $prepared['install.json'] = "{\n    \"name\": \"AppNuno OpenCart 4.x\",\n    \"description\": \"AppNuno native navigation for OpenCart 4.\",\n    \"code\": \"appnuno\",\n    \"version\": \"1.3.0\",\n    \"author\": \"AppNuno\",\n    \"link\": \"https://appnuno.com\"\n}\n";
+    $prepared['install.json'] = "{\n    \"name\": \"AppNuno OpenCart 4.x\",\n    \"description\": \"AppNuno native navigation for OpenCart 4.\",\n    \"code\": \"appnuno\",\n    \"version\": \"" . $platform_versions['opencart'] . "\",\n    \"author\": \"AppNuno\",\n    \"link\": \"https://appnuno.com\"\n}\n";
 }
 if (in_array($line, array('2.0', '2.1'), true)) {
     $prepared['upload/admin/language/english/module/appnuno.php'] = $prepared['upload/admin/language/en-gb/module/appnuno.php'];
@@ -106,7 +111,8 @@ try {
         $staged = $staging . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $name);
         if (!$archive->addFile($staged, $name)
             || !$archive->setCompressionName($name, ZipArchive::CM_DEFLATE, 9)
-            || !$archive->setExternalAttributesName($name, ZipArchive::OPSYS_UNIX, 0100644 << 16)) {
+            || !$archive->setExternalAttributesName($name, ZipArchive::OPSYS_UNIX, 0100644 << 16)
+            || !$archive->setMtimeName($name, 946684800)) {
             throw new RuntimeException('Unable to add a normalized file to the OpenCart extension archive.');
         }
     }
