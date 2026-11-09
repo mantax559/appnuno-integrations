@@ -197,7 +197,10 @@
 .appnuno-settings #default-tabs.appnuno-default-empty .appnuno-default-empty-state { display: flex; grid-column: 1 / -1; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-width: 0; padding: 32px 16px; text-align: center; }
 .appnuno-settings #default-tabs .appnuno-default-empty-title { color: #18181b; font-size: 18px; font-weight: 650; }
 .appnuno-settings #default-tabs .appnuno-default-empty-message { max-width: 440px; margin: 0; color: #71717a; font-size: 14px; }
-.appnuno-settings #default-tabs .appnuno-default-empty-state .btn[data-add-tab] { width: auto; min-width: 190px; margin-top: 4px; }
+.appnuno-settings #default-tabs .appnuno-default-empty-state .btn[data-add-tab] { width: auto; min-width: 190px; margin-top: 4px; border-color: #18181b; background: #18181b; color: #fff; }
+.appnuno-settings #default-tabs .appnuno-default-empty-state .btn[data-add-tab]:hover,
+.appnuno-settings #default-tabs .appnuno-default-empty-state .btn[data-add-tab]:focus,
+.appnuno-settings #default-tabs .appnuno-default-empty-state .btn[data-add-tab]:active { border-color: #303035; background: #303035; color: #fff; }
 .appnuno-settings .appnuno-tab.active { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 var(--appnuno-gap); border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
 .appnuno-settings .appnuno-tab.active > [data-field-group] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); align-items: center; gap: var(--appnuno-gap); min-width: 0; padding: 16px 0; border-bottom: 1px solid var(--appnuno-line); }
 .appnuno-settings .appnuno-tab.active > [data-field-group]:last-child { border-bottom: 0; }
@@ -445,9 +448,17 @@
 @media (forced-colors: active) {
   .appnuno-settings input[type="checkbox"] { appearance: auto; }
 }
+#page-picker-dialog.modal .modal-dialog,
+#icon-picker-dialog.modal .modal-dialog { transform: none; }
+#page-picker-dialog.modal.in .modal-dialog,
+#icon-picker-dialog.modal.in .modal-dialog { animation: appnuno-modal-in 140ms ease-out; }
+@keyframes appnuno-modal-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 @keyframes appnuno-spin {
   to { transform: rotate(360deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .appnuno-settings *, #icon-picker-dialog *, .appnuno-switch-indicator { transition: none !important; animation: none !important; }
+  .appnuno-settings *, #page-picker-dialog *, #icon-picker-dialog *, .appnuno-switch-indicator { transition: none !important; animation: none !important; }
 }

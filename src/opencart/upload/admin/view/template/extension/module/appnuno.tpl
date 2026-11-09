@@ -88,8 +88,8 @@
                 <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
                 <div class="col-sm-10">
                   <select id="back-enabled" class="form-control">
-                    <option value="1"><?php echo $text_enabled; ?></option>
-                    <option value="0"><?php echo $text_disabled; ?></option>
+                    <option value="1"><?php echo $text['text_yes']; ?></option>
+                    <option value="0"><?php echo $text['text_no']; ?></option>
                   </select>
                 </div>
               </div>
@@ -111,8 +111,8 @@
                 <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
                 <div class="col-sm-10">
                   <select id="glass-enabled" class="form-control">
-                    <option value="1"><?php echo $text_enabled; ?></option>
-                    <option value="0"><?php echo $text_disabled; ?></option>
+                    <option value="1"><?php echo $text['text_yes']; ?></option>
+                    <option value="0"><?php echo $text['text_no']; ?></option>
                   </select>
                 </div>
               </div>
@@ -148,7 +148,7 @@
               <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label>
                 <div class="col-sm-10">
-                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control appnuno-compact-control" required="required" />
+                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control appnuno-compact-control" placeholder="0.3" required="required" />
                 </div>
               </div>
               <div class="form-group" data-show-when="glass-enabled">
@@ -169,7 +169,7 @@
               <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
                 <div class="col-sm-10">
-                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control appnuno-compact-control" value="0.02" required="required" />
+                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control appnuno-compact-control" value="0.02" placeholder="0.02" required="required" />
                 </div>
               </div>
               </div>
@@ -217,7 +217,7 @@
     </div>
   </div>
 </div>
-<div class="modal fade" id="page-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="page-picker-title">
+<div class="modal" id="page-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="page-picker-title">
   <div class="modal-dialog" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -241,7 +241,7 @@
     </div>
   </div>
 </div>
-<div class="modal fade" id="icon-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="icon-picker-title">
+<div class="modal" id="icon-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="icon-picker-title">
   <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
@@ -901,6 +901,7 @@
 		input.value = value || '';
 		input.setAttribute('data-field', key);
 		input.setAttribute('data-validation-path', path);
+		if (key === 'id') input.placeholder = text.text_tab_id_placeholder;
 		column.appendChild(input);
 		group.appendChild(appendFieldHelp(title, key));
 		group.appendChild(column);
