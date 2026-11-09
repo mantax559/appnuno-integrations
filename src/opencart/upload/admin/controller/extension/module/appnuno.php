@@ -247,7 +247,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config'], $language_codes);
 
 		if (strlen($config_error)) {
-			$this->error['config'] = $config_error;
+			$this->error['config'] = $this->readableConfigError($config_error, $posted_config);
 			$error_separator = strrpos($config_error, ':');
 			$this->error['config_path'] = is_int($error_separator) ? substr($config_error, 0, $error_separator) : '';
 		}
@@ -299,5 +299,296 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		return $destinations;
+	}
+
+	private function readableConfigError($config_error, $posted_config) {
+		$separator = strrpos($config_error, ': ');
+
+		if (!is_int($separator)) {
+			return $config_error;
+		}
+
+		$message = substr($config_error, $separator + 2);
+		$key = $this->configErrorKey($message);
+		$sentence = strlen($key) ? $this->language->get($key) : $message;
+
+		if (!strlen($sentence) || $sentence === $key) {
+			$sentence = $message;
+		}
+
+		$place = $this->readableConfigPlace(substr($config_error, 0, $separator), $posted_config);
+
+		if (!strlen($place)) {
+			return $sentence;
+		}
+
+		return $place . ': ' . $sentence;
+	}
+
+	private function configErrorKey($message) {
+		$keys = array(
+			'Configuration must be valid JSON smaller than 64 KB.' => 'error_json',
+			'Configuration is missing its tab sets. Submit the settings page again.' => 'error_config_shape',
+			'A maximum of 30 route-specific tab sets is allowed.' => 'error_routes_limit',
+			'Each route must be a valid OpenCart route such as checkout/cart.' => 'error_route',
+			'A tab set must contain no more than 8 tabs.' => 'error_tab_limit',
+			'Enter a valid, unique tab ID.' => 'error_tab_id',
+			'Tab IDs must be unique within each tab set.' => 'error_tab_id_unique',
+			'Choose a store destination or enter a valid local path beginning with /.' => 'error_tab_url',
+			'Add at least one localized URL.' => 'error_tab_urls',
+			'Use a valid OpenCart language code.' => 'error_tab_url_language',
+			'Enter a valid local URL beginning with /.' => 'error_tab_url_local',
+			'Enter a local URL for this language, even if the language is disabled.' => 'error_tab_url_required',
+			'Enter a label for each enabled store language.' => 'error_tab_labels',
+			'Choose an icon from the AppNuno catalog.' => 'error_tab_icon',
+			'The selected state must be true or false.' => 'error_tab_active',
+			'The visibility state must be true or false.' => 'error_tab_visible',
+			'The badge count must be zero or a positive integer.' => 'error_tab_badge',
+			'Choose whether the tab appears on every page.' => 'error_tab_all_pages',
+			'Choose no more than 30 store pages.' => 'error_tab_pages_limit',
+			'Choose a valid store page.' => 'error_tab_pages',
+			'Choose a valid cart badge tab.' => 'error_cart_tab',
+			'Choose a valid back-button configuration.' => 'error_back',
+			'Glass settings must be an object.' => 'error_glass',
+			'Choose a valid glass setting.' => 'error_glass_setting',
+			'Choose Automatic, Light or Dark.' => 'error_glass_color_scheme',
+			'Choose a valid glass style.' => 'error_glass_style',
+			'Enter a duration from 0 to 10 seconds.' => 'error_glass_duration',
+			'Enter a valid tint color and opacity.' => 'error_glass_tint',
+			'Navigation colors must be an object.' => 'error_colors',
+			'Navigation color values must be an object.' => 'error_color_scheme',
+			'Choose a valid six-digit color.' => 'error_color'
+		);
+
+		return isset($keys[$message]) ? $keys[$message] : '';
+	}
+
+	private function readableConfigPlace($path, $posted_config) {
+		$config = json_decode($posted_config, true);
+
+		if (!is_array($config)) {
+			$config = array();
+		}
+
+		if ($path === 'module_appnuno_config') {
+			return '';
+		}
+
+		if ($path === 'cartTabId') {
+			return $this->language->get('entry_cart_tab');
+		}
+
+		if ($path === 'back') {
+			return $this->language->get('text_back_button');
+		}
+
+		if ($path === 'glass') {
+			return $this->language->get('text_glass');
+		}
+
+		if ($path === 'colors') {
+			return $this->language->get('text_navigation_colors');
+		}
+
+		if ($path === 'defaultTabs') {
+			return $this->language->get('text_default_tabs');
+		}
+
+		if ($path === 'routes') {
+			return $this->language->get('text_shown_on_pages');
+		}
+
+		if (preg_match('/^glass\.(enabled|animate|isInteractive|colorScheme|style|animationDuration|tintColor|contentColor)$/', $path, $match)) {
+			$fields = array(
+				'enabled' => 'entry_glass_enabled',
+				'animate' => 'entry_glass_animate',
+				'isInteractive' => 'entry_glass_interactive',
+				'colorScheme' => 'entry_glass_color_scheme',
+				'style' => 'entry_glass_style',
+				'animationDuration' => 'entry_glass_duration',
+				'tintColor' => 'entry_glass_tint',
+				'contentColor' => 'entry_content'
+			);
+
+			return $this->joinPlace(array($this->language->get('text_glass'), $this->language->get($fields[$match[1]])));
+		}
+
+		if (preg_match('/^colors\.(light|dark)$/', $path, $match)) {
+			return $this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode');
+		}
+
+		if (preg_match('/^colors\.(light|dark)\.(backgroundColor|contentColor)$/', $path, $match)) {
+			return $this->joinPlace(array(
+				$this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode'),
+				$this->language->get($match[2] === 'backgroundColor' ? 'entry_background' : 'entry_content')
+			));
+		}
+
+		if (preg_match('/^routes\.(.+)\.route$/', $path, $match)) {
+			return $this->joinPlace(array($this->language->get('text_shown_on_pages'), $this->routeLabel($match[1])));
+		}
+
+		if (preg_match('/^(defaultTabs|routes\.[^\[]+)\[(\d+)\](?:\.(.*))?$/', $path, $match)) {
+			$tabs = $this->tabsForPath($config, $match[1]);
+			$parts = array($this->tabTitle($tabs, (int)$match[2]));
+			$field = $this->tabFieldLabel(isset($match[3]) ? $match[3] : '');
+
+			if (strlen($field)) {
+				$parts[] = $field;
+			}
+
+			if (strpos($match[1], 'routes.') === 0) {
+				array_unshift($parts, $this->routeLabel(substr($match[1], 7)));
+			}
+
+			return $this->joinPlace($parts);
+		}
+
+		return '';
+	}
+
+	private function tabsForPath($config, $collection) {
+		if ($collection === 'defaultTabs') {
+			return isset($config['defaultTabs']) && is_array($config['defaultTabs']) ? array_values($config['defaultTabs']) : array();
+		}
+
+		$route = substr($collection, 7);
+
+		return isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? array_values($config['routes'][$route]) : array();
+	}
+
+	private function tabTitle($tabs, $index) {
+		$titles = array();
+
+		foreach ($tabs as $tab_index => $tab) {
+			$titles[$tab_index] = $this->singleTabTitle(is_array($tab) ? $tab : array());
+		}
+
+		$title = isset($titles[$index]) ? $titles[$index] : $this->language->get('text_tab_list_empty');
+		$count = 0;
+
+		foreach ($titles as $candidate) {
+			if ($candidate === $title) {
+				$count++;
+			}
+		}
+
+		if ($count > 1) {
+			$title .= ' (' . ($index + 1) . ')';
+		}
+
+		return $title;
+	}
+
+	private function singleTabTitle($tab) {
+		$language_code = $this->config->get('config_language');
+
+		if (isset($tab['labels']) && is_array($tab['labels'])) {
+			if (is_string($language_code) && isset($tab['labels'][$language_code]) && is_string($tab['labels'][$language_code]) && strlen(trim($tab['labels'][$language_code]))) {
+				return trim($tab['labels'][$language_code]);
+			}
+
+			foreach ($tab['labels'] as $label) {
+				if (is_string($label) && strlen(trim($label))) {
+					return trim($label);
+				}
+			}
+		}
+
+		if (isset($tab['label']) && is_string($tab['label']) && strlen(trim($tab['label']))) {
+			return trim($tab['label']);
+		}
+
+		if (isset($tab['id']) && is_string($tab['id']) && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $tab['id'])) {
+			return trim($tab['id']);
+		}
+
+		return $this->language->get('text_tab_list_empty');
+	}
+
+	private function tabFieldLabel($field) {
+		if ($field === 'id') {
+			return $this->language->get('text_tab_id');
+		}
+
+		if ($field === 'url' || $field === 'urls') {
+			return $this->language->get('text_destination');
+		}
+
+		if ($field === 'labels') {
+			return $this->language->get('text_language_labels');
+		}
+
+		if ($field === 'icon') {
+			return $this->language->get('text_icon');
+		}
+
+		if ($field === 'visible') {
+			return $this->language->get('text_tab_visible');
+		}
+
+		if ($field === 'badge') {
+			return $this->language->get('entry_cart_tab');
+		}
+
+		if ($field === 'allPages' || $field === 'pages') {
+			return $this->language->get('text_shown_on_pages');
+		}
+
+		if (strpos($field, 'urls.') === 0) {
+			return $this->joinPlace(array($this->languageName(substr($field, 5)), $this->language->get('text_custom_url')));
+		}
+
+		if (strpos($field, 'labels.') === 0) {
+			return $this->joinPlace(array($this->languageName(substr($field, 7)), $this->language->get('text_label')));
+		}
+
+		return '';
+	}
+
+	private function languageName($code) {
+		if ($code === 'default') {
+			return $this->language->get('text_default_language');
+		}
+
+		foreach ($this->available_languages as $language) {
+			if (isset($language['code'], $language['name']) && $language['code'] === $code && is_string($language['name']) && strlen($language['name'])) {
+				return $language['name'];
+			}
+		}
+
+		return $code;
+	}
+
+	private function routeLabel($route) {
+		$labels = array(
+			'common/home' => 'text_route_home',
+			'product/category' => 'text_route_category',
+			'product/product' => 'text_route_product',
+			'product/special' => 'text_route_special',
+			'product/search' => 'text_route_search',
+			'product/manufacturer' => 'text_route_manufacturer',
+			'information/information' => 'text_route_information',
+			'information/contact' => 'text_route_contact',
+			'account/account' => 'text_route_account',
+			'account/login' => 'text_route_login',
+			'account/register' => 'text_route_register',
+			'checkout/cart' => 'text_route_cart',
+			'checkout/checkout' => 'text_route_checkout'
+		);
+
+		return isset($labels[$route]) ? $this->language->get($labels[$route]) : $route;
+	}
+
+	private function joinPlace($parts) {
+		$labels = array();
+
+		foreach ($parts as $part) {
+			if (is_string($part) && strlen($part)) {
+				$labels[] = $part;
+			}
+		}
+
+		return implode(', ', $labels);
 	}
 }

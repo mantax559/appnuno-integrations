@@ -296,7 +296,7 @@
 	function appnunoIcon(name) {
 		var paths = {
 			plus: '<path d="M12 5v14M5 12h14"/>',
-			trash: '<path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/>',
+			trash: '<path fill="currentColor" stroke="none" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
 			eyeOff: '<path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 2.8 2.8M9.9 5.1A10.8 10.8 0 0 1 12 5c5 0 8.5 4 10 7a16 16 0 0 1-3.4 4.3M6.1 6.1C4.2 7.6 2.7 9.7 2 12c.9 2.4 4.4 6.5 9.2 6.9"/>',
 			check: '<path d="m5 12 5 5L20 7"/>',
 			alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'

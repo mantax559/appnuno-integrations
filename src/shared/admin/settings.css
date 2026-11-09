@@ -165,6 +165,8 @@
 .appnuno-section-switch .appnuno-section-list > li > a { width: auto; }
 .appnuno-settings .appnuno-sections { padding: 0; }
 .appnuno-settings .appnuno-section:not(.appnuno-section-open) { display: none; }
+.appnuno-settings .appnuno-section.appnuno-section-open,
+.appnuno-settings .appnuno-tab.active { animation: appnuno-modal-in 180ms ease; }
 .appnuno-settings #tab-navigation.appnuno-section-open { display: block !important; }
 .appnuno-settings #default-tabs { display: grid; grid-template-columns: minmax(220px, 3fr) minmax(0, 9fr); gap: var(--appnuno-gap); margin: 0; }
 .appnuno-settings #default-tabs > .appnuno-tab-column,
@@ -193,6 +195,7 @@
 .appnuno-settings #default-tabs .appnuno-default-empty-state .appnuno-button[data-add-tab]:hover,
 .appnuno-settings #default-tabs .appnuno-default-empty-state .appnuno-button[data-add-tab]:focus,
 .appnuno-settings #default-tabs .appnuno-default-empty-state .appnuno-button[data-add-tab]:active { border-color: #303035; background: #303035; color: #fff; }
+.appnuno-settings .appnuno-tab:not(.active) { display: none; }
 .appnuno-settings .appnuno-tab.active { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0; padding: 0 var(--appnuno-gap); border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius); background: #fff; box-shadow: none; }
 .appnuno-settings .appnuno-tab.active > [data-field-group] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 360px); align-items: center; gap: var(--appnuno-gap); min-width: 0; padding: 16px 0; border-bottom: 1px solid var(--appnuno-line); }
 .appnuno-settings .appnuno-tab.active > [data-field-group]:last-child { border-bottom: 0; }
