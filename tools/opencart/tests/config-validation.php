@@ -59,12 +59,16 @@ if (strlen($model->validateConfig($localized_urls, array('en-gb', 'lt-lt')))) {
 if (!strstr($model->validateConfig($localized_urls, array('en-gb', 'lt-lt', 'fr-fr')), 'defaultTabs[0].urls.fr-fr')) {
     throw new RuntimeException('Expected a custom URL to be required for every configured language code.');
 }
-$invalid_localized_url = json_encode(array(
-    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://external.example/catalog'))),
+$full_address = json_encode(array(
+    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://shop.example/index.php?route=product/product&product_id=42'))),
     'routes' => array()
 ));
-if (!strstr($model->validateConfig($invalid_localized_url), 'defaultTabs[0].urls.en-gb')) {
-    throw new RuntimeException('Expected external localized URLs to be rejected with the language path.');
+if (strlen($model->validateConfig($full_address))) {
+    throw new RuntimeException('Expected a full https store URL to be accepted.');
+}
+$normalized_address = json_decode($model->normalizeConfig($full_address), true);
+if (!is_array($normalized_address) || $normalized_address['defaultTabs'][0]['urls']['en-gb'] !== '/index.php?route=product/product&product_id=42') {
+    throw new RuntimeException('Expected a full https store URL to be stored as its local path and query.');
 }
 $invalid_labels = json_encode(array(
     'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => ''), 'url' => '/')),

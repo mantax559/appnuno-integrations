@@ -163,7 +163,7 @@ class ModelExtensionModuleAppnuno extends Model {
 			}
 
 			if (isset($tab['url']) && !$this->validLocalUrl($tab['url'])) {
-				return $tab_path . '.url: Choose a store destination or enter a valid local path beginning with /.';
+				return $tab_path . '.url: Choose a store page or enter a local URL, for example /home.';
 			}
 
 			if (isset($tab['urls'])) {
@@ -177,7 +177,7 @@ class ModelExtensionModuleAppnuno extends Model {
 					}
 
 					if (!$this->validLocalUrl($url)) {
-						return $tab_path . '.urls.' . $language_code . ': Enter a valid local URL beginning with /.';
+						return $tab_path . '.urls.' . $language_code . ': Enter a local URL, for example /home.';
 					}
 				}
 
@@ -187,7 +187,7 @@ class ModelExtensionModuleAppnuno extends Model {
 					}
 				}
 			} elseif (!isset($tab['url'])) {
-				return $tab_path . '.url: Choose a store destination or enter a valid local path beginning with /.';
+				return $tab_path . '.url: Choose a store page or enter a local URL, for example /home.';
 			}
 
 			if (!$this->validTabLabels($tab)) {
@@ -307,8 +307,114 @@ class ModelExtensionModuleAppnuno extends Model {
 		return '';
 	}
 
+	public function normalizeConfig($json) {
+		$config = json_decode($json, true);
+
+		if (!is_array($config)) {
+			return $json;
+		}
+
+		if (isset($config['defaultTabs']) && is_array($config['defaultTabs'])) {
+			$config['defaultTabs'] = $this->normalizeTabs($config['defaultTabs']);
+		}
+
+		if (isset($config['routes']) && is_array($config['routes'])) {
+			foreach ($config['routes'] as $route => $tabs) {
+				if (is_array($tabs)) {
+					$config['routes'][$route] = $this->normalizeTabs($tabs);
+				}
+			}
+		}
+
+		$encoded = json_encode($config);
+
+		return is_string($encoded) ? $encoded : $json;
+	}
+
+	private function normalizeTabs($tabs) {
+		foreach ($tabs as $index => $tab) {
+			if (!is_array($tab)) {
+				continue;
+			}
+
+			if (isset($tab['url'])) {
+				$local = $this->localUrl($tab['url']);
+
+				if (strlen($local)) {
+					$tab['url'] = $local;
+				}
+			}
+
+			if (isset($tab['urls']) && is_array($tab['urls'])) {
+				foreach ($tab['urls'] as $code => $url) {
+					$local = $this->localUrl($url);
+
+					if (strlen($local)) {
+						$tab['urls'][$code] = $local;
+					}
+				}
+			}
+
+			$tabs[$index] = $tab;
+		}
+
+		return $tabs;
+	}
+
+	private function localUrl($url) {
+		if (!is_string($url)) {
+			return '';
+		}
+
+		$url = trim($url);
+
+		if (!strlen($url) || preg_match('~[[:cntrl:]\\\\ ]~', $url)) {
+			return '';
+		}
+
+		if (preg_match('#^https?://#i', $url)) {
+			$parts = parse_url($url);
+
+			if (!is_array($parts) || !isset($parts['host']) || isset($parts['user']) || isset($parts['pass'])) {
+				return '';
+			}
+
+			$path = isset($parts['path']) && is_string($parts['path']) && strlen($parts['path']) ? $parts['path'] : '/';
+
+			if ($path[0] !== '/') {
+				$path = '/' . $path;
+			}
+
+			$local = $path;
+
+			if (isset($parts['query']) && strlen($parts['query'])) {
+				$local .= '?' . $parts['query'];
+			}
+
+			if (isset($parts['fragment']) && strlen($parts['fragment'])) {
+				$local .= '#' . $parts['fragment'];
+			}
+
+			return $local;
+		}
+
+		if (strpos($url, ':') !== false || strpos($url, '//') === 0) {
+			return '';
+		}
+
+		if (preg_match('#^/(?!/)#', $url)) {
+			return $url;
+		}
+
+		if (preg_match('#^[A-Za-z0-9]#', $url)) {
+			return '/' . $url;
+		}
+
+		return '';
+	}
+
 	private function validLocalUrl($url) {
-		return is_string($url) && preg_match('/^\/(?!\/)/', $url) && !preg_match('~[[:cntrl:] ]~', $url) && !preg_match('~\\\\~', $url);
+		return strlen($this->localUrl($url)) > 0;
 	}
 
 	private function validTabLabels($tab) {

@@ -234,7 +234,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			return false;
 		}
 
-		$this->request->post['module_appnuno_config'] = $posted_config;
+		$this->request->post['module_appnuno_config'] = $this->model_extension_module_appnuno->normalizeConfig($posted_config);
+		$posted_config = $this->request->post['module_appnuno_config'];
 
 		$language_codes = array();
 
@@ -316,13 +317,83 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			$sentence = $message;
 		}
 
-		$place = $this->readableConfigPlace(substr($config_error, 0, $separator), $posted_config);
+		if (!strlen($key)) {
+			$place = $this->readableConfigPlace(substr($config_error, 0, $separator), $posted_config);
 
-		if (!strlen($place)) {
-			return $sentence;
+			return strlen($place) ? $place . ': ' . $sentence : $sentence;
 		}
 
-		return $place . ': ' . $sentence;
+		return $this->composeConfigError($key, substr($config_error, 0, $separator), $posted_config);
+	}
+
+	private function composeConfigError($key, $path, $posted_config) {
+		if ($key === 'error_glass_setting') {
+			$choices = array(
+				'glass.enabled' => 'error_glass_enabled_choice',
+				'glass.animate' => 'error_glass_animate_choice',
+				'glass.isInteractive' => 'error_glass_interactive_choice'
+			);
+
+			if (isset($choices[$path])) {
+				$key = $choices[$path];
+			}
+		}
+
+		$context = $this->errorContext($path, $posted_config);
+		$template_key = $key;
+
+		if (strlen($context['page']) && $this->language->get($key . '_page') !== $key . '_page') {
+			$template_key = $key . '_page';
+		}
+
+		$sentence = $this->language->get($template_key);
+
+		if (!strlen($sentence) || $sentence === $template_key) {
+			$sentence = $this->language->get($key);
+		}
+
+		return strtr($sentence, array(
+			'{tab}' => $context['tab'],
+			'{page}' => $context['page'],
+			'{language}' => $context['language'],
+			'{mode}' => $context['mode'],
+			'{field}' => $context['field']
+		));
+	}
+
+	private function errorContext($path, $posted_config) {
+		$config = json_decode($posted_config, true);
+
+		if (!is_array($config)) {
+			$config = array();
+		}
+
+		$context = array('tab' => '', 'page' => '', 'language' => '', 'mode' => '', 'field' => '');
+
+		if (preg_match('/^(defaultTabs|routes\.[^\[]+)\[(\d+)\](?:\.(.*))?$/', $path, $match)) {
+			if (strpos($match[1], 'routes.') === 0) {
+				$context['page'] = $this->routeLabel(substr($match[1], 7));
+			}
+
+			$context['tab'] = $this->tabTitle($this->tabsForPath($config, $match[1]), (int)$match[2]);
+			$field = isset($match[3]) ? $match[3] : '';
+
+			if (strpos($field, 'urls.') === 0) {
+				$context['language'] = $this->languageName(substr($field, 5));
+			}
+		} elseif (preg_match('/^routes\.(.+)\.route$/', $path, $match)) {
+			$context['page'] = $match[1];
+		} elseif (preg_match('/^routes\.(.+)$/', $path, $match)) {
+			$context['page'] = $this->routeLabel($match[1]);
+		} elseif (preg_match('/^colors\.(light|dark)(?:\.(backgroundColor|contentColor))?$/', $path, $match)) {
+			$context['mode'] = $this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode');
+
+			if (isset($match[2]) && strlen($match[2])) {
+				$context['field'] = $this->language->get($match[2] === 'backgroundColor' ? 'entry_background' : 'entry_content');
+			}
+		}
+
+		return $context;
 	}
 
 	private function configErrorKey($message) {
@@ -334,10 +405,10 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			'A tab set must contain no more than 8 tabs.' => 'error_tab_limit',
 			'Enter a valid, unique tab ID.' => 'error_tab_id',
 			'Tab IDs must be unique within each tab set.' => 'error_tab_id_unique',
-			'Choose a store destination or enter a valid local path beginning with /.' => 'error_tab_url',
+			'Choose a store page or enter a local URL, for example /home.' => 'error_tab_url',
 			'Add at least one localized URL.' => 'error_tab_urls',
 			'Use a valid OpenCart language code.' => 'error_tab_url_language',
-			'Enter a valid local URL beginning with /.' => 'error_tab_url_local',
+			'Enter a local URL, for example /home.' => 'error_tab_url_local',
 			'Enter a local URL for this language, even if the language is disabled.' => 'error_tab_url_required',
 			'Enter a label for each enabled store language.' => 'error_tab_labels',
 			'Choose an icon from the AppNuno catalog.' => 'error_tab_icon',
@@ -589,6 +660,6 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			}
 		}
 
-		return implode(', ', $labels);
+		return implode(' > ', $labels);
 	}
 }

@@ -14,18 +14,15 @@
   </div>
   <div class="container-fluid appnuno-page">
     <?php if ($success) { ?>
-    <div class="appnuno-alert appnuno-alert-success"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
-      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-success"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-check"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
     <?php if ($error_warning) { ?>
-    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span> <?php echo $error_warning; ?>
-      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo $error_warning; ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
     <?php if ($error_config) { ?>
-    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span> <?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?>
-      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
     <div class="appnuno-settings">
@@ -35,7 +32,7 @@
           <img class="appnuno-brand-mark" src="https://appnuno.com/logo-dark.png" alt="AppNuno">
           <div class="appnuno-version-group">
             <span class="appnuno-version">v<?php echo htmlspecialchars($appnuno_version, ENT_QUOTES, 'UTF-8'); ?></span>
-            <a class="appnuno-documentation" href="https://appnuno.com/opencart" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars($text_documentation, ENT_QUOTES, 'UTF-8'); ?></a>
+            <a class="appnuno-documentation" href="https://appnuno.com/opencart" target="_blank" rel="noopener noreferrer"><span class="appnuno-icon appnuno-icon-document" aria-hidden="true"></span><?php echo htmlspecialchars($text_documentation, ENT_QUOTES, 'UTF-8'); ?></a>
           </div>
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
@@ -294,14 +291,26 @@
 	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
 	function appnunoIcon(name) {
-		var paths = {
-			plus: '<path d="M12 5v14M5 12h14"/>',
-			trash: '<path fill="currentColor" stroke="none" d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>',
-			eyeOff: '<path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 2.8 2.8M9.9 5.1A10.8 10.8 0 0 1 12 5c5 0 8.5 4 10 7a16 16 0 0 1-3.4 4.3M6.1 6.1C4.2 7.6 2.7 9.7 2 12c.9 2.4 4.4 6.5 9.2 6.9"/>',
-			check: '<path d="m5 12 5 5L20 7"/>',
-			alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'
-		};
-		return '<svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[name] + '</svg>';
+		var file = name === 'eyeOff' ? 'eye-off' : name;
+		return '<span class="appnuno-icon appnuno-icon-' + file + '" aria-hidden="true"></span>';
+	}
+	function localUrl(value) {
+		var url = String(value || '').replace(/^\s+|\s+$/g, '');
+		var match;
+		if (!url || /[\u0000-\u001F\u007F\\ ]/.test(url)) {
+			return '';
+		}
+		match = url.match(/^(https?:)\/\/([^/?#]+)([^?#]*)(\?[^#]*)?(#.*)?$/i);
+		if (match) {
+			if (match[2].indexOf('@') !== -1) {
+				return '';
+			}
+			return (match[3] && match[3].charAt(0) === '/' ? match[3] : '/' + (match[3] || '')) + (match[4] || '') + (match[5] || '');
+		}
+		if (url.indexOf(':') !== -1 || url.indexOf('//') === 0) {
+			return '';
+		}
+		return url.charAt(0) === '/' ? url : (/^[A-Za-z0-9]/.test(url) ? '/' + url : '');
 	}
 	var tabNavigationColumn = document.createElement('div');
 	tabNavigationColumn.className = 'appnuno-tab-column';
@@ -1097,7 +1106,13 @@
 			var input = document.createElement('input');
 			input.type = 'text';
 			input.className = 'appnuno-input';
-			input.placeholder = text.text_url_placeholder.replace('%s', language.name);
+			input.placeholder = text.text_url_placeholder;
+			input.addEventListener('change', function () {
+				var normalized = localUrl(input.value);
+				if (normalized) {
+					input.value = normalized;
+				}
+			});
 			input.setAttribute('data-language-url', language.code);
 			input.setAttribute('data-validation-path', path + '.urls.' + language.code);
 			input.value = savedUrls[language.code] || tab.url || '';
@@ -1346,21 +1361,29 @@
 			button.setAttribute('data-cart-value', option[0]);
 			button.setAttribute('aria-pressed', 'false');
 			button.textContent = option[1];
-			button.addEventListener('click', function () {
-				var card = control.closest('.appnuno-tab');
-				var idField = card && card.querySelector('[data-field="id"]');
-				var tabId = idField ? idField.value.trim() : '';
-				if (option[0] === '1') {
-					if (!tabId) {
-						return;
-					}
-					cartTabId = tabId;
-				} else if (cartTabId === tabId) {
-					cartTabId = '';
-				}
-				refreshCartSwitches();
-			});
 			control.appendChild(button);
+		});
+		control.addEventListener('click', function (event) {
+			var button = event.target.closest('button[data-cart-value]');
+			if (!button || !control.contains(button)) {
+				return;
+			}
+			var card = control.closest('.appnuno-tab');
+			var idField = card && card.querySelector('[data-field="id"]');
+			var tabId = idField ? idField.value.trim() : '';
+			var enable = button.getAttribute('data-cart-value') === '1';
+			if (enable) {
+				cartTabId = tabId;
+				Array.prototype.forEach.call(tabPanels.querySelectorAll('[data-cart-switch]'), function (other) {
+					if (other !== control) {
+						other.setAttribute('data-cart-on', '0');
+					}
+				});
+			} else if (cartTabId === tabId) {
+				cartTabId = '';
+			}
+			control.setAttribute('data-cart-on', enable ? '1' : '0');
+			refreshCartSwitches();
 		});
 		column.appendChild(control);
 		group.appendChild(appendFieldHelp(title, 'cart_tab'));
@@ -1375,7 +1398,12 @@
 			if (!switchControl || !idField) {
 				return;
 			}
-			var enabled = idField.value.trim() === cartTabId && !!cartTabId;
+			var tabId = idField.value.trim();
+			var marked = switchControl.getAttribute('data-cart-on');
+			var enabled = marked === '1' || (marked !== '0' && tabId !== '' && tabId === cartTabId);
+			if (marked === '1' && tabId) {
+				cartTabId = tabId;
+			}
 			Array.prototype.forEach.call(switchControl.querySelectorAll('button[data-cart-value]'), function (button) {
 				button.setAttribute('aria-pressed', button.getAttribute('data-cart-value') === (enabled ? '1' : '0') ? 'true' : 'false');
 			});
@@ -1504,7 +1532,7 @@
 			if (destination && destination.value === '__custom__') {
 				var urls = {};
 				Array.prototype.forEach.call(card.querySelectorAll('[data-language-url]'), function (field) {
-					urls[field.getAttribute('data-language-url')] = field.value.trim();
+					urls[field.getAttribute('data-language-url')] = localUrl(field.value) || field.value.trim();
 				});
 				tab.urls = urls;
 				tab.url = urls[defaultLanguageCode] || urls.default || Object.keys(urls).map(function (languageCode) { return urls[languageCode]; })[0] || '';
