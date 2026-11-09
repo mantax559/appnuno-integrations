@@ -14,22 +14,22 @@
   </div>
   <div class="container-fluid appnuno-page">
     <?php if ($success) { ?>
-    <div class="alert alert-success"><i class="fa fa-check-circle"></i> <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <div class="appnuno-alert appnuno-alert-success"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 5 5L20 7"/></svg></span> <?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?>
+      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
     <?php if ($error_warning) { ?>
-    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo $error_warning; ?>
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span> <?php echo $error_warning; ?>
+      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
     <?php if ($error_config) { ?>
-    <div class="alert alert-danger"><i class="fa fa-exclamation-circle"></i> <?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?>
-      <button type="button" class="close" data-dismiss="alert">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg></span> <?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?>
+      <button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
     </div>
     <?php } ?>
-    <div class="panel panel-default appnuno-settings">
-      <div class="panel-heading appnuno-toolbar">
+    <div class="appnuno-settings">
+      <div class="appnuno-toolbar">
         <div class="appnuno-watermark" aria-hidden="true"></div>
         <div class="appnuno-brand">
           <img class="appnuno-brand-mark" src="https://appnuno.com/logo-dark.png" alt="AppNuno">
@@ -39,25 +39,25 @@
           </div>
         </div>
         <div class="appnuno-toolbar-actions appnuno-button-group">
-          <a href="<?php echo $cancel; ?>" class="btn btn-default"><?php echo $button_cancel; ?></a>
-          <button type="submit" form="form-appnuno" class="btn btn-primary"><?php echo $button_save; ?></button>
+          <a href="<?php echo $cancel; ?>" class="appnuno-button"><?php echo $button_cancel; ?></a>
+          <button type="submit" form="form-appnuno" class="appnuno-button appnuno-button-primary"><?php echo $button_save; ?></button>
         </div>
       </div>
-      <div class="panel-body">
-        <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno" class="form-horizontal">
+      <div class="appnuno-body">
+        <form action="<?php echo $action; ?>" method="post" enctype="multipart/form-data" id="form-appnuno">
           <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
           <div class="appnuno-section-toolbar">
             <div class="appnuno-switch appnuno-section-switch">
               <span class="appnuno-switch-indicator" aria-hidden="true"></span>
-              <ul class="nav nav-tabs">
-                <li class="active"><a href="#tab-navigation" data-toggle="tab"><?php echo $text_default_tabs; ?></a></li>
-                <li><a href="#tab-glass" data-toggle="tab"><?php echo $text['text_glass']; ?></a></li>
-                <li><a href="#tab-colors" data-toggle="tab"><?php echo $text['text_navigation_colors']; ?></a></li>
+              <ul class="appnuno-section-list">
+                <li class="active"><a href="#tab-navigation"><?php echo $text_default_tabs; ?></a></li>
+                <li><a href="#tab-glass"><?php echo $text['text_glass']; ?></a></li>
+                <li><a href="#tab-colors"><?php echo $text['text_navigation_colors']; ?></a></li>
               </ul>
             </div>
-            <div class="form-group appnuno-status-field">
-              <label class="col-sm-2 control-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
-              <div class="col-sm-10">
+            <div class="appnuno-field appnuno-status-field">
+              <label class="appnuno-field-label" id="input-status-label" for="input-status"><?php echo $entry_status; ?></label>
+              <div class="appnuno-field-control">
                 <div class="appnuno-switch" data-status-switch="input-status">
                   <span class="appnuno-switch-indicator" aria-hidden="true"></span>
                   <?php if ($module_appnuno_status) { ?>
@@ -76,27 +76,27 @@
               </div>
             </div>
           </div>
-          <div class="tab-content">
-            <div class="tab-pane active" id="tab-navigation">
+          <div class="appnuno-sections">
+            <div class="appnuno-section appnuno-section-open" id="tab-navigation">
               <div id="default-tabs"></div>
             </div>
-            <div class="tab-pane" id="tab-glass">
+            <div class="appnuno-section" id="tab-glass">
               <section class="appnuno-setting-card">
               <h2 class="appnuno-setting-title"><?php echo $text['text_back_button']; ?></h2>
               <div class="appnuno-setting-card-body">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
-                <div class="col-sm-10">
-                  <select id="back-enabled" class="form-control">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="back-enabled"><?php echo $text['entry_back_enabled']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="back-enabled" class="appnuno-input">
                     <option value="1"><?php echo $text['text_yes']; ?></option>
                     <option value="0"><?php echo $text['text_no']; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="back-enabled">
-                <label class="col-sm-2 control-label" for="back-placement"><?php echo $text['entry_back_placement']; ?></label>
-                <div class="col-sm-10">
-                  <select id="back-placement" class="form-control">
+              <div class="appnuno-field" data-show-when="back-enabled">
+                <label class="appnuno-field-label" for="back-placement"><?php echo $text['entry_back_placement']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="back-placement" class="appnuno-input">
                     <option value="separate"><?php echo $text['text_placement_separate']; ?></option>
                     <option value="bar"><?php echo $text['text_placement_bar']; ?></option>
                   </select>
@@ -107,88 +107,88 @@
               <section class="appnuno-setting-card">
               <h2 class="appnuno-setting-title"><?php echo $text['text_glass_button']; ?></h2>
               <div class="appnuno-setting-card-body">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
-                <div class="col-sm-10">
-                  <select id="glass-enabled" class="form-control">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="glass-enabled"><?php echo $text['entry_glass_enabled']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="glass-enabled" class="appnuno-input">
                     <option value="1"><?php echo $text['text_yes']; ?></option>
                     <option value="0"><?php echo $text['text_no']; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-color-scheme"><?php echo $text['entry_glass_color_scheme']; ?></label>
-                <div class="col-sm-10">
-                  <select id="glass-color-scheme" class="form-control">
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-color-scheme"><?php echo $text['entry_glass_color_scheme']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="glass-color-scheme" class="appnuno-input">
                     <option value="auto"><?php echo $text['text_color_auto']; ?></option>
                     <option value="light"><?php echo $text['text_color_light']; ?></option>
                     <option value="dark"><?php echo $text['text_color_dark']; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-style"><?php echo $text['entry_glass_style']; ?></label>
-                <div class="col-sm-10">
-                  <select id="glass-style" class="form-control">
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-style"><?php echo $text['entry_glass_style']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="glass-style" class="appnuno-input">
                     <option value="regular"><?php echo $text['text_style_regular']; ?></option>
                     <option value="clear"><?php echo $text['text_style_clear']; ?></option>
                     <option value="none"><?php echo $text['text_style_none']; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-animate"><?php echo $text['entry_glass_animate']; ?></label>
-                <div class="col-sm-10">
-                  <select id="glass-animate" class="form-control">
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-animate"><?php echo $text['entry_glass_animate']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="glass-animate" class="appnuno-input">
                     <option value="1"><?php echo $text_enabled; ?></option>
                     <option value="0"><?php echo $text_disabled; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label>
-                <div class="col-sm-10">
-                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control appnuno-compact-control" placeholder="0.3" required="required" />
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="appnuno-input appnuno-compact-control" placeholder="0.3" required="required" />
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-interactive"><?php echo $text['entry_glass_interactive']; ?></label>
-                <div class="col-sm-10">
-                  <select id="glass-interactive" class="form-control">
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-interactive"><?php echo $text['entry_glass_interactive']; ?></label>
+                <div class="appnuno-field-control">
+                  <select id="glass-interactive" class="appnuno-input">
                     <option value="1"><?php echo $text_enabled; ?></option>
                     <option value="0"><?php echo $text_disabled; ?></option>
                   </select>
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-tint-color"><?php echo $text['entry_glass_tint']; ?></label>
-                <div class="col-sm-10">
-                  <input type="color" id="glass-tint-color" class="form-control" value="#000000" />
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-tint-color"><?php echo $text['entry_glass_tint']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="glass-tint-color" class="appnuno-input" value="#000000" />
                 </div>
               </div>
-              <div class="form-group" data-show-when="glass-enabled">
-                <label class="col-sm-2 control-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
-                <div class="col-sm-10">
-                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control appnuno-compact-control" value="0.02" placeholder="0.02" required="required" />
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="appnuno-input appnuno-compact-control" value="0.02" placeholder="0.02" required="required" />
                 </div>
               </div>
               </div>
               </section>
             </div>
-            <div class="tab-pane" id="tab-colors">
+            <div class="appnuno-section" id="tab-colors">
               <section class="appnuno-setting-card">
               <h2 class="appnuno-setting-title"><?php echo $text['text_light_mode']; ?></h2>
               <div class="appnuno-setting-card-body">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="light-background"><?php echo $text['entry_background']; ?></label>
-                <div class="col-sm-10">
-                  <input type="color" id="light-background" class="form-control" value="#FFFFFF" />
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="light-background"><?php echo $text['entry_background']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="light-background" class="appnuno-input" value="#FFFFFF" />
                 </div>
               </div>
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="light-content"><?php echo $text['entry_content']; ?></label>
-                <div class="col-sm-10">
-                  <input type="color" id="light-content" class="form-control" value="#2C3136" />
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="light-content"><?php echo $text['entry_content']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="light-content" class="appnuno-input" value="#2C3136" />
                 </div>
               </div>
               </div>
@@ -196,16 +196,16 @@
               <section class="appnuno-setting-card">
               <h2 class="appnuno-setting-title"><?php echo $text['text_dark_mode']; ?></h2>
               <div class="appnuno-setting-card-body">
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
-                <div class="col-sm-10">
-                  <input type="color" id="dark-background" class="form-control" value="#2C3136" />
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="dark-background"><?php echo $text['entry_background']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="dark-background" class="appnuno-input" value="#2C3136" />
                 </div>
               </div>
-              <div class="form-group">
-                <label class="col-sm-2 control-label" for="dark-content"><?php echo $text['entry_content']; ?></label>
-                <div class="col-sm-10">
-                  <input type="color" id="dark-content" class="form-control" value="#FFFFFF" />
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="dark-content"><?php echo $text['entry_content']; ?></label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="dark-content" class="appnuno-input" value="#FFFFFF" />
                 </div>
               </div>
               </div>
@@ -217,40 +217,40 @@
     </div>
   </div>
 </div>
-<div class="modal" id="page-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="page-picker-title">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="appnuno-modal-close" data-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="page-picker-title"><?php echo $text['text_shown_on_pages']; ?></h4>
+<div class="appnuno-dialog" id="page-picker-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="page-picker-title">
+  <div class="appnuno-dialog-window" role="document">
+    <div class="appnuno-dialog-panel">
+      <div class="appnuno-dialog-header">
+        <button type="button" class="appnuno-modal-close" data-appnuno-dismiss="dialog" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
+        <h4 class="appnuno-dialog-title" id="page-picker-title"><?php echo $text['text_shown_on_pages']; ?></h4>
       </div>
-      <div class="modal-body">
+      <div class="appnuno-dialog-body">
         <div id="page-picker-all-pages"></div>
         <div class="appnuno-page-picker-actions appnuno-button-group">
-          <button type="button" class="btn btn-default" id="page-picker-select-all"><?php echo $text['button_select_all_pages']; ?></button>
-          <button type="button" class="btn btn-default" id="page-picker-clear"><?php echo $text['button_clear_pages']; ?></button>
+          <button type="button" class="appnuno-button" id="page-picker-select-all"><?php echo $text['button_select_all_pages']; ?></button>
+          <button type="button" class="appnuno-button" id="page-picker-clear"><?php echo $text['button_clear_pages']; ?></button>
         </div>
         <div id="page-picker-choices" class="appnuno-page-picker-choices"></div>
       </div>
-      <div class="modal-footer">
+      <div class="appnuno-dialog-footer">
         <div class="appnuno-button-group">
-          <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo $text['button_cancel_pages']; ?></button>
-          <button type="button" class="btn btn-primary" id="page-picker-apply"><?php echo $text['button_apply_pages']; ?></button>
+          <button type="button" class="appnuno-button" data-appnuno-dismiss="dialog"><?php echo $text['button_cancel_pages']; ?></button>
+          <button type="button" class="appnuno-button appnuno-button-primary" id="page-picker-apply"><?php echo $text['button_apply_pages']; ?></button>
         </div>
       </div>
     </div>
   </div>
 </div>
-<div class="modal" id="icon-picker-dialog" tabindex="-1" role="dialog" aria-labelledby="icon-picker-title">
-  <div class="modal-dialog modal-lg" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="appnuno-modal-close" data-dismiss="modal" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
-        <h4 class="modal-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
+<div class="appnuno-dialog" id="icon-picker-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="icon-picker-title">
+  <div class="appnuno-dialog-window" role="document">
+    <div class="appnuno-dialog-panel">
+      <div class="appnuno-dialog-header">
+        <button type="button" class="appnuno-modal-close" data-appnuno-dismiss="dialog" aria-label="<?php echo $button_cancel; ?>"><span aria-hidden="true">&times;</span></button>
+        <h4 class="appnuno-dialog-title" id="icon-picker-title"><?php echo $text['text_icon']; ?></h4>
       </div>
-      <div class="modal-body">
+      <div class="appnuno-dialog-body">
         <div class="appnuno-icon-toolbar">
-          <input type="search" id="icon-picker-search" class="form-control" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
+          <input type="search" id="icon-picker-search" class="appnuno-input" aria-label="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" maxlength="120" placeholder="<?php echo htmlspecialchars($icon_catalog_search, ENT_QUOTES, 'UTF-8'); ?>" />
         </div>
         <div class="appnuno-icon-meta">
           <p id="icon-picker-count"></p>
@@ -293,22 +293,30 @@
 	var cartTabId = typeof configuration.cartTabId === 'string' ? configuration.cartTabId : 'cart';
 	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
-	var adminMarkup = window.bootstrap && window.bootstrap.Modal ? 'bootstrap5' : 'bootstrap3';
-	defaultContainer.className = 'row';
+	function appnunoIcon(name) {
+		var paths = {
+			plus: '<path d="M12 5v14M5 12h14"/>',
+			trash: '<path d="M4 7h16M9 7V5h6v2M7 7l1 12h8l1-12"/>',
+			eyeOff: '<path d="M3 3l18 18M10.6 10.6a3 3 0 0 0 2.8 2.8M9.9 5.1A10.8 10.8 0 0 1 12 5c5 0 8.5 4 10 7a16 16 0 0 1-3.4 4.3M6.1 6.1C4.2 7.6 2.7 9.7 2 12c.9 2.4 4.4 6.5 9.2 6.9"/>',
+			check: '<path d="m5 12 5 5L20 7"/>',
+			alert: '<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'
+		};
+		return '<svg class="appnuno-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths[name] + '</svg>';
+	}
 	var tabNavigationColumn = document.createElement('div');
-	tabNavigationColumn.className = 'col-sm-3';
+	tabNavigationColumn.className = 'appnuno-tab-column';
 	var tabNavigation = document.createElement('ul');
-	tabNavigation.className = adminMarkup === 'bootstrap5' ? 'nav nav-pills flex-column' : 'nav nav-pills nav-stacked';
+	tabNavigation.className = 'appnuno-tab-list';
 	tabNavigation.setAttribute('role', 'tablist');
 	tabNavigation.setAttribute('aria-orientation', 'vertical');
 	var tabPanels = document.createElement('div');
 	var tabSequence = 0;
-	tabPanels.className = 'col-sm-10 tab-content';
+	tabPanels.className = 'appnuno-tab-panels';
 	var addTabButton = document.createElement('button');
 	addTabButton.type = 'button';
-	addTabButton.className = 'btn btn-primary btn-block';
+	addTabButton.className = 'appnuno-button';
 	addTabButton.setAttribute('data-add-tab', 'default-tabs');
-	addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
+	addTabButton.innerHTML = appnunoIcon('plus') + ' ' + text.button_add_default_tab;
 	var emptyState = document.createElement('div');
 	emptyState.className = 'appnuno-default-empty-state';
 	var emptyStateTitle = document.createElement('strong');
@@ -407,7 +415,7 @@
 			switchResizeObserver.observe(control);
 		}
 		var indicator = control.querySelector('.appnuno-switch-indicator');
-		var selected = control.querySelector('[aria-pressed="true"]') || control.querySelector('.nav-tabs > li.active > a, .nav-tabs > li > a.active');
+		var selected = control.querySelector('[aria-pressed="true"]') || control.querySelector('.appnuno-section-list > li.active > a');
 		if (!indicator || !selected) {
 			return;
 		}
@@ -474,8 +482,8 @@
 			var remove = button.querySelector('[data-remove-tab]');
 			if (card.querySelector('[data-tab-visibility]').value !== '1') {
 				if (!marker) {
-					marker = document.createElement('i');
-					marker.className = adminMarkup === 'bootstrap5' ? 'float-end fas fa-solid fa-eye-slash' : 'fa fa-eye-slash';
+					marker = document.createElement('span');
+					marker.innerHTML = appnunoIcon('eyeOff');
 					marker.setAttribute('data-visibility-indicator', 'true');
 					marker.setAttribute('data-appnuno-tooltip', text.text_visibility_indicator);
 					marker.setAttribute('aria-label', text.text_visibility_indicator);
@@ -488,10 +496,10 @@
 		var isEmpty = !tabPanels.querySelector('.appnuno-tab');
 		defaultContainer.classList.toggle('appnuno-default-empty', isEmpty);
 		if (isEmpty) {
-			addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_first_tab;
+			addTabButton.innerHTML = appnunoIcon('plus') + ' ' + text.button_add_first_tab;
 			emptyState.appendChild(addTabButton);
 		} else {
-			addTabButton.innerHTML = '<i class="' + (adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-plus-circle fa-circle-plus' : 'fa fa-plus-circle') + '"></i> ' + text.button_add_default_tab;
+			addTabButton.innerHTML = appnunoIcon('plus') + ' ' + text.button_add_default_tab;
 			tabNavigationColumn.appendChild(addTabButton);
 		}
 	}
@@ -500,10 +508,8 @@
 		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (panel) {
 			var active = panel === card;
 			panel.classList.toggle('active', active);
-			panel.classList.toggle('show', active && adminMarkup === 'bootstrap5');
 			var link = tabNavigation.querySelector('[data-tab-target="' + panel.getAttribute('data-tab-key') + '"]');
 			if (link) {
-				link.className = adminMarkup === 'bootstrap5' ? 'nav-link' + (active ? ' active' : '') : '';
 				link.parentNode.className = active ? 'active' : '';
 				link.setAttribute('aria-selected', active ? 'true' : 'false');
 			}
@@ -516,7 +522,7 @@
 		if (!control) {
 			return;
 		}
-		var group = control.closest('.form-group');
+		var group = control.closest('.appnuno-field');
 		var label = group && group.querySelector('label');
 		appendInlineHelp(label, text[key]);
 	}
@@ -578,21 +584,21 @@
 
 	function createGroup() {
 		var group = document.createElement('div');
-		group.className = adminMarkup === 'bootstrap5' ? 'row mb-3' : 'form-group';
+		group.className = 'appnuno-field';
 		group.setAttribute('data-field-group', 'true');
 		return group;
 	}
 
 	function createGroupLabel(label) {
 		var title = document.createElement('label');
-		title.className = adminMarkup === 'bootstrap5' ? 'col-sm-3 col-form-label' : 'col-sm-3 control-label';
+		title.className = 'appnuno-field-label';
 		title.textContent = label;
 		return title;
 	}
 
 	function createGroupColumn() {
 		var column = document.createElement('div');
-		column.className = 'col-sm-9';
+		column.className = 'appnuno-field-control';
 		return column;
 	}
 
@@ -613,21 +619,95 @@
 	var pagePickerDialog = document.getElementById('page-picker-dialog');
 	var pagePickerGroup = null;
 
-	function showIconPicker() {
-		if (window.bootstrap && window.bootstrap.Modal) {
-			window.bootstrap.Modal.getOrCreateInstance(iconPickerDialog).show();
-		} else {
-			window.jQuery(iconPickerDialog).modal('show');
+	var dialogReturnFocus = null;
+
+	function showDialog(dialog) {
+		if (!dialog || dialog.classList.contains('is-open')) {
+			return;
+		}
+		dialogReturnFocus = document.activeElement;
+		var backdrop = document.createElement('div');
+		backdrop.className = 'appnuno-backdrop';
+		backdrop.addEventListener('click', function () { hideDialog(dialog); });
+		dialog.__appnunoBackdrop = backdrop;
+		document.body.appendChild(backdrop);
+		document.body.classList.add('appnuno-dialog-open');
+		dialog.hidden = false;
+		dialog.classList.add('is-open');
+		if (!dialog.__appnunoDismissBound) {
+			dialog.__appnunoDismissBound = true;
+			dialog.addEventListener('click', function (event) {
+				if (event.target === dialog) {
+					hideDialog(dialog);
+				}
+			});
+		}
+		var focusTarget = dialog.querySelector('input:not([type="hidden"]), select, textarea') || dialog.querySelector('button:not([data-appnuno-dismiss])');
+		if (focusTarget && typeof focusTarget.focus === 'function') {
+			focusTarget.focus();
 		}
 	}
 
-	function hideIconPicker() {
-		if (window.bootstrap && window.bootstrap.Modal) {
-			window.bootstrap.Modal.getOrCreateInstance(iconPickerDialog).hide();
-		} else {
-			window.jQuery(iconPickerDialog).modal('hide');
+	function hideDialog(dialog) {
+		if (!dialog || !dialog.classList.contains('is-open')) {
+			return;
 		}
+		dialog.classList.remove('is-open');
+		dialog.hidden = true;
+		if (dialog.__appnunoBackdrop && dialog.__appnunoBackdrop.parentNode) {
+			dialog.__appnunoBackdrop.parentNode.removeChild(dialog.__appnunoBackdrop);
+		}
+		dialog.__appnunoBackdrop = null;
+		if (!document.querySelector('.appnuno-dialog.is-open')) {
+			document.body.classList.remove('appnuno-dialog-open');
+		}
+		if (dialogReturnFocus && typeof dialogReturnFocus.focus === 'function') {
+			dialogReturnFocus.focus();
+		}
+		dialogReturnFocus = null;
 	}
+
+	function showIconPicker() {
+		showDialog(iconPickerDialog);
+	}
+
+	function hideIconPicker() {
+		hideDialog(iconPickerDialog);
+	}
+
+	document.addEventListener('click', function (event) {
+		var source = event.target;
+		if (source && source.nodeType !== 1) {
+			source = source.parentElement;
+		}
+		var dismiss = source && source.closest ? source.closest('[data-appnuno-dismiss]') : null;
+		if (!dismiss) {
+			return;
+		}
+		if (dismiss.getAttribute('data-appnuno-dismiss') === 'dialog') {
+			var dialog = dismiss.closest('.appnuno-dialog');
+			if (dialog) {
+				event.preventDefault();
+				hideDialog(dialog);
+			}
+		}
+		if (dismiss.getAttribute('data-appnuno-dismiss') === 'alert') {
+			var alertBox = dismiss.closest('.appnuno-alert');
+			if (alertBox && alertBox.parentNode) {
+				alertBox.parentNode.removeChild(alertBox);
+			}
+		}
+	});
+	document.addEventListener('keydown', function (event) {
+		if (event.key !== 'Escape' && event.key !== 'Esc') {
+			return;
+		}
+		var openDialog = document.querySelector('.appnuno-dialog.is-open');
+		if (openDialog) {
+			event.preventDefault();
+			hideDialog(openDialog);
+		}
+	});
 
 	function validCatalogIcon(icon) {
 		if (!icon || typeof icon.id !== 'string' || typeof icon.uri !== 'string' || typeof icon.content_hash !== 'string' || !/^[a-f0-9]{64}$/.test(icon.content_hash)) {
@@ -668,7 +748,7 @@
 			}
 			var option = document.createElement('button');
 			option.type = 'button';
-			option.className = 'btn appnuno-icon-option';
+			option.className = 'appnuno-button appnuno-icon-option';
 			option.title = icon.id;
 			option.setAttribute('aria-label', icon.id);
 			option.setAttribute('data-appnuno-tooltip', icon.id);
@@ -714,7 +794,7 @@
 			function addButton(label, pageNumber, disabled, current) {
 				var button = document.createElement('button');
 				button.type = 'button';
-				button.className = 'btn btn-default';
+				button.className = 'appnuno-button';
 				button.textContent = label;
 				button.disabled = disabled;
 				if (current) {
@@ -866,7 +946,7 @@
 		var selected = validCatalogIcon(tab.icon) ? tab.icon : null;
 		var button = document.createElement('button');
 		button.type = 'button';
-		button.className = 'btn btn-default';
+		button.className = 'appnuno-button';
 		button.setAttribute('data-icon-picker', 'true');
 		button.addEventListener('click', function () {
 			iconPickerTarget = input;
@@ -897,7 +977,7 @@
 		input.id = 'appnuno-field-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
 		title.htmlFor = input.id;
 		input.type = type || 'text';
-		input.className = 'form-control';
+		input.className = 'appnuno-input';
 		input.value = value || '';
 		input.setAttribute('data-field', key);
 		input.setAttribute('data-validation-path', path);
@@ -919,9 +999,9 @@
 		var legacyAssigned = false;
 		languages.forEach(function (language) {
 			var inputGroup = document.createElement('div');
-			inputGroup.className = 'input-group';
+			inputGroup.className = 'appnuno-input-group';
 			var flag = document.createElement('span');
-			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
+			flag.className = 'appnuno-input-addon';
 			if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
 				var image = document.createElement('img');
 				image.src = 'language/' + language.code + '/' + language.code + '.png';
@@ -941,7 +1021,7 @@
 			}
 			var input = document.createElement('input');
 			input.type = 'text';
-			input.className = 'form-control';
+			input.className = 'appnuno-input';
 			input.maxLength = 80;
 			input.placeholder = language.name + ' (' + language.code + ')';
 			input.title = language.name + ' (' + language.code + ')';
@@ -960,7 +1040,7 @@
 		if (!languages.length) {
 			var fallback = document.createElement('input');
 			fallback.type = 'text';
-			fallback.className = 'form-control';
+			fallback.className = 'appnuno-input';
 			fallback.maxLength = 80;
 			fallback.placeholder = text.text_label;
 			fallback.value = legacyLabel;
@@ -982,7 +1062,7 @@
 		var select = document.createElement('select');
 		select.id = 'appnuno-destination-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
 		title.htmlFor = select.id;
-		select.className = 'form-control';
+		select.className = 'appnuno-input';
 		select.setAttribute('data-url-select', 'true');
 		select.appendChild(new Option(text.text_custom_url, '__custom__'));
 		destinations.forEach(function (destination) {
@@ -994,9 +1074,9 @@
 		var languageList = languages.length ? languages : [{ code: 'default', name: text.text_default_language, image: '' }];
 		languageList.forEach(function (language) {
 			var inputGroup = document.createElement('div');
-			inputGroup.className = 'input-group';
+			inputGroup.className = 'appnuno-input-group';
 			var flag = document.createElement('span');
-			flag.className = adminMarkup === 'bootstrap5' ? 'input-group-text' : 'input-group-addon';
+			flag.className = 'appnuno-input-addon';
 			if (language.code !== 'default' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
 				var image = document.createElement('img');
 				image.src = 'language/' + language.code + '/' + language.code + '.png';
@@ -1016,7 +1096,7 @@
 			}
 			var input = document.createElement('input');
 			input.type = 'text';
-			input.className = 'form-control';
+			input.className = 'appnuno-input';
 			input.placeholder = text.text_url_placeholder.replace('%s', language.name);
 			input.setAttribute('data-language-url', language.code);
 			input.setAttribute('data-validation-path', path + '.urls.' + language.code);
@@ -1064,23 +1144,14 @@
 		input.value = value;
 		input.checked = !!checked;
 		input.setAttribute('data-page-choice', 'true');
-		if (adminMarkup === 'bootstrap5') {
-			row.className = 'form-check';
-			input.className = 'form-check-input';
-			input.id = 'appnuno-page-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-') + '-' + String(value).replace(/[^A-Za-z0-9_-]/g, '-');
-			var caption = document.createElement('label');
-			caption.className = 'form-check-label';
-			caption.htmlFor = input.id;
-			caption.textContent = label;
-			row.appendChild(input);
-			row.appendChild(caption);
-		} else {
-			row.className = 'checkbox';
-			var caption = document.createElement('label');
-			caption.appendChild(input);
-			caption.appendChild(document.createTextNode(' ' + label));
-			row.appendChild(caption);
-		}
+		row.className = 'appnuno-check';
+		input.id = 'appnuno-page-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-') + '-' + String(value).replace(/[^A-Za-z0-9_-]/g, '-');
+		var caption = document.createElement('label');
+		caption.className = 'appnuno-check-label';
+		caption.htmlFor = input.id;
+		caption.textContent = label;
+		row.appendChild(input);
+		row.appendChild(caption);
 		list.appendChild(row);
 	}
 
@@ -1119,7 +1190,7 @@
 		});
 		var button = document.createElement('button');
 		button.type = 'button';
-		button.className = 'btn btn-default appnuno-page-manage';
+		button.className = 'appnuno-button appnuno-page-manage';
 		button.setAttribute('data-page-manage', 'true');
 		button.setAttribute('aria-label', text.button_manage_pages);
 		button.title = text.button_manage_pages;
@@ -1157,22 +1228,15 @@
 		allPages.type = 'checkbox';
 		allPages.id = 'page-picker-all';
 		allPages.checked = sourceAllPages.checked;
-		allPages.className = adminMarkup === 'bootstrap5' ? 'form-check-input' : '';
 		allPages.setAttribute('data-modal-all-pages', 'true');
 		var allPagesRow = document.createElement('div');
-		allPagesRow.className = adminMarkup === 'bootstrap5' ? 'form-check appnuno-page-all-choice' : 'checkbox appnuno-page-all-choice';
+		allPagesRow.className = 'appnuno-check appnuno-page-all-choice';
 		var allPagesLabel = document.createElement('label');
+		allPagesLabel.className = 'appnuno-check-label';
 		allPagesLabel.htmlFor = allPages.id;
-		if (adminMarkup === 'bootstrap5') {
-			allPagesLabel.className = 'form-check-label';
-			allPagesLabel.appendChild(document.createTextNode(text.text_all_pages));
-			allPagesRow.appendChild(allPages);
-			allPagesRow.appendChild(allPagesLabel);
-		} else {
-			allPagesLabel.appendChild(allPages);
-			allPagesLabel.appendChild(document.createTextNode(' ' + text.text_all_pages));
-			allPagesRow.appendChild(allPagesLabel);
-		}
+		allPagesLabel.textContent = text.text_all_pages;
+		allPagesRow.appendChild(allPages);
+		allPagesRow.appendChild(allPagesLabel);
 		var choices = sourceList.cloneNode(true);
 		choices.hidden = false;
 		choices.removeAttribute('data-validation-path');
@@ -1202,19 +1266,11 @@
 		};
 		choices.hidden = allPages.checked;
 		pagePickerGroup = group;
-		if (window.bootstrap && window.bootstrap.Modal) {
-			window.bootstrap.Modal.getOrCreateInstance(pagePickerDialog).show();
-		} else {
-			window.jQuery(pagePickerDialog).modal('show');
-		}
+		showDialog(pagePickerDialog);
 	}
 
 	function hidePagePicker() {
-		if (window.bootstrap && window.bootstrap.Modal) {
-			window.bootstrap.Modal.getOrCreateInstance(pagePickerDialog).hide();
-		} else {
-			window.jQuery(pagePickerDialog).modal('hide');
-		}
+		hideDialog(pagePickerDialog);
 	}
 
 	document.getElementById('page-picker-apply').addEventListener('click', function () {
@@ -1330,7 +1386,7 @@
 
 	function createTab(tab, path) {
 		var card = document.createElement('div');
-		card.className = 'tab-pane appnuno-tab';
+		card.className = 'appnuno-tab';
 		card.setAttribute('data-validation-path', path);
 		card.appendChild(createVisibilityField(tab, path));
 		card.appendChild(createField(text.text_tab_id, tab.id, 'id', 'text', path + '.id'));
@@ -1360,11 +1416,9 @@
 		card.setAttribute('data-tab-key', key);
 		tabPanels.appendChild(card);
 		var tabRow = document.createElement('li');
-		tabRow.className = adminMarkup === 'bootstrap5' ? 'nav-item' : '';
 		tabRow.setAttribute('role', 'presentation');
 		var link = document.createElement('a');
 		link.href = '#' + key;
-		link.className = adminMarkup === 'bootstrap5' ? 'nav-link' : '';
 	link.setAttribute('data-tab-target', key);
 	link.setAttribute('role', 'tab');
 	link.setAttribute('aria-controls', key);
@@ -1372,8 +1426,8 @@
 		event.preventDefault();
 		activateTab(card);
 	});
-		var remove = document.createElement('i');
-		remove.className = adminMarkup === 'bootstrap5' ? 'fas fa-solid fa-trash fa-trash-can' : 'fa fa-trash';
+		var remove = document.createElement('span');
+		remove.innerHTML = appnunoIcon('trash');
 		remove.setAttribute('data-remove-tab', 'true');
 		remove.setAttribute('role', 'button');
 		remove.setAttribute('tabindex', '0');
@@ -1525,7 +1579,7 @@
 		var pane = document.querySelector(link.getAttribute('href'));
 		if (pane && pane.parentNode) {
 			Array.prototype.forEach.call(pane.parentNode.children, function (child) {
-				if (child.classList && child.classList.contains('tab-pane')) {
+				if (child.classList && child.classList.contains('appnuno-section')) {
 					var selected = child === pane;
 					child.classList.toggle('active', selected);
 					child.classList.toggle('appnuno-section-open', selected);
@@ -1546,7 +1600,6 @@
 		});
 		placeSwitchIndicator(link.closest('.appnuno-section-switch'));
 	}
-	var sectionTimer = 0;
 	document.addEventListener('click', function (event) {
 		var source = event.target;
 		if (source && source.nodeType !== 1) {
@@ -1556,9 +1609,8 @@
 		if (!link || !link.closest('.appnuno-section-switch')) {
 			return;
 		}
+		event.preventDefault();
 		showSectionLink(link);
-		window.clearTimeout(sectionTimer);
-		sectionTimer = window.setTimeout(function () { showSectionLink(link); }, 250);
 	}, true);
 	window.addEventListener('resize', function () {
 		window.requestAnimationFrame(function () {
@@ -1692,27 +1744,21 @@
 			if (card) {
 				activateTab(card);
 			}
-			var section = matched.closest('#form-appnuno > .tab-content > .tab-pane');
+			var section = matched.closest('#form-appnuno > .appnuno-sections > .appnuno-section');
 			if (section) {
-				var sectionLink = document.querySelector('.nav-tabs a[href="#' + section.id + '"]');
-				if (adminMarkup === 'bootstrap5') {
-					window.bootstrap.Tab.getOrCreateInstance(sectionLink).show();
-				} else {
-					window.jQuery(sectionLink).tab('show');
+				var sectionLink = document.querySelector('.appnuno-section-list a[href="#' + section.id + '"]');
+				if (sectionLink) {
+					showSectionLink(sectionLink);
 				}
-				window.requestAnimationFrame(function () { placeSwitchIndicator(sectionSwitch); });
 			}
 			matched.setAttribute('aria-invalid', 'true');
+			matched.classList.add('appnuno-invalid');
 			var group = matched;
 			while (group && group.getAttribute('data-field-group') !== 'true' && !group.classList.contains('appnuno-tab') && group.id !== 'default-tabs') {
 				group = group.parentNode;
 			}
 			group = group || matched;
-			if (adminMarkup === 'bootstrap5') {
-				matched.classList.add('is-invalid');
-			} else {
-				group.className += ' has-error';
-			}
+			group.classList.add('appnuno-invalid');
 			if (typeof group.scrollIntoView === 'function') {
 				group.scrollIntoView({ block: 'center' });
 			}
