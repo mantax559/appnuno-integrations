@@ -381,6 +381,7 @@
 .appnuno-settings .appnuno-input.appnuno-invalid { border-color: #dc2626; background-image: none; }
 .appnuno-settings .appnuno-icon,
 .appnuno-alert-icon .appnuno-icon,
+.appnuno-alert-close .appnuno-icon,
 #default-tabs .appnuno-icon { display: block; width: 16px; height: 16px; flex: 0 0 16px; background-color: currentColor; -webkit-mask-position: center; -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; mask-position: center; mask-size: contain; mask-repeat: no-repeat; mask-mode: alpha; }
 .appnuno-icon-plus { -webkit-mask-image: url("icons/plus.svg"); mask-image: url("icons/plus.svg"); }
 .appnuno-icon-trash { -webkit-mask-image: url("icons/trash.svg"); mask-image: url("icons/trash.svg"); }
@@ -399,7 +400,7 @@
 .appnuno-page > .appnuno-alert-warning { background: #f8e89a; color: #8a7812; }
 .appnuno-page > .appnuno-alert-danger { background: #f8d4de; color: #e25870; }
 .appnuno-page > .appnuno-alert-info { background: #d9f0ff; color: #1d7eb5; }
-.appnuno-page > .appnuno-alert .appnuno-alert-close { position: static; float: none; align-self: center; flex: 0 0 auto; width: auto; height: auto; margin: 0 0 0 auto; padding: 0 2px; border: 0; border-radius: 0; background-color: transparent; color: inherit; font: 400 20px/1 ui-sans-serif, system-ui, sans-serif; opacity: 1; text-shadow: none; cursor: pointer; }
+.appnuno-page > .appnuno-alert .appnuno-alert-close { position: static; float: none; align-self: center; display: grid; place-items: center; flex: 0 0 auto; width: auto; height: auto; margin: 0 0 0 auto; padding: 0; border: 0; border-radius: 0; background-color: transparent; color: inherit; opacity: 1; text-shadow: none; cursor: pointer; }
 .appnuno-page > .appnuno-alert .appnuno-alert-close:hover { background: transparent; opacity: 0.7; }
 .appnuno-page > .appnuno-alert button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
 

@@ -529,26 +529,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	private function tabTitle($tabs, $index) {
-		$titles = array();
-
-		foreach ($tabs as $tab_index => $tab) {
-			$titles[$tab_index] = $this->singleTabTitle(is_array($tab) ? $tab : array());
+		if (!isset($tabs[$index]) || !is_array($tabs[$index])) {
+			return $this->language->get('text_tab_list_empty');
 		}
 
-		$title = isset($titles[$index]) ? $titles[$index] : $this->language->get('text_tab_list_empty');
-		$count = 0;
-
-		foreach ($titles as $candidate) {
-			if ($candidate === $title) {
-				$count++;
-			}
-		}
-
-		if ($count > 1) {
-			$title .= ' (' . ($index + 1) . ')';
-		}
-
-		return $title;
+		return $this->singleTabTitle($tabs[$index]);
 	}
 
 	private function singleTabTitle($tab) {

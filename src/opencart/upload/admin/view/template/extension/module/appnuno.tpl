@@ -14,15 +14,15 @@
   </div>
   <div class="container-fluid appnuno-page">
     <?php if ($success) { ?>
-    <div class="appnuno-alert appnuno-alert-success"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-check"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-success"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-check"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>"><span class="appnuno-icon appnuno-icon-trash" aria-hidden="true"></span></button>
     </div>
     <?php } ?>
     <?php if ($error_warning) { ?>
-    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo $error_warning; ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo $error_warning; ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>"><span class="appnuno-icon appnuno-icon-trash" aria-hidden="true"></span></button>
     </div>
     <?php } ?>
     <?php if ($error_config) { ?>
-    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>">&times;</button>
+    <div class="appnuno-alert appnuno-alert-danger"><span class="appnuno-alert-icon" aria-hidden="true"><span class="appnuno-icon appnuno-icon-alert"></span></span><span class="appnuno-alert-text"><?php echo htmlspecialchars($error_config, ENT_QUOTES, 'UTF-8'); ?></span><button type="button" class="appnuno-alert-close" data-appnuno-dismiss="alert" aria-label="<?php echo $button_cancel; ?>"><span class="appnuno-icon appnuno-icon-trash" aria-hidden="true"></span></button>
     </div>
     <?php } ?>
     <div class="appnuno-settings">
