@@ -1,8 +1,7 @@
 <?php
 class ControllerExtensionModuleAppnuno extends Controller {
-	// OpenCart 3.0.3+ passes the template source as a third view-event argument. PHP 8 rejects that call when the method only declares two parameters.
 	public function inject(&$route, &$data, &$code = null) {
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			return;
 		}
 
@@ -19,11 +18,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	public function bootstrap() {
-		$this->response->addHeader('Content-Type: application/javascript; charset=utf-8');
-		$this->response->addHeader('Cache-Control: no-store, private');
-		$this->response->addHeader('X-Content-Type-Options: nosniff');
+		$this->responseHeaders('application/javascript; charset=utf-8');
 
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			$this->response->addHeader('HTTP/1.1 404 Not Found');
 			$this->response->setOutput('');
 
@@ -44,11 +41,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	public function state() {
-		$this->response->addHeader('Content-Type: application/json; charset=utf-8');
-		$this->response->addHeader('Cache-Control: no-store, private');
-		$this->response->addHeader('X-Content-Type-Options: nosniff');
+		$this->responseHeaders('application/json; charset=utf-8');
 
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			$this->response->addHeader('HTTP/1.1 404 Not Found');
 			$this->response->setOutput('{}');
 
@@ -57,7 +52,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$this->load->model('extension/module/appnuno');
 
-		$this->response->setOutput(json_encode($this->model_extension_module_appnuno->getState(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
+		$this->response->setOutput($this->json($this->model_extension_module_appnuno->getState()));
 	}
 
 	private function getIntegrationJson() {
@@ -86,35 +81,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		foreach ($tabs as &$tab) {
-			if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
-				$language_code = $this->languageCode();
-
-				if (isset($tab['urls'][$language_code])) {
-					$tab['url'] = $tab['urls'][$language_code];
-				} elseif (!isset($tab['url'])) {
-					$tab['url'] = reset($tab['urls']);
-				}
-
-				unset($tab['urls']);
-			}
-
-			unset($tab['allPages'], $tab['pages']);
-
-			if (isset($tab['labels']) && is_array($tab['labels'])) {
-				$language_code = $this->languageCode();
-
-				if (isset($tab['labels'][$language_code])) {
-					$tab['label'] = $tab['labels'][$language_code];
-				} elseif (count($tab['labels'])) {
-					$tab['label'] = reset($tab['labels']);
-				}
-
-				unset($tab['labels']);
-			}
-
-			if (isset($tab['id']) && in_array($tab['id'], array($cart_tab_id), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
-				$tab['badge'] = (int)$state['cartCount'];
-			}
+			$this->applyStorefrontTab($tab, $cart_tab_id, $state);
 		}
 
 		unset($tab);
@@ -136,7 +103,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			'navigation' => $navigation
 		);
 
-		return json_encode($integration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+		return $this->json($integration);
 	}
 
 	private function tabsForRoute($config, $route) {
@@ -168,7 +135,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		foreach ($tabs as $tab) {
 			if (is_array($tab) && $this->tabVisible($tab)) {
-				if (!isset($tab['icon']) || !is_array($tab['icon']) || !isset($tab['icon']['id'], $tab['icon']['uri']) || !is_string($tab['icon']['id']) || !is_string($tab['icon']['uri'])) {
+				if (!$this->publishableIcon(isset($tab['icon']) ? $tab['icon'] : null)) {
 					unset($tab['icon']);
 				}
 
@@ -215,16 +182,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 	private function markActiveTab($tabs, $route) {
 		$page = isset($this->request->get['page']) && is_string($this->request->get['page']) ? $this->request->get['page'] : '';
-		$request_path = '/';
-		$parsed_path = $page !== '' ? parse_url($page, PHP_URL_PATH) : '/';
-
-		if (is_string($parsed_path) && $parsed_path !== '') {
-			$request_path = $parsed_path;
-		}
-
-		if (strlen($request_path) > 1 && substr($request_path, -1) === '/') {
-			$request_path = substr($request_path, 0, -1);
-		}
+		$request_path = $this->normalizedPath($page !== '' ? parse_url($page, PHP_URL_PATH) : '/');
 
 		$best_index = -1;
 		$best_score = 0;
@@ -258,11 +216,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			return 0;
 		}
 
-		$path = isset($parts['path']) && is_string($parts['path']) && $parts['path'] !== '' ? $parts['path'] : '/';
-
-		if (strlen($path) > 1 && substr($path, -1) === '/') {
-			$path = substr($path, 0, -1);
-		}
+		$path = $this->normalizedPath(isset($parts['path']) ? $parts['path'] : '/');
 
 		$query = array();
 
@@ -316,6 +270,78 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		return true;
+	}
+
+	private function moduleEnabled() {
+		return in_array($this->config->get('module_appnuno_status'), array('1', 1), true);
+	}
+
+	private function responseHeaders($content_type) {
+		$this->response->addHeader('Content-Type: ' . $content_type);
+		$this->response->addHeader('Cache-Control: no-store, private');
+		$this->response->addHeader('X-Content-Type-Options: nosniff');
+	}
+
+	private function json($value) {
+		return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+	}
+
+	private function applyStorefrontTab(&$tab, $cart_tab_id, $state) {
+		$this->applyLocalizedUrl($tab);
+		unset($tab['allPages'], $tab['pages']);
+		$this->applyLocalizedLabel($tab);
+
+		if (isset($tab['id']) && in_array($tab['id'], array($cart_tab_id), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
+			$tab['badge'] = (int)$state['cartCount'];
+		}
+	}
+
+	private function applyLocalizedUrl(&$tab) {
+		if (!isset($tab['urls']) || !is_array($tab['urls']) || !count($tab['urls'])) {
+			return;
+		}
+
+		$language_code = $this->languageCode();
+
+		if (isset($tab['urls'][$language_code])) {
+			$tab['url'] = $tab['urls'][$language_code];
+		} elseif (!isset($tab['url'])) {
+			$tab['url'] = reset($tab['urls']);
+		}
+
+		unset($tab['urls']);
+	}
+
+	private function applyLocalizedLabel(&$tab) {
+		if (!isset($tab['labels']) || !is_array($tab['labels'])) {
+			return;
+		}
+
+		$language_code = $this->languageCode();
+
+		if (isset($tab['labels'][$language_code])) {
+			$tab['label'] = $tab['labels'][$language_code];
+		} elseif (count($tab['labels'])) {
+			$tab['label'] = reset($tab['labels']);
+		}
+
+		unset($tab['labels']);
+	}
+
+	private function publishableIcon($icon) {
+		return is_array($icon) && isset($icon['id'], $icon['uri']) && is_string($icon['id']) && is_string($icon['uri']);
+	}
+
+	private function normalizedPath($path) {
+		if (!is_string($path) || $path === '') {
+			$path = '/';
+		}
+
+		if (strlen($path) > 1 && substr($path, -1) === '/') {
+			return substr($path, 0, -1);
+		}
+
+		return $path;
 	}
 
 	private function languageCode() {

@@ -294,6 +294,47 @@
 		var file = name === 'eyeOff' ? 'eye-off' : name;
 		return '<span class="appnuno-icon appnuno-icon-' + file + '" aria-hidden="true"></span>';
 	}
+	function languageAddon(language) {
+		var flag = document.createElement('span');
+		flag.className = 'appnuno-input-addon';
+		if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
+			var image = document.createElement('img');
+			image.src = 'language/' + language.code + '/' + language.code + '.png';
+			image.alt = language.name;
+			image.width = 16;
+			image.height = 11;
+			image.onerror = function () {
+				var fallback = document.createElement('span');
+				fallback.textContent = language.code;
+				if (image.parentNode) {
+					image.parentNode.replaceChild(fallback, image);
+				}
+			};
+			flag.appendChild(image);
+		} else {
+			flag.textContent = language.code;
+		}
+		return flag;
+	}
+	function createChoiceSwitch(className, label, options, pressedValue, valueAttribute) {
+		var control = document.createElement('div');
+		control.className = className;
+		control.setAttribute('role', 'group');
+		control.setAttribute('aria-label', label);
+		var indicator = document.createElement('span');
+		indicator.className = 'appnuno-switch-indicator';
+		indicator.setAttribute('aria-hidden', 'true');
+		control.appendChild(indicator);
+		options.forEach(function (option) {
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.setAttribute(valueAttribute, option[0]);
+			button.setAttribute('aria-pressed', option[0] === pressedValue ? 'true' : 'false');
+			button.textContent = option[1];
+			control.appendChild(button);
+		});
+		return control;
+	}
 	function localUrl(value) {
 		var url = String(value || '').replace(/^\s+|\s+$/g, '');
 		var match;
@@ -541,23 +582,12 @@
 		if (!select || select.tagName !== 'SELECT') {
 			return;
 		}
-		var control = document.createElement('div');
-		control.className = 'appnuno-switch appnuno-select-switch';
-		control.setAttribute('data-status-switch', id);
-		control.setAttribute('role', 'group');
-		control.setAttribute('aria-label', select.parentNode.parentNode.querySelector('label').textContent.trim());
-		var indicator = document.createElement('span');
-		indicator.className = 'appnuno-switch-indicator';
-		indicator.setAttribute('aria-hidden', 'true');
-		control.appendChild(indicator);
+		var options = [];
 		Array.prototype.forEach.call(select.options, function (option) {
-			var button = document.createElement('button');
-			button.type = 'button';
-			button.setAttribute('data-value', option.value);
-			button.setAttribute('aria-pressed', option.value === select.value ? 'true' : 'false');
-			button.textContent = option.textContent;
-			control.appendChild(button);
+			options.push([option.value, option.textContent]);
 		});
+		var control = createChoiceSwitch('appnuno-switch appnuno-select-switch', select.parentNode.parentNode.querySelector('label').textContent.trim(), options, select.value, 'data-value');
+		control.setAttribute('data-status-switch', id);
 		select.classList.add('appnuno-select-switch-source');
 		select.parentNode.insertBefore(control, select);
 		bindStatusSwitch(control);
@@ -1009,25 +1039,7 @@
 		languages.forEach(function (language) {
 			var inputGroup = document.createElement('div');
 			inputGroup.className = 'appnuno-input-group';
-			var flag = document.createElement('span');
-			flag.className = 'appnuno-input-addon';
-			if (/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
-				var image = document.createElement('img');
-				image.src = 'language/' + language.code + '/' + language.code + '.png';
-				image.alt = language.name;
-				image.width = 16;
-				image.height = 11;
-				image.onerror = function () {
-					var fallback = document.createElement('span');
-					fallback.textContent = language.code;
-					if (image.parentNode) {
-						image.parentNode.replaceChild(fallback, image);
-					}
-				};
-				flag.appendChild(image);
-			} else {
-				flag.textContent = language.code;
-			}
+			var flag = languageAddon(language);
 			var input = document.createElement('input');
 			input.type = 'text';
 			input.className = 'appnuno-input';
@@ -1084,25 +1096,7 @@
 		languageList.forEach(function (language) {
 			var inputGroup = document.createElement('div');
 			inputGroup.className = 'appnuno-input-group';
-			var flag = document.createElement('span');
-			flag.className = 'appnuno-input-addon';
-			if (language.code !== 'default' && /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/.test(language.code)) {
-				var image = document.createElement('img');
-				image.src = 'language/' + language.code + '/' + language.code + '.png';
-				image.alt = language.name;
-				image.width = 16;
-				image.height = 11;
-				image.onerror = function () {
-					var fallback = document.createElement('span');
-					fallback.textContent = language.code;
-					if (image.parentNode) {
-						image.parentNode.replaceChild(fallback, image);
-					}
-				};
-				flag.appendChild(image);
-			} else {
-				flag.textContent = language.code;
-			}
+			var flag = languageAddon(language);
 			var input = document.createElement('input');
 			input.type = 'text';
 			input.className = 'appnuno-input';
@@ -1315,23 +1309,8 @@
 		input.value = tab.visible === false ? '0' : '1';
 		input.setAttribute('data-tab-visibility', 'true');
 		input.setAttribute('data-validation-path', path + '.visible');
-		var control = document.createElement('div');
-		control.className = 'appnuno-switch appnuno-select-switch';
+		var control = createChoiceSwitch('appnuno-switch appnuno-select-switch', text.text_tab_visible, [['1', text.text_visibility_on], ['0', text.text_visibility_indicator]], input.value, 'data-value');
 		control.setAttribute('data-status-switch', input.id);
-		control.setAttribute('role', 'group');
-		control.setAttribute('aria-label', text.text_tab_visible);
-		var indicator = document.createElement('span');
-		indicator.className = 'appnuno-switch-indicator';
-		indicator.setAttribute('aria-hidden', 'true');
-		control.appendChild(indicator);
-		[['1', text.text_visibility_on], ['0', text.text_visibility_indicator]].forEach(function (option) {
-			var button = document.createElement('button');
-			button.type = 'button';
-			button.setAttribute('data-value', option[0]);
-			button.setAttribute('aria-pressed', input.value === option[0] ? 'true' : 'false');
-			button.textContent = option[1];
-			control.appendChild(button);
-		});
 		column.appendChild(control);
 		column.appendChild(input);
 		group.appendChild(appendFieldHelp(title, 'tab_visibility'));
@@ -1346,23 +1325,8 @@
 		group.setAttribute('data-validation-path', path + '.cartBadge');
 		var title = createGroupLabel(text.entry_cart_tab);
 		var column = createGroupColumn();
-		var control = document.createElement('div');
-		control.className = 'appnuno-switch appnuno-cart-switch';
+		var control = createChoiceSwitch('appnuno-switch appnuno-cart-switch', text.entry_cart_tab, [['1', text.text_enabled], ['0', text.text_disabled]], '', 'data-cart-value');
 		control.setAttribute('data-cart-switch', 'true');
-		control.setAttribute('role', 'group');
-		control.setAttribute('aria-label', text.entry_cart_tab);
-		var indicator = document.createElement('span');
-		indicator.className = 'appnuno-switch-indicator';
-		indicator.setAttribute('aria-hidden', 'true');
-		control.appendChild(indicator);
-		[['1', text.text_enabled], ['0', text.text_disabled]].forEach(function (option) {
-			var button = document.createElement('button');
-			button.type = 'button';
-			button.setAttribute('data-cart-value', option[0]);
-			button.setAttribute('aria-pressed', 'false');
-			button.textContent = option[1];
-			control.appendChild(button);
-		});
 		control.addEventListener('click', function (event) {
 			var button = event.target.closest('button[data-cart-value]');
 			if (!button || !control.contains(button)) {

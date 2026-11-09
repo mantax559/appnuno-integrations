@@ -116,8 +116,8 @@ class ModelExtensionModuleAppnuno extends Model {
 		}
 
 		foreach ($config['routes'] as $route => $tabs) {
-			if (!is_string($route) || !preg_match('/^[A-Za-z0-9_\/.]+$/', $route)) {
-				return 'routes.' . $route . '.route: Each route must be a valid OpenCart route such as checkout/cart.';
+			if (!$this->validRoute($route)) {
+				return $this->reject('routes.' . $route . '.route', 'Each route must be a valid OpenCart route such as checkout/cart.');
 			}
 
 			$error = $this->validateTabs($tabs, 'routes.' . $route, $language_codes);
@@ -127,8 +127,8 @@ class ModelExtensionModuleAppnuno extends Model {
 			}
 		}
 
-		if (isset($config['cartTabId']) && (!is_string($config['cartTabId']) || (strlen($config['cartTabId']) && !preg_match('/^[A-Za-z0-9_-]{1,64}$/', $config['cartTabId'])))) {
-			return 'cartTabId: Choose a valid cart badge tab.';
+		if (isset($config['cartTabId']) && !$this->validOptionalTabId($config['cartTabId'])) {
+			return $this->reject('cartTabId', 'Choose a valid cart badge tab.');
 		}
 
 		if (isset($config['back']) && (!is_array($config['back']) || (isset($config['back']['placement']) && !in_array($config['back']['placement'], array('separate', 'bar'), true)) || (isset($config['back']['enabled']) && !is_bool($config['back']['enabled'])))) {
@@ -146,98 +146,110 @@ class ModelExtensionModuleAppnuno extends Model {
 
 	private function validateTabs($tabs, $path, $language_codes) {
 		if (!is_array($tabs) || count($tabs) > 8) {
-			return $path . ': A tab set must contain no more than 8 tabs.';
+			return $this->reject($path, 'A tab set must contain no more than 8 tabs.');
 		}
 
 		$ids = array();
 
 		foreach ($tabs as $index => $tab) {
 			$tab_path = $path . '[' . $index . ']';
+			$error = $this->tabError($tab, $tab_path, $ids, $language_codes);
 
-			if (!is_array($tab) || !isset($tab['id']) || !is_string($tab['id']) || !preg_match('/^[A-Za-z0-9_-]{1,64}$/', $tab['id'])) {
-				return $tab_path . '.id: Enter a valid, unique tab ID.';
-			}
-
-			if (in_array($tab['id'], $ids, true)) {
-				return $tab_path . '.id: Tab IDs must be unique within each tab set.';
-			}
-
-			if (isset($tab['url']) && !$this->validLocalUrl($tab['url'])) {
-				return $tab_path . '.url: Choose a store page or enter a local URL, for example /home.';
-			}
-
-			if (isset($tab['urls'])) {
-				if (!is_array($tab['urls']) || !count($tab['urls']) || count($tab['urls']) > 20) {
-					return $tab_path . '.urls: Add at least one localized URL.';
-				}
-
-				foreach ($tab['urls'] as $language_code => $url) {
-					if (!is_string($language_code) || (!in_array($language_code, array('default'), true) && !preg_match('/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/', $language_code))) {
-						return $tab_path . '.urls: Use a valid OpenCart language code.';
-					}
-
-					if (!$this->validLocalUrl($url)) {
-						return $tab_path . '.urls.' . $language_code . ': Enter a local URL, for example /home.';
-					}
-				}
-
-				foreach ($language_codes as $language_code) {
-					if (!isset($tab['urls'][$language_code])) {
-						return $tab_path . '.urls.' . $language_code . ': Enter a local URL for this language, even if the language is disabled.';
-					}
-				}
-			} elseif (!isset($tab['url'])) {
-				return $tab_path . '.url: Choose a store page or enter a local URL, for example /home.';
-			}
-
-			if (!$this->validTabLabels($tab)) {
-				return $tab_path . '.labels: Enter a label for each enabled store language.';
-			}
-
-			if (isset($tab['icon'])) {
-				$icon = $tab['icon'];
-
-				if (!is_array($icon) || !isset($icon['id']) || !is_string($icon['id']) || !isset($icon['uri']) || !is_string($icon['uri']) || !isset($icon['content_hash']) || !is_string($icon['content_hash']) || !preg_match('/^[a-f0-9]{64}$/', $icon['content_hash']) || !filter_var($icon['uri'], FILTER_VALIDATE_URL)) {
-					return $tab_path . '.icon: Choose an icon from the AppNuno catalog.';
-				}
-
-				$icon_parts = parse_url($icon['uri']);
-				$asset_match = array();
-
-				if (!is_array($icon_parts) || !isset($icon_parts['scheme'], $icon_parts['host'], $icon_parts['path']) || !in_array($icon_parts['scheme'], array('https'), true) || !in_array($icon_parts['host'], array('appnuno.com'), true) || isset($icon_parts['user']) || isset($icon_parts['pass']) || isset($icon_parts['port']) || isset($icon_parts['query']) || isset($icon_parts['fragment']) || !preg_match('#^/icon-assets/(duo|custom)/([a-z0-9]+(?:-[a-z0-9]+)*)/([a-f0-9]{64})\\.svg$#D', $icon_parts['path'], $asset_match) || strcmp($icon['id'], $asset_match[1] . ':' . $asset_match[2]) || strcmp($icon['content_hash'], $asset_match[3])) {
-					return $tab_path . '.icon: Choose an icon from the AppNuno catalog.';
-				}
-			}
-
-			if (isset($tab['active']) && !is_bool($tab['active'])) {
-				return $tab_path . '.active: The selected state must be true or false.';
-			}
-
-			if (array_key_exists('visible', $tab) && !is_bool($tab['visible'])) {
-				return $tab_path . '.visible: The visibility state must be true or false.';
-			}
-
-			if (isset($tab['badge']) && (!is_int($tab['badge']) || !is_int(filter_var($tab['badge'], FILTER_VALIDATE_INT, array('options' => array('min_range' => 0)))))) {
-				return $tab_path . '.badge: The badge count must be zero or a positive integer.';
-			}
-
-			if (array_key_exists('allPages', $tab) && !is_bool($tab['allPages'])) {
-				return $tab_path . '.allPages: Choose whether the tab appears on every page.';
-			}
-
-			if (isset($tab['pages'])) {
-				if (!is_array($tab['pages']) || count($tab['pages']) > 30) {
-					return $tab_path . '.pages: Choose no more than 30 store pages.';
-				}
-
-				foreach ($tab['pages'] as $page_route) {
-					if (!is_string($page_route) || !preg_match('/^[A-Za-z0-9_\/.]+$/', $page_route)) {
-						return $tab_path . '.pages: Choose a valid store page.';
-					}
-				}
+			if (strlen($error)) {
+				return $error;
 			}
 
 			$ids[] = $tab['id'];
+		}
+
+		return '';
+	}
+
+	private function tabError($tab, $tab_path, $ids, $language_codes) {
+		if (!is_array($tab) || !isset($tab['id']) || !$this->validTabId($tab['id'])) {
+			return $this->reject($tab_path . '.id', 'Enter a valid, unique tab ID.');
+		}
+
+		if (in_array($tab['id'], $ids, true)) {
+			return $this->reject($tab_path . '.id', 'Tab IDs must be unique within each tab set.');
+		}
+
+		$url_error = $this->tabUrlError($tab, $tab_path, $language_codes);
+
+		if (strlen($url_error)) {
+			return $url_error;
+		}
+
+		if (!$this->validTabLabels($tab)) {
+			return $this->reject($tab_path . '.labels', 'Enter a label for each enabled store language.');
+		}
+
+		if (isset($tab['icon']) && !$this->validIcon($tab['icon'])) {
+			return $this->reject($tab_path . '.icon', 'Choose an icon from the AppNuno catalog.');
+		}
+
+		if (isset($tab['active']) && !is_bool($tab['active'])) {
+			return $this->reject($tab_path . '.active', 'The selected state must be true or false.');
+		}
+
+		if (array_key_exists('visible', $tab) && !is_bool($tab['visible'])) {
+			return $this->reject($tab_path . '.visible', 'The visibility state must be true or false.');
+		}
+
+		if (isset($tab['badge']) && (!is_int($tab['badge']) || !is_int(filter_var($tab['badge'], FILTER_VALIDATE_INT, array('options' => array('min_range' => 0)))))) {
+			return $this->reject($tab_path . '.badge', 'The badge count must be zero or a positive integer.');
+		}
+
+		if (array_key_exists('allPages', $tab) && !is_bool($tab['allPages'])) {
+			return $this->reject($tab_path . '.allPages', 'Choose whether the tab appears on every page.');
+		}
+
+		if (isset($tab['pages'])) {
+			if (!is_array($tab['pages']) || count($tab['pages']) > 30) {
+				return $this->reject($tab_path . '.pages', 'Choose no more than 30 store pages.');
+			}
+
+			foreach ($tab['pages'] as $page_route) {
+				if (!$this->validRoute($page_route)) {
+					return $this->reject($tab_path . '.pages', 'Choose a valid store page.');
+				}
+			}
+		}
+
+		return '';
+	}
+
+	private function tabUrlError($tab, $tab_path, $language_codes) {
+		if (isset($tab['url']) && !$this->validLocalUrl($tab['url'])) {
+			return $this->reject($tab_path . '.url', 'Choose a store page or enter a local URL, for example /home.');
+		}
+
+		if (isset($tab['urls'])) {
+			if (!is_array($tab['urls']) || !count($tab['urls']) || count($tab['urls']) > 20) {
+				return $this->reject($tab_path . '.urls', 'Add at least one localized URL.');
+			}
+
+			foreach ($tab['urls'] as $language_code => $url) {
+				if (!$this->validLanguageCode($language_code)) {
+					return $this->reject($tab_path . '.urls', 'Use a valid OpenCart language code.');
+				}
+
+				if (!$this->validLocalUrl($url)) {
+					return $this->reject($tab_path . '.urls.' . $language_code, 'Enter a local URL, for example /home.');
+				}
+			}
+
+			foreach ($language_codes as $language_code) {
+				if (!isset($tab['urls'][$language_code])) {
+					return $this->reject($tab_path . '.urls.' . $language_code, 'Enter a local URL for this language, even if the language is disabled.');
+				}
+			}
+
+			return '';
+		}
+
+		if (!isset($tab['url'])) {
+			return $this->reject($tab_path . '.url', 'Choose a store page or enter a local URL, for example /home.');
 		}
 
 		return '';
@@ -338,20 +350,12 @@ class ModelExtensionModuleAppnuno extends Model {
 			}
 
 			if (isset($tab['url'])) {
-				$local = $this->localUrl($tab['url']);
-
-				if (strlen($local)) {
-					$tab['url'] = $local;
-				}
+				$tab['url'] = $this->storedLocalUrl($tab['url']);
 			}
 
 			if (isset($tab['urls']) && is_array($tab['urls'])) {
 				foreach ($tab['urls'] as $code => $url) {
-					$local = $this->localUrl($url);
-
-					if (strlen($local)) {
-						$tab['urls'][$code] = $local;
-					}
+					$tab['urls'][$code] = $this->storedLocalUrl($url);
 				}
 			}
 
@@ -413,6 +417,12 @@ class ModelExtensionModuleAppnuno extends Model {
 		return '';
 	}
 
+	private function storedLocalUrl($url) {
+		$local = $this->localUrl($url);
+
+		return strlen($local) ? $local : $url;
+	}
+
 	private function validLocalUrl($url) {
 		return strlen($this->localUrl($url)) > 0;
 	}
@@ -424,7 +434,7 @@ class ModelExtensionModuleAppnuno extends Model {
 			}
 
 			foreach ($tab['labels'] as $language_code => $label) {
-				if (!is_string($language_code) || (!in_array($language_code, array('default'), true) && !preg_match('/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/', $language_code)) || !is_string($label) || !strlen(trim($label)) || strlen($label) > 80) {
+				if (!$this->validLanguageCode($language_code) || !$this->validLabel($label)) {
 					return false;
 				}
 			}
@@ -432,6 +442,46 @@ class ModelExtensionModuleAppnuno extends Model {
 			return true;
 		}
 
-		return isset($tab['label']) && is_string($tab['label']) && strlen(trim($tab['label'])) && strlen($tab['label']) <= 80;
+		return $this->validLabel(isset($tab['label']) ? $tab['label'] : null);
+	}
+
+	private function reject($path, $message) {
+		return $path . ': ' . $message;
+	}
+
+	private function validRoute($route) {
+		return is_string($route) && preg_match('/^[A-Za-z0-9_\/.]+$/', $route);
+	}
+
+	private function validTabId($id) {
+		return is_string($id) && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $id);
+	}
+
+	private function validOptionalTabId($id) {
+		return is_string($id) && (!strlen($id) || $this->validTabId($id));
+	}
+
+	private function validLanguageCode($code) {
+		return is_string($code) && (in_array($code, array('default'), true) || preg_match('/^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$/', $code));
+	}
+
+	private function validLabel($label) {
+		return is_string($label) && strlen(trim($label)) && strlen($label) <= 80;
+	}
+
+	private function validIcon($icon) {
+		$asset_match = array();
+
+		if (!is_array($icon) || !$this->validIconParts($icon)) {
+			return false;
+		}
+
+		$icon_parts = parse_url($icon['uri']);
+
+		return is_array($icon_parts) && isset($icon_parts['scheme'], $icon_parts['host'], $icon_parts['path']) && in_array($icon_parts['scheme'], array('https'), true) && in_array($icon_parts['host'], array('appnuno.com'), true) && !isset($icon_parts['user']) && !isset($icon_parts['pass']) && !isset($icon_parts['port']) && !isset($icon_parts['query']) && !isset($icon_parts['fragment']) && preg_match('#^/icon-assets/(duo|custom)/([a-z0-9]+(?:-[a-z0-9]+)*)/([a-f0-9]{64})\\.svg$#D', $icon_parts['path'], $asset_match) && !strcmp($icon['id'], $asset_match[1] . ':' . $asset_match[2]) && !strcmp($icon['content_hash'], $asset_match[3]);
+	}
+
+	private function validIconParts($icon) {
+		return isset($icon['id'], $icon['uri'], $icon['content_hash']) && is_string($icon['id']) && is_string($icon['uri']) && is_string($icon['content_hash']) && preg_match('/^[a-f0-9]{64}$/', $icon['content_hash']) && filter_var($icon['uri'], FILTER_VALIDATE_URL);
 	}
 }

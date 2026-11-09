@@ -43,70 +43,13 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$data['icon_catalog_search'] = $this->language->get('text_icon_catalog_search');
 		$data['languages'] = $this->available_languages;
 		$data['destinations'] = $this->translatedDestinations($this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id')));
-		$data['route_options'] = array(
-			array(
-				'label' => $this->language->get('text_route_home'),
-				'route' => 'common/home'
-			),
-			array(
-				'label' => $this->language->get('text_route_category'),
-				'route' => 'product/category'
-			),
-			array(
-				'label' => $this->language->get('text_route_product'),
-				'route' => 'product/product'
-			),
-			array(
-				'label' => $this->language->get('text_route_special'),
-				'route' => 'product/special'
-			),
-			array(
-				'label' => $this->language->get('text_route_search'),
-				'route' => 'product/search'
-			),
-			array(
-				'label' => $this->language->get('text_route_manufacturer'),
-				'route' => 'product/manufacturer'
-			),
-			array(
-				'label' => $this->language->get('text_route_information'),
-				'route' => 'information/information'
-			),
-			array(
-				'label' => $this->language->get('text_route_contact'),
-				'route' => 'information/contact'
-			),
-			array(
-				'label' => $this->language->get('text_route_account'),
-				'route' => 'account/account'
-			),
-			array(
-				'label' => $this->language->get('text_route_login'),
-				'route' => 'account/login'
-			),
-			array(
-				'label' => $this->language->get('text_route_register'),
-				'route' => 'account/register'
-			),
-			array(
-				'label' => $this->language->get('text_route_cart'),
-				'route' => 'checkout/cart'
-			),
-			array(
-				'label' => $this->language->get('text_route_checkout'),
-				'route' => 'checkout/checkout'
-			)
-		);
+		$data['route_options'] = $this->routeOptions();
 		$data['help_config'] = $this->language->get('help_config');
 
 		$data['button_save'] = $this->language->get('button_save');
 		$data['button_cancel'] = $this->language->get('button_cancel');
 
-		if (isset($this->error['warning'])) {
-			$data['error_warning'] = $this->error['warning'];
-		} else {
-			$data['error_warning'] = '';
-		}
+		$data['error_warning'] = $this->capturedError('warning');
 
 		if (isset($this->session->data['success'])) {
 			$data['success'] = $this->session->data['success'];
@@ -116,17 +59,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			$data['success'] = '';
 		}
 
-		if (isset($this->error['config'])) {
-			$data['error_config'] = $this->error['config'];
-		} else {
-			$data['error_config'] = '';
-		}
-
-		if (isset($this->error['config_path'])) {
-			$data['error_config_path'] = $this->error['config_path'];
-		} else {
-			$data['error_config_path'] = '';
-		}
+		$data['error_config'] = $this->capturedError('config');
+		$data['error_config_path'] = $this->capturedError('config_path');
 
 		$data['breadcrumbs'] = array();
 
@@ -147,43 +81,14 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$data['action'] = $this->url->link('extension/module/appnuno', 'token=' . $this->session->data['token'], true);
 		$data['cancel'] = $this->url->link('extension/extension', 'token=' . $this->session->data['token'] . '&type=module', true);
-		if (isset($this->request->post['module_appnuno_status'])) {
-			$data['module_appnuno_status'] = $this->request->post['module_appnuno_status'];
-		} elseif (in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
-			$data['module_appnuno_status'] = '1';
-		} else {
-			$data['module_appnuno_status'] = '0';
-		}
-
-		if (isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config'])) {
-			$data['module_appnuno_config'] = $this->request->post['module_appnuno_config'];
-		} else {
-			$data['module_appnuno_config'] = $this->config->get('module_appnuno_config');
-		}
-
-		if (!is_string($data['module_appnuno_config']) || !strlen(trim($data['module_appnuno_config']))) {
-			$data['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
-		}
-
-		$configuration = json_decode($data['module_appnuno_config'], true);
-
-		if (!isset($this->request->server['REQUEST_METHOD']) || ($this->request->server['REQUEST_METHOD'] != 'POST')) {
-			if (!is_array($configuration) || $this->model_extension_module_appnuno->validateConfig($data['module_appnuno_config'])) {
-				$data['module_appnuno_config'] = $this->model_extension_module_appnuno->defaultConfig();
-				$configuration = json_decode($data['module_appnuno_config'], true);
-			}
-		}
-
-		if (!is_array($configuration)) {
-			$configuration = json_decode($this->model_extension_module_appnuno->defaultConfig(), true);
-		}
-
-		$data['configuration_json'] = json_encode($configuration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$data['text_json'] = json_encode($data['text'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$data['languages_json'] = json_encode($data['languages'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$data['destinations_json'] = json_encode($data['destinations'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$data['route_options_json'] = json_encode($data['route_options'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
-		$data['error_config_path_json'] = json_encode($data['error_config_path'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+		$data['module_appnuno_status'] = $this->moduleStatus();
+		list($data['module_appnuno_config'], $configuration) = $this->configurationState();
+		$data['configuration_json'] = $this->json($configuration);
+		$data['text_json'] = $this->json($data['text']);
+		$data['languages_json'] = $this->json($data['languages']);
+		$data['destinations_json'] = $this->json($data['destinations']);
+		$data['route_options_json'] = $this->json($data['route_options']);
+		$data['error_config_path_json'] = $this->json($data['error_config_path']);
 		$data['default_language_code'] = $this->config->get('config_language');
 
 		$data['header'] = $this->load->controller('common/header');
@@ -237,15 +142,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$this->request->post['module_appnuno_config'] = $this->model_extension_module_appnuno->normalizeConfig($posted_config);
 		$posted_config = $this->request->post['module_appnuno_config'];
 
-		$language_codes = array();
-
-		foreach ($this->available_languages as $language) {
-			if (isset($language['code']) && is_string($language['code'])) {
-				$language_codes[] = $language['code'];
-			}
-		}
-
-		$config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config'], $language_codes);
+		$config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config'], $this->languageCodes());
 
 		if (strlen($config_error)) {
 			$this->error['config'] = $this->readableConfigError($config_error, $posted_config);
@@ -259,7 +156,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	private function interfaceText() {
 		$text = array();
 
-		foreach (array('text_enabled', 'text_disabled', 'text_yes', 'text_no', 'text_visibility_on', 'text_icon_page_previous', 'text_icon_page_next', 'button_add_default_tab', 'button_add_first_tab', 'text_default_tabs_empty', 'text_default_tabs_empty_help', 'entry_cart_tab', 'help_cart_tab', 'help_status', 'text_back_button', 'entry_back_enabled', 'entry_back_placement', 'text_placement_separate', 'text_placement_bar', 'text_glass', 'text_glass_button', 'entry_glass_enabled', 'entry_glass_color_scheme', 'text_color_auto', 'text_color_light', 'text_color_dark', 'entry_glass_style', 'text_style_regular', 'text_style_clear', 'text_style_none', 'entry_glass_animate', 'entry_glass_duration', 'entry_glass_interactive', 'entry_glass_tint', 'entry_glass_opacity', 'text_navigation_colors', 'text_light_mode', 'text_dark_mode', 'entry_background', 'entry_content', 'text_language_labels', 'text_label', 'text_default_language', 'text_destination', 'text_choose_destination', 'text_custom_url', 'text_url_placeholder', 'text_tab_id', 'text_tab_id_placeholder', 'text_icon', 'text_choose_icon', 'text_icon_catalog_search', 'text_icon_catalog_loading', 'text_icon_catalog_empty', 'text_icon_catalog_error', 'text_icon_catalog_clear', 'text_icon_catalog_total', 'button_remove_tab', 'text_shown_on_pages', 'help_shown_on_pages', 'text_all_pages', 'button_manage_pages', 'text_show_on_all_pages', 'text_show_on_selected_pages', 'text_show_on_no_pages', 'button_apply_pages', 'button_cancel_pages', 'button_select_all_pages', 'button_clear_pages', 'text_tab_missing', 'text_tab_visible', 'text_tab_visibility_toggle', 'text_visibility_indicator', 'text_tab_list_empty', 'help_default_tabs', 'help_back_enabled', 'help_back_placement', 'help_glass_enabled', 'help_glass_color_scheme', 'help_glass_style', 'help_glass_animate', 'help_glass_duration', 'help_glass_interactive', 'help_glass_tint', 'help_glass_opacity', 'help_background', 'help_content', 'help_tab_id', 'help_tab_labels', 'help_tab_destination', 'help_icon_catalog', 'help_tab_visibility', 'help_cart_tab') as $key) {
+		foreach (array('text_enabled', 'text_disabled', 'text_yes', 'text_no', 'text_visibility_on', 'text_icon_page_previous', 'text_icon_page_next', 'button_add_default_tab', 'button_add_first_tab', 'text_default_tabs_empty', 'text_default_tabs_empty_help', 'entry_cart_tab', 'help_cart_tab', 'help_status', 'text_back_button', 'entry_back_enabled', 'entry_back_placement', 'text_placement_separate', 'text_placement_bar', 'text_glass', 'text_glass_button', 'entry_glass_enabled', 'entry_glass_color_scheme', 'text_color_auto', 'text_color_light', 'text_color_dark', 'entry_glass_style', 'text_style_regular', 'text_style_clear', 'text_style_none', 'entry_glass_animate', 'entry_glass_duration', 'entry_glass_interactive', 'entry_glass_tint', 'entry_glass_opacity', 'text_navigation_colors', 'text_light_mode', 'text_dark_mode', 'entry_background', 'entry_content', 'text_language_labels', 'text_label', 'text_default_language', 'text_destination', 'text_choose_destination', 'text_custom_url', 'text_url_placeholder', 'text_tab_id', 'text_tab_id_placeholder', 'text_icon', 'text_choose_icon', 'text_icon_catalog_search', 'text_icon_catalog_loading', 'text_icon_catalog_empty', 'text_icon_catalog_error', 'text_icon_catalog_clear', 'text_icon_catalog_total', 'button_remove_tab', 'text_shown_on_pages', 'help_shown_on_pages', 'text_all_pages', 'button_manage_pages', 'text_show_on_all_pages', 'text_show_on_selected_pages', 'text_show_on_no_pages', 'button_apply_pages', 'button_cancel_pages', 'button_select_all_pages', 'button_clear_pages', 'text_tab_missing', 'text_tab_visible', 'text_tab_visibility_toggle', 'text_visibility_indicator', 'text_tab_list_empty', 'help_default_tabs', 'help_back_enabled', 'help_back_placement', 'help_glass_enabled', 'help_glass_color_scheme', 'help_glass_style', 'help_glass_animate', 'help_glass_duration', 'help_glass_interactive', 'help_glass_tint', 'help_glass_opacity', 'help_background', 'help_content', 'help_tab_id', 'help_tab_labels', 'help_tab_destination', 'help_icon_catalog', 'help_tab_visibility') as $key) {
 			$text[$key] = $this->language->get($key);
 		}
 
@@ -385,11 +282,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			$context['page'] = $match[1];
 		} elseif (preg_match('/^routes\.(.+)$/', $path, $match)) {
 			$context['page'] = $this->routeLabel($match[1]);
-		} elseif (preg_match('/^colors\.(light|dark)(?:\.(backgroundColor|contentColor))?$/', $path, $match)) {
-			$context['mode'] = $this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode');
+		} else		if (preg_match('/^colors\.(light|dark)(?:\.(backgroundColor|contentColor))?$/', $path, $match)) {
+			$context['mode'] = $this->colorModeLabel($match[1]);
 
 			if (isset($match[2]) && strlen($match[2])) {
-				$context['field'] = $this->language->get($match[2] === 'backgroundColor' ? 'entry_background' : 'entry_content');
+				$context['field'] = $this->colorFieldLabel($match[2]);
 			}
 		}
 
@@ -485,14 +382,11 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		if (preg_match('/^colors\.(light|dark)$/', $path, $match)) {
-			return $this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode');
+			return $this->colorModeLabel($match[1]);
 		}
 
 		if (preg_match('/^colors\.(light|dark)\.(backgroundColor|contentColor)$/', $path, $match)) {
-			return $this->joinPlace(array(
-				$this->language->get($match[1] === 'light' ? 'text_light_mode' : 'text_dark_mode'),
-				$this->language->get($match[2] === 'backgroundColor' ? 'entry_background' : 'entry_content')
-			));
+			return $this->joinPlace(array($this->colorModeLabel($match[1]), $this->colorFieldLabel($match[2])));
 		}
 
 		if (preg_match('/^routes\.(.+)\.route$/', $path, $match)) {
@@ -617,7 +511,26 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	private function routeLabel($route) {
-		$labels = array(
+		$labels = $this->routeKeys();
+
+		return isset($labels[$route]) ? $this->language->get($labels[$route]) : $route;
+	}
+
+	private function routeOptions() {
+		$options = array();
+
+		foreach ($this->routeKeys() as $route => $key) {
+			$options[] = array(
+				'label' => $this->language->get($key),
+				'route' => $route
+			);
+		}
+
+		return $options;
+	}
+
+	private function routeKeys() {
+		return array(
 			'common/home' => 'text_route_home',
 			'product/category' => 'text_route_category',
 			'product/product' => 'text_route_product',
@@ -632,8 +545,69 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			'checkout/cart' => 'text_route_cart',
 			'checkout/checkout' => 'text_route_checkout'
 		);
+	}
 
-		return isset($labels[$route]) ? $this->language->get($labels[$route]) : $route;
+	private function moduleStatus() {
+		if (isset($this->request->post['module_appnuno_status'])) {
+			return $this->request->post['module_appnuno_status'];
+		}
+
+		return in_array($this->config->get('module_appnuno_status'), array('1', 1), true) ? '1' : '0';
+	}
+
+	private function configurationState() {
+		if (isset($this->request->post['module_appnuno_config']) && is_string($this->request->post['module_appnuno_config'])) {
+			$json = $this->request->post['module_appnuno_config'];
+		} else {
+			$json = $this->config->get('module_appnuno_config');
+		}
+
+		if (!is_string($json) || !strlen(trim($json))) {
+			$json = $this->model_extension_module_appnuno->defaultConfig();
+		}
+
+		$configuration = json_decode($json, true);
+
+		if (!isset($this->request->server['REQUEST_METHOD']) || ($this->request->server['REQUEST_METHOD'] != 'POST')) {
+			if (!is_array($configuration) || $this->model_extension_module_appnuno->validateConfig($json)) {
+				$json = $this->model_extension_module_appnuno->defaultConfig();
+				$configuration = json_decode($json, true);
+			}
+		}
+
+		if (!is_array($configuration)) {
+			$configuration = json_decode($this->model_extension_module_appnuno->defaultConfig(), true);
+		}
+
+		return array($json, $configuration);
+	}
+
+	private function languageCodes() {
+		$language_codes = array();
+
+		foreach ($this->available_languages as $language) {
+			if (isset($language['code']) && is_string($language['code'])) {
+				$language_codes[] = $language['code'];
+			}
+		}
+
+		return $language_codes;
+	}
+
+	private function capturedError($key) {
+		return isset($this->error[$key]) ? $this->error[$key] : '';
+	}
+
+	private function json($value) {
+		return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+	}
+
+	private function colorModeLabel($mode) {
+		return $this->language->get($mode === 'light' ? 'text_light_mode' : 'text_dark_mode');
+	}
+
+	private function colorFieldLabel($field) {
+		return $this->language->get($field === 'backgroundColor' ? 'entry_background' : 'entry_content');
 	}
 
 	private function joinPlace($parts) {
