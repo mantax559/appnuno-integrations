@@ -148,7 +148,7 @@
               <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-duration"><?php echo $text['entry_glass_duration']; ?></label>
                 <div class="col-sm-10">
-                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control" required="required" />
+                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="form-control appnuno-compact-control" required="required" />
                 </div>
               </div>
               <div class="form-group" data-show-when="glass-enabled">
@@ -169,7 +169,7 @@
               <div class="form-group" data-show-when="glass-enabled">
                 <label class="col-sm-2 control-label" for="glass-tint-alpha"><?php echo $text['entry_glass_opacity']; ?></label>
                 <div class="col-sm-10">
-                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control" value="0.02" required="required" />
+                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="form-control appnuno-compact-control" value="0.02" required="required" />
                 </div>
               </div>
               </div>
@@ -226,15 +226,17 @@
       </div>
       <div class="modal-body">
         <div id="page-picker-all-pages"></div>
-        <div class="appnuno-page-picker-actions">
-          <button type="button" class="btn btn-default btn-sm" id="page-picker-select-all"><?php echo $text['button_select_all_pages']; ?></button>
-          <button type="button" class="btn btn-default btn-sm" id="page-picker-clear"><?php echo $text['button_clear_pages']; ?></button>
+        <div class="appnuno-page-picker-actions appnuno-button-group">
+          <button type="button" class="btn btn-default" id="page-picker-select-all"><?php echo $text['button_select_all_pages']; ?></button>
+          <button type="button" class="btn btn-default" id="page-picker-clear"><?php echo $text['button_clear_pages']; ?></button>
         </div>
         <div id="page-picker-choices" class="appnuno-page-picker-choices"></div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo $text['button_cancel_pages']; ?></button>
-        <button type="button" class="btn btn-primary" id="page-picker-apply"><?php echo $text['button_apply_pages']; ?></button>
+        <div class="appnuno-button-group">
+          <button type="button" class="btn btn-default" data-dismiss="modal"><?php echo $text['button_cancel_pages']; ?></button>
+          <button type="button" class="btn btn-primary" id="page-picker-apply"><?php echo $text['button_apply_pages']; ?></button>
+        </div>
       </div>
     </div>
   </div>
@@ -409,18 +411,31 @@
 		if (!indicator || !selected) {
 			return;
 		}
-		var controlRect = control.getBoundingClientRect();
 		var selectedRect = selected.getBoundingClientRect();
+		if (selectedRect.width < 1 || selectedRect.height < 1) {
+			control.removeAttribute('data-placed');
+			return;
+		}
+		var placed = control.getAttribute('data-placed') === 'true';
+		if (!placed) {
+			indicator.style.transition = 'none';
+		}
+		var controlRect = control.getBoundingClientRect();
 		var controlStyle = window.getComputedStyle(control);
 		indicator.style.width = selectedRect.width + 'px';
 		indicator.style.height = selectedRect.height + 'px';
 		indicator.style.transform = 'translate(' + (selectedRect.left - controlRect.left - (parseFloat(controlStyle.borderLeftWidth) || 0)) + 'px, ' + (selectedRect.top - controlRect.top - (parseFloat(controlStyle.borderTopWidth) || 0)) + 'px)';
+		if (!placed) {
+			indicator.offsetWidth;
+			indicator.style.transition = '';
+			control.setAttribute('data-placed', 'true');
+		}
 	}
 
 	function revealSwitchMotion(control) {
 		window.requestAnimationFrame(function () {
 			window.requestAnimationFrame(function () {
-				control.setAttribute('data-placed', 'true');
+				placeSwitchIndicator(control);
 			});
 		});
 	}
@@ -493,6 +508,7 @@
 				link.setAttribute('aria-selected', active ? 'true' : 'false');
 			}
 		});
+		Array.prototype.forEach.call(card.querySelectorAll('.appnuno-switch'), placeSwitchIndicator);
 	}
 
 	function appendControlHelp(id, key) {
@@ -547,9 +563,7 @@
 			Array.prototype.forEach.call(control.querySelectorAll('button[data-value]'), function (item) {
 				item.setAttribute('aria-pressed', item === button ? 'true' : 'false');
 			});
-			if (input.tagName === 'SELECT') {
-				input.dispatchEvent(new Event('change', { bubbles: true }));
-			}
+			input.dispatchEvent(new Event('change', { bubbles: true }));
 			placeSwitchIndicator(control);
 		});
 		if (input.tagName === 'SELECT') {
@@ -589,6 +603,7 @@
 	var iconPickerPage = 1;
 	var iconPickerCount = document.getElementById('icon-picker-count');
 	var iconPickerLoading = document.getElementById('icon-picker-loading');
+	var iconPickerStage = iconPickerLoading ? iconPickerLoading.parentNode : null;
 	var iconPickerPageSize = 130;
 	var iconPickerTimer = null;
 	var iconPickerRequest = 0;
@@ -722,18 +737,26 @@
 		});
 	}
 
+	function setIconPickerLoading(loading) {
+		iconPickerLoading.hidden = !loading;
+		if (iconPickerStage) {
+			iconPickerStage.classList.toggle('is-loading', loading);
+		}
+	}
+
 	function presentIconPage(icons, currentPage, lastPage, total, local) {
 		var page = Math.min(Math.max(currentPage, 1), Math.max(lastPage, 1));
 		var visible = local ? icons.slice((page - 1) * iconPickerPageSize, page * iconPickerPageSize) : icons;
 		var requestId = iconPickerRequest;
 		iconPickerPage = page;
+		setIconPickerLoading(true);
 		renderIconOptions(visible);
 		iconPickerCount.textContent = String(text.text_icon_catalog_total || '%s').replace('%s', String(total));
 		renderIconPager(page, total ? lastPage : 0);
 		iconPickerStatus.textContent = '';
 		waitForIconImages().then(function () {
 			if (requestId === iconPickerRequest) {
-				iconPickerLoading.hidden = true;
+				setIconPickerLoading(false);
 			}
 		});
 	}
@@ -757,7 +780,7 @@
 		var requestId = iconPickerRequest + 1;
 		iconPickerRequest = requestId;
 		var started = Date.now();
-		iconPickerLoading.hidden = false;
+		setIconPickerLoading(true);
 		if (iconPickerCatalog && iconPickerCatalogQuery === search) {
 			var cachedLastPage = Math.ceil(iconPickerCatalog.length / iconPickerPageSize) || 1;
 			revealIconPage(requestId, started, function () {
@@ -827,7 +850,7 @@
 				if (requestId !== iconPickerRequest) {
 					return;
 				}
-				iconPickerLoading.hidden = true;
+				setIconPickerLoading(false);
 				iconPickerStatus.textContent = text.text_icon_catalog_error;
 			});
 	}
@@ -1213,19 +1236,35 @@
 		var group = createGroup();
 		var title = createGroupLabel(text.text_tab_visible);
 		var column = createGroupColumn();
-		var input = document.createElement('select');
-		input.className = 'form-control';
+		var input = document.createElement('input');
+		input.type = 'hidden';
 		input.id = 'appnuno-visible-' + String(path).replace(/[^A-Za-z0-9_-]/g, '-');
 		title.htmlFor = input.id;
-		input.appendChild(new Option(text.text_visibility_on, '1'));
-		input.appendChild(new Option(text.text_visibility_indicator, '0'));
 		input.value = tab.visible === false ? '0' : '1';
 		input.setAttribute('data-tab-visibility', 'true');
 		input.setAttribute('data-validation-path', path + '.visible');
+		var control = document.createElement('div');
+		control.className = 'appnuno-switch appnuno-select-switch';
+		control.setAttribute('data-status-switch', input.id);
+		control.setAttribute('role', 'group');
+		control.setAttribute('aria-label', text.text_tab_visible);
+		var indicator = document.createElement('span');
+		indicator.className = 'appnuno-switch-indicator';
+		indicator.setAttribute('aria-hidden', 'true');
+		control.appendChild(indicator);
+		[['1', text.text_visibility_on], ['0', text.text_visibility_indicator]].forEach(function (option) {
+			var button = document.createElement('button');
+			button.type = 'button';
+			button.setAttribute('data-value', option[0]);
+			button.setAttribute('aria-pressed', input.value === option[0] ? 'true' : 'false');
+			button.textContent = option[1];
+			control.appendChild(button);
+		});
+		column.appendChild(control);
 		column.appendChild(input);
 		group.appendChild(appendFieldHelp(title, 'tab_visibility'));
 		group.appendChild(column);
-		enhanceSelectSwitch(input.id);
+		bindStatusSwitch(control);
 		return group;
 	}
 

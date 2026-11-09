@@ -818,7 +818,7 @@ def add_cart_page_tab(page: Page) -> None:
         raise AssertionError("The page visibility explanation should appear below its label.")
     all_pages = page_tab.locator('[data-all-pages]')
     summary = page_tab.locator('[data-page-manage]')
-    if not all_pages.is_checked() or page_tab.locator('[data-pages]').is_visible() or summary.inner_text() != "Show on all pages":
+    if not all_pages.is_checked() or page_tab.locator('[data-pages]').is_visible() or summary.inner_text() != "Showing on all pages":
         raise AssertionError("A new tab should show on all pages by default and summarize that selection.")
     summary.click()
     dialog = page.locator('#page-picker-dialog')
@@ -845,14 +845,14 @@ def add_cart_page_tab(page: Page) -> None:
     dialog.locator('#page-picker-choices [data-page-choice][value="checkout/cart"]').check()
     dialog.locator('#page-picker-apply').click()
     dialog.wait_for(state="hidden")
-    if all_pages.is_checked() or summary.inner_text() != "Show on 2 pages":
+    if all_pages.is_checked() or summary.inner_text() != "Showing on 2 pages":
         raise AssertionError("Applying a two-page selection should update its saved state and summary.")
     summary.click()
     dialog.wait_for(state="visible")
     dialog.locator('#page-picker-clear').click()
     dialog.locator('#page-picker-apply').click()
     dialog.wait_for(state="hidden")
-    if summary.inner_text() != "Hidden on all pages" or page_tab.locator('[data-pages] input:checked').count():
+    if summary.inner_text() != "Showing on no pages" or page_tab.locator('[data-pages] input:checked').count():
         raise AssertionError("Clearing all modal choices should hide the tab on every page and update its summary.")
     summary.click()
     dialog.wait_for(state="visible")
@@ -1070,7 +1070,7 @@ def configure_colors(page: Page) -> None:
     if color_help.count() != 4 or page.locator('#tab-colors label [data-toggle="tooltip"], #tab-colors label [data-bs-toggle="tooltip"]').count():
         raise AssertionError("Navigation color explanations should appear beneath labels without tooltips.")
     color_layout = page.locator("#light-background").evaluate("element => ({ maxWidth: getComputedStyle(element).maxWidth, marginLeft: getComputedStyle(element).marginLeft, right: element.getBoundingClientRect().right, parentRight: element.parentElement.getBoundingClientRect().right })")
-    if color_layout["maxWidth"] != "140px" or color_layout["marginLeft"] != "auto" or abs(color_layout["right"] - color_layout["parentRight"]) > 1:
+    if color_layout["maxWidth"] != "112px" or color_layout["marginLeft"] != "auto" or abs(color_layout["right"] - color_layout["parentRight"]) > 1:
         raise AssertionError(f"Navigation color pickers should be narrow and aligned to the right: {color_layout}.")
     page.locator("#light-background").fill("#112233")
     page.locator("#light-content").fill("#223344")
@@ -1170,7 +1170,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Navigacijos spalvos",
         "Šviesus režimas",
         "Skirtukų pavadinimai pagal kalbą",
-        "Įjungta",
+        "Taip",
     ))
     switch_admin_language(runtime, page, "en-gb")
     expect_module_language(runtime, page, (
