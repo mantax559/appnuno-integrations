@@ -1154,7 +1154,7 @@ def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...
 def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
     switch_admin_language(runtime, page, "lt-lt")
     expect_module_language(runtime, page, (
-        "Numatytieji skirtukai",
+        "Navigacija",
         "Krepšelio ženkliuko skirtukas",
         "Rodoma puslapiuose",
         "Tvarkyti puslapius",
@@ -1167,14 +1167,14 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Grįžimo mygtukas",
         "Stiklo mygtuko efektas",
         "Pasirinkite piktogramą",
-        "Navigacijos spalvos",
+        "Spalvos",
         "Šviesus režimas",
         "Skirtukų pavadinimai pagal kalbą",
         "Taip",
     ))
     switch_admin_language(runtime, page, "en-gb")
     expect_module_language(runtime, page, (
-        "Default tabs",
+        "Navigation",
         "Cart badge tab",
         "Shown on pages",
         "Manage pages",
@@ -1187,7 +1187,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Back button",
         "Glass button effect",
         "Choose an icon",
-        "Navigation colors",
+        "Colors",
         "Light mode",
         "Tab labels by language",
         "Enabled",
