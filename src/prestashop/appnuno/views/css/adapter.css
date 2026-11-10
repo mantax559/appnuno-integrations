@@ -1,12 +1,3 @@
-body:has(.appnuno-admin) .page-head,
-body:has(.appnuno-admin) .header-toolbar,
-body:has(.appnuno-admin) #content .page-head,
-body.appnuno-admin-screen .page-head,
-body.appnuno-admin-screen .header-toolbar,
-body.appnuno-admin-screen #content .page-head {
-  display: none;
-}
-
 body:has(.appnuno-admin) #content,
 body:has(.appnuno-admin) #main,
 body:has(.appnuno-admin) #main-div,
@@ -68,10 +59,19 @@ body.appnuno-admin-screen .sf-minitoolbar {
 }
 
 .appnuno-admin .appnuno-page a,
+.appnuno-admin .appnuno-page a:hover,
+.appnuno-admin .appnuno-page a:focus,
+.appnuno-admin .appnuno-page a:active,
 .appnuno-admin #page-picker-dialog a,
-.appnuno-admin #icon-picker-dialog a {
+.appnuno-admin #page-picker-dialog a:hover,
+.appnuno-admin #page-picker-dialog a:focus,
+.appnuno-admin #page-picker-dialog a:active,
+.appnuno-admin #icon-picker-dialog a,
+.appnuno-admin #icon-picker-dialog a:hover,
+.appnuno-admin #icon-picker-dialog a:focus,
+.appnuno-admin #icon-picker-dialog a:active {
   color: inherit;
-  text-decoration: none;
+  text-decoration: none !important;
   box-shadow: none;
 }
 
@@ -278,4 +278,13 @@ body.appnuno-admin-screen .sf-minitoolbar {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.appnuno-admin .appnuno-page button[data-icon-picker] {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.appnuno-admin .appnuno-page .appnuno-input-group > .appnuno-input-addon + input.appnuno-input {
+  border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
 }

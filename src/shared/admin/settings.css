@@ -239,18 +239,23 @@
 .appnuno-settings .appnuno-input-group .appnuno-input { flex: 1 1 auto; width: auto; min-width: 0; height: 42px; float: none; }
 .appnuno-settings .appnuno-input-addon,
 .appnuno-settings .appnuno-input-addon { display: flex; align-items: center; justify-content: center; flex: 0 0 46px; width: 46px; height: 42px; margin: 0; padding: 0; float: none; border: 1px solid var(--appnuno-line); border-right: 0; border-radius: var(--appnuno-radius-control) 0 0 var(--appnuno-radius-control); background: #fafafa; color: #71717a; font-size: 11px; }
-.appnuno-settings .appnuno-input-group .appnuno-input-addon + .appnuno-input,
-.appnuno-settings .appnuno-input-group .appnuno-input-addon + .appnuno-input { border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0; }
+.appnuno-settings .appnuno-input-group > .appnuno-input-addon + input.appnuno-input[type="text"] { border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0; }
 .appnuno-settings .appnuno-input-group + .appnuno-input-group { margin-top: var(--appnuno-space); }
-.appnuno-settings input[type="checkbox"] { appearance: none; position: static; float: none; flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; margin: 0; border: 1px solid var(--appnuno-line); border-radius: 5px; background: #fff; cursor: pointer; box-shadow: none; }
+.appnuno-settings input[type="checkbox"] { -webkit-appearance: none; appearance: none; position: static; float: none; display: inline-block; flex: 0 0 18px; width: 18px; height: 18px; min-width: 18px; min-height: 18px; margin: 0; padding: 0; border: 1px solid var(--appnuno-line); border-radius: 5px; background: #fff; opacity: 1; cursor: pointer; box-shadow: none; }
 .appnuno-settings input[type="checkbox"]:checked { border-color: #18181b; background: #18181b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='m4 8 3 3 5-6'/%3E%3C/svg%3E") center / 16px no-repeat; }
 .appnuno-settings input[type="checkbox"]:hover,
-.appnuno-settings input[type="checkbox"]:focus { border-color: var(--appnuno-line); box-shadow: none; }
+.appnuno-settings input[type="checkbox"]:focus,
+.appnuno-settings input[type="checkbox"]:active { border-color: var(--appnuno-line); background-color: #fff; box-shadow: none; }
+.appnuno-settings input[type="checkbox"]:checked:hover,
+.appnuno-settings input[type="checkbox"]:checked:focus,
+.appnuno-settings input[type="checkbox"]:checked:active { border-color: #18181b; background-color: #18181b; box-shadow: none; }
+.appnuno-settings input[type="checkbox"]::before,
+.appnuno-settings input[type="checkbox"]::after,
 .appnuno-settings input[type="checkbox"]:checked::before,
 .appnuno-settings input[type="checkbox"]:checked::after { display: none; content: none; }
 .appnuno-settings input[type="checkbox"]:focus-visible { outline: none; }
 .appnuno-settings .appnuno-check,
-.appnuno-settings .appnuno-check { position: relative; display: flex; align-items: center; gap: 10px; margin: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
+.appnuno-settings .appnuno-check { position: relative; display: flex; flex-direction: row; align-items: center; gap: 10px; margin: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
 .appnuno-settings .appnuno-check label,
 .appnuno-settings .appnuno-check-label { display: flex; align-items: center; flex: 1; gap: 10px; min-height: 24px; margin: 0; padding: 0; color: #000; font-size: 12px; font-weight: 400; cursor: pointer; }
 .appnuno-settings [data-pages] { height: auto; max-height: none; overflow: visible; margin-top: 16px; padding: 6px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; box-shadow: none; }
@@ -292,6 +297,13 @@
 .appnuno-settings input[type="color"]::-webkit-color-swatch { border: 1px solid var(--appnuno-line); border-radius: 8px; }
 .appnuno-settings input[type="color"]::-moz-color-swatch { border: 1px solid var(--appnuno-line); border-radius: 8px; }
 .appnuno-settings .appnuno-invalid { border-color: #dc2626; }
+.appnuno-settings .appnuno-field.appnuno-invalid .appnuno-input,
+.appnuno-settings .appnuno-field.appnuno-invalid .appnuno-input-addon,
+.appnuno-settings .appnuno-field.appnuno-invalid select,
+.appnuno-settings .appnuno-field.appnuno-invalid .appnuno-button,
+.appnuno-settings .appnuno-input.appnuno-invalid,
+.appnuno-settings select.appnuno-invalid,
+.appnuno-settings button.appnuno-invalid { border-color: #dc2626 !important; }
 
 #page-picker-dialog { --appnuno-gap: 24px; --appnuno-space: 8px; --appnuno-line: #e4e4e7; --appnuno-radius: 12px; --appnuno-radius-control: 8px; color: #18181b; font: 14px/1.5 ui-sans-serif, system-ui, sans-serif; }
 #page-picker-dialog, #page-picker-dialog * { box-sizing: border-box; }
@@ -310,15 +322,21 @@
 #page-picker-dialog .appnuno-button-group > .appnuno-button:last-child { border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0; }
 #page-picker-dialog .appnuno-page-picker-choices [data-pages] { max-height: min(50vh, 420px); overflow-y: auto; margin: 0; padding: 8px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
 #page-picker-dialog .appnuno-check,
-#page-picker-dialog .appnuno-check { position: relative; display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
-#page-picker-dialog input[type="checkbox"] { -webkit-appearance: none; appearance: none; position: static; float: none; flex: 0 0 18px; width: 18px; height: 18px; min-height: 18px; margin: 0; border: 1px solid var(--appnuno-line); border-radius: 5px; background: #fff; cursor: pointer; box-shadow: none; }
-#page-picker-dialog input[type="checkbox"]:checked { border-color: #18181b; background: #18181b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='m4 8 3 3 5-6'/%3E%3C/svg%3E") center / 16px no-repeat; }
+#page-picker-dialog .appnuno-check { position: relative; display: flex !important; flex-direction: row !important; align-items: center !important; gap: 10px; min-height: 44px; margin: 0; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
+#page-picker-dialog input[type="checkbox"] { -webkit-appearance: none !important; appearance: none !important; position: static !important; top: auto !important; float: none !important; display: inline-block !important; flex: 0 0 18px !important; width: 18px !important; height: 18px !important; min-width: 18px !important; min-height: 18px !important; margin: 0 !important; padding: 0 !important; border: 1px solid var(--appnuno-line) !important; border-radius: 5px !important; background: #fff !important; opacity: 1 !important; visibility: visible !important; cursor: pointer; box-shadow: none !important; }
+#page-picker-dialog input[type="checkbox"]:checked { border-color: #18181b !important; background: #18181b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='white' stroke-width='1.8'%3E%3Cpath d='m4 8 3 3 5-6'/%3E%3C/svg%3E") center / 16px no-repeat !important; }
+#page-picker-dialog input[type="checkbox"]:hover,
+#page-picker-dialog input[type="checkbox"]:focus,
+#page-picker-dialog input[type="checkbox"]:active { border-color: var(--appnuno-line) !important; background-color: #fff !important; box-shadow: none !important; }
+#page-picker-dialog input[type="checkbox"]:checked:hover,
+#page-picker-dialog input[type="checkbox"]:checked:focus,
+#page-picker-dialog input[type="checkbox"]:checked:active { border-color: #18181b !important; background-color: #18181b !important; box-shadow: none !important; }
 #page-picker-dialog input[type="checkbox"]::before,
 #page-picker-dialog input[type="checkbox"]::after,
 #page-picker-dialog input[type="checkbox"]:checked::before,
-#page-picker-dialog input[type="checkbox"]:checked::after { content: none; display: none; }
+#page-picker-dialog input[type="checkbox"]:checked::after { content: none !important; display: none !important; width: 0 !important; height: 0 !important; margin: 0 !important; }
 #page-picker-dialog .appnuno-check label,
-#page-picker-dialog .appnuno-check-label { display: flex; align-items: center; flex: 1; gap: 10px; min-height: 24px; margin: 0; padding: 0; color: #000; font-size: 14px; font-weight: 400; cursor: pointer; }
+#page-picker-dialog .appnuno-check-label { display: flex; align-items: center; flex: 1; float: none; width: auto; gap: 10px; min-height: 24px; margin: 0; padding: 0; color: #000; font-size: 14px; font-weight: 400; cursor: pointer; }
 #page-picker-dialog .appnuno-page-picker-choices [data-pages] .appnuno-check,
 #page-picker-dialog .appnuno-page-picker-choices [data-pages] .appnuno-check { min-height: 36px; padding: 4px 0; border: 0; background: transparent; }
 #page-picker-dialog .appnuno-page-picker-choices [data-pages] label { font-size: 14px; }
@@ -366,7 +384,8 @@
 #icon-picker-grid img { display: block; width: 28px; height: 28px; max-width: 28px; max-height: 28px; }
 #appnuno-tooltip { position: fixed; z-index: 100010; max-width: 280px; padding: 8px 12px; border-radius: 8px; background: #18181b; color: #fff; font: 13px/1.4 ui-sans-serif, system-ui, sans-serif; transform: translate(-50%, -100%); pointer-events: none; box-shadow: 0 8px 24px rgb(0 0 0 / 18%); }
 #appnuno-tooltip[hidden] { display: none; }
-.appnuno-settings [data-icon-picker] { display: flex; width: 100%; max-width: 100%; justify-content: flex-start; white-space: normal; overflow-wrap: anywhere; }
+.appnuno-settings [data-icon-picker] { display: flex; width: 100%; max-width: 100%; justify-content: flex-start; text-align: left; white-space: normal; overflow-wrap: anywhere; }
+body .appnuno-settings .appnuno-field-control > button.appnuno-button[data-icon-picker] { justify-content: flex-start; text-align: left; }
 .appnuno-settings [data-icon-picker].appnuno-icon-empty,
 .appnuno-settings [data-icon-picker].appnuno-icon-empty:hover { color: #a1a1aa; }
 .appnuno-settings [data-icon-picker] img { flex: 0 0 24px; }

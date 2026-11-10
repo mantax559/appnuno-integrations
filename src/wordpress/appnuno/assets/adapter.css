@@ -258,3 +258,12 @@ body.wp-admin.appnuno-admin-screen .appnuno-page #default-tabs [data-remove-tab]
   border: 0;
   background: transparent;
 }
+
+body.wp-admin.appnuno-admin-screen .appnuno-page button[data-icon-picker] {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-input-group > .appnuno-input-addon + input.appnuno-input {
+  border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
+}

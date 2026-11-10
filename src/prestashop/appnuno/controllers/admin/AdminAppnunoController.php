@@ -34,7 +34,6 @@ class AdminAppnunoController extends ModuleAdminController
     {
         $this->content = AppnunoAdmin::render($this->appnunoErrors);
         parent::initContent();
-        $this->show_page_header_toolbar = false;
     }
 
     public function setMedia($isNewTheme = false)
