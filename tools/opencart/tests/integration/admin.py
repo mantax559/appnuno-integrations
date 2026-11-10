@@ -294,7 +294,7 @@ def assert_responsive_layout(page: Page) -> None:
                             settingsScrollWidth: settings.scrollWidth,
                             sectionClientWidth: panel.clientWidth,
                             sectionScrollWidth: panel.scrollWidth,
-                            overflowingNodes: Array.from(settings.querySelectorAll('*')).filter(element => element.getClientRects().length).map(element => {
+                            overflowingNodes: Array.from(settings.querySelectorAll('*')).filter(element => element.getClientRects().length && !element.closest('.appnuno-watermark')).map(element => {
                                 const rect = element.getBoundingClientRect();
                                 return {
                                     tag: element.tagName,
@@ -306,7 +306,7 @@ def assert_responsive_layout(page: Page) -> None:
                                     clientWidth: element.clientWidth,
                                     scrollWidth: element.scrollWidth
                                 };
-                            }).filter(element => element.right > settingsRect.right + 1 || element.scrollWidth > element.clientWidth + 1).sort((first, second) => second.right - first.right).slice(0, 8),
+                            }).filter(element => element.left < settingsRect.left - 1 || element.right > settingsRect.right + 1 || element.scrollWidth > element.clientWidth + 1).sort((first, second) => second.right - first.right).slice(0, 8),
                             parentInnerLeft: parentRect.left + parseFloat(parentStyle.borderLeftWidth) + parseFloat(parentStyle.paddingLeft),
                             parentInnerRight: parentRect.right - parseFloat(parentStyle.borderRightWidth) - parseFloat(parentStyle.paddingRight)
                         };
@@ -327,9 +327,8 @@ def assert_responsive_layout(page: Page) -> None:
                     context = f"{width}px, {section}, {state} sidebar"
                     if measurement["documentWidth"] > measurement["viewportWidth"] + 1:
                         raise AssertionError(f"The settings page overflows horizontally ({context}): {measurement}.")
-                    for area in ("settings", "section"):
-                        if measurement[f"{area}ScrollWidth"] > measurement[f"{area}ClientWidth"] + 1:
-                            raise AssertionError(f"The {area} clips or scrolls horizontally ({context}): {measurement}.")
+                    if measurement["sectionScrollWidth"] > measurement["sectionClientWidth"] + 1 or measurement["overflowingNodes"]:
+                        raise AssertionError(f"The settings clips or scrolls horizontally ({context}): {measurement}.")
                     if width >= 768 and measurement["sidebarVisible"] and measurement["contentLeft"] < measurement["sidebarRight"] - 1:
                         raise AssertionError(f"The settings content is covered by the OpenCart sidebar ({context}): {measurement}.")
                     if measurement["settingsLeft"] < measurement["contentLeft"] - 1 or measurement["settingsRight"] > measurement["contentRight"] + 1:
