@@ -9,6 +9,7 @@ $ErrorActionPreference = "Stop"
 $env:WORDPRESS_VERSION = $WordPressVersion
 $env:WORDPRESS_PORT = "$WordPressPort"
 $env:WOOCOMMERCE_VERSION = $WooCommerceVersion
+$env:APPNUNO_INSTALL_PLUGIN = "1"
 $composeFile = Join-Path $PSScriptRoot "docker\docker-compose.yml"
 $liveComposeFile = Join-Path $PSScriptRoot "docker\docker-compose.live.yml"
 $composeArgs = @("-p", "appnuno-wordpress-live", "-f", $composeFile, "-f", $liveComposeFile)

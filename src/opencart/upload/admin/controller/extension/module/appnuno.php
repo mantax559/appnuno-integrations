@@ -1,4 +1,12 @@
 <?php
+if (!class_exists('AppnunoConfig', false)) {
+	if (defined('DIR_SYSTEM') && is_file(DIR_SYSTEM . 'library/appnuno-config.php')) {
+		require_once DIR_SYSTEM . 'library/appnuno-config.php';
+	} else {
+		require_once dirname(__FILE__) . '/../../../../../../shared/php/appnuno-config.php';
+	}
+}
+
 class ControllerExtensionModuleAppnuno extends Controller {
 	private $error = array();
 	private $available_languages = array();
@@ -31,9 +39,6 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$data['heading_title'] = $this->language->get('heading_title');
 		$data['appnuno_version'] = trim(file_get_contents(DIR_APPLICATION . 'view/javascript/appnuno/version.txt'));
-		$data['appnuno_settings_css_version'] = filemtime(DIR_APPLICATION . 'view/javascript/appnuno/settings.css');
-
-		$data['text_edit'] = $this->language->get('text_edit');
 		$data['text_documentation'] = $this->language->get('text_documentation');
 		$data['text_enabled'] = $this->language->get('text_enabled');
 		$data['text_disabled'] = $this->language->get('text_disabled');
@@ -44,11 +49,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$data['languages'] = $this->available_languages;
 		$data['destinations'] = $this->translatedDestinations($this->model_extension_module_appnuno->getDestinations((int)$this->config->get('config_language_id'), (int)$this->config->get('config_store_id')));
 		$data['route_options'] = $this->routeOptions();
-		$data['help_config'] = $this->language->get('help_config');
-
 		$data['button_save'] = $this->language->get('button_save');
 		$data['button_cancel'] = $this->language->get('button_cancel');
-
 		$data['error_warning'] = $this->capturedError('warning');
 
 		if (isset($this->session->data['success'])) {
@@ -61,7 +63,6 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$data['error_config'] = $this->capturedError('config');
 		$data['error_config_path'] = $this->capturedError('config_path');
-
 		$data['breadcrumbs'] = array();
 
 		$data['breadcrumbs'][] = array(
@@ -90,7 +91,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$data['route_options_json'] = $this->json($data['route_options']);
 		$data['error_config_path_json'] = $this->json($data['error_config_path']);
 		$data['default_language_code'] = $this->config->get('config_language');
-
+		$data['appnuno_settings'] = $this->settingsMarkup($data);
 		$data['header'] = $this->load->controller('common/header');
 		$data['column_left'] = $this->load->controller('common/column_left');
 		$data['footer'] = $this->load->controller('common/footer');
@@ -141,16 +142,76 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$this->request->post['module_appnuno_config'] = $this->model_extension_module_appnuno->normalizeConfig($posted_config);
 		$posted_config = $this->request->post['module_appnuno_config'];
-
 		$config_error = $this->model_extension_module_appnuno->validateConfig($this->request->post['module_appnuno_config'], $this->languageCodes());
 
 		if (strlen($config_error)) {
-			$this->error['config'] = $this->readableConfigError($config_error, $posted_config);
+			$this->error['config'] = AppnunoConfig::readableConfigError(
+				$config_error,
+				$posted_config,
+				function ($key) {
+					return $this->language->get($key);
+				},
+				function ($route) {
+					return $this->routeLabel($route);
+				},
+				function ($code) {
+					return $this->languageName($code);
+				},
+				$this->activeLanguageCode()
+			);
 			$error_separator = strrpos($config_error, ':');
 			$this->error['config_path'] = is_int($error_separator) ? substr($config_error, 0, $error_separator) : '';
 		}
 
 		return !$this->error;
+	}
+
+	private function settingsMarkup($data) {
+		$path = DIR_APPLICATION . 'view/javascript/appnuno/settings.html';
+		$html = is_file($path) ? file_get_contents($path) : '';
+		$enabled = in_array($data['module_appnuno_status'], array('1', 1), true);
+		$replacements = array(
+			'appnuno_version' => htmlspecialchars($data['appnuno_version'], ENT_QUOTES, 'UTF-8'),
+			'documentation_url' => 'https://appnuno.com/opencart',
+			'cancel' => htmlspecialchars($data['cancel'], ENT_QUOTES, 'UTF-8'),
+			'form_action' => htmlspecialchars($data['action'], ENT_QUOTES, 'UTF-8'),
+			'form_nonce' => '',
+			'status_enabled_pressed' => $enabled ? 'true' : 'false',
+			'status_disabled_pressed' => $enabled ? 'false' : 'true',
+			'status_value' => $enabled ? '1' : '0',
+			'alert_success' => AppnunoConfig::alert('success', 'check', $data['success'], $data['button_cancel']),
+			'alert_warning' => AppnunoConfig::alert('danger', 'alert', $data['error_warning'], $data['button_cancel']),
+			'alert_config' => AppnunoConfig::alert('danger', 'alert', $data['error_config'], $data['button_cancel']),
+			'configuration_json' => $data['configuration_json'],
+			'text_json' => $data['text_json'],
+			'languages_json' => $data['languages_json'],
+			'destinations_json' => $data['destinations_json'],
+			'route_options_json' => $data['route_options_json'],
+			'error_config_path_json' => $data['error_config_path_json'],
+			'default_language_json' => $this->json($data['default_language_code']),
+			'settings_script' => 'view/javascript/appnuno/settings.js?v=' . $this->assetVersion()
+		);
+
+		foreach (array('text_documentation', 'button_cancel', 'button_save', 'text_default_tabs', 'entry_status', 'text_enabled', 'text_disabled', 'icon_catalog_search') as $key) {
+			$replacements[$key === 'icon_catalog_search' ? 'text_icon_catalog_search' : $key] = htmlspecialchars($data[$key], ENT_QUOTES, 'UTF-8');
+		}
+
+		foreach ($data['text'] as $key => $value) {
+			$replacements[$key] = htmlspecialchars(is_string($value) ? $value : '', ENT_QUOTES, 'UTF-8');
+		}
+
+		return AppnunoConfig::renderSettings(is_string($html) ? $html : '', $replacements);
+	}
+
+	private function assetVersion() {
+		$directory = DIR_APPLICATION . 'view/javascript/appnuno/';
+		$body = '';
+
+		foreach (array('settings.css', 'adapter.css', 'settings.js', 'settings.html') as $name) {
+			$body .= is_file($directory . $name) ? hash_file('sha256', $directory . $name) : '';
+		}
+
+		return substr(hash('sha256', $body), 0, 12);
 	}
 
 	private function interfaceText() {
@@ -197,303 +258,6 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		}
 
 		return $destinations;
-	}
-
-	private function readableConfigError($config_error, $posted_config) {
-		$separator = strrpos($config_error, ': ');
-
-		if (!is_int($separator)) {
-			return $config_error;
-		}
-
-		$message = substr($config_error, $separator + 2);
-		$key = $this->configErrorKey($message);
-		$sentence = strlen($key) ? $this->language->get($key) : $message;
-
-		if (!strlen($sentence) || $sentence === $key) {
-			$sentence = $message;
-		}
-
-		if (!strlen($key)) {
-			$place = $this->readableConfigPlace(substr($config_error, 0, $separator), $posted_config);
-
-			return strlen($place) ? $place . ': ' . $sentence : $sentence;
-		}
-
-		return $this->composeConfigError($key, substr($config_error, 0, $separator), $posted_config);
-	}
-
-	private function composeConfigError($key, $path, $posted_config) {
-		if ($key === 'error_glass_setting') {
-			$choices = array(
-				'glass.enabled' => 'error_glass_enabled_choice',
-				'glass.animate' => 'error_glass_animate_choice',
-				'glass.isInteractive' => 'error_glass_interactive_choice'
-			);
-
-			if (isset($choices[$path])) {
-				$key = $choices[$path];
-			}
-		}
-
-		$context = $this->errorContext($path, $posted_config);
-		$template_key = $key;
-
-		if (strlen($context['page']) && $this->language->get($key . '_page') !== $key . '_page') {
-			$template_key = $key . '_page';
-		}
-
-		$sentence = $this->language->get($template_key);
-
-		if (!strlen($sentence) || $sentence === $template_key) {
-			$sentence = $this->language->get($key);
-		}
-
-		return strtr($sentence, array(
-			'{tab}' => $context['tab'],
-			'{page}' => $context['page'],
-			'{language}' => $context['language'],
-			'{mode}' => $context['mode'],
-			'{field}' => $context['field']
-		));
-	}
-
-	private function errorContext($path, $posted_config) {
-		$config = json_decode($posted_config, true);
-
-		if (!is_array($config)) {
-			$config = array();
-		}
-
-		$context = array('tab' => '', 'page' => '', 'language' => '', 'mode' => '', 'field' => '');
-
-		if (preg_match('/^(defaultTabs|routes\.[^\[]+)\[(\d+)\](?:\.(.*))?$/', $path, $match)) {
-			if (strpos($match[1], 'routes.') === 0) {
-				$context['page'] = $this->routeLabel(substr($match[1], 7));
-			}
-
-			$context['tab'] = $this->tabTitle($this->tabsForPath($config, $match[1]), (int)$match[2]);
-			$field = isset($match[3]) ? $match[3] : '';
-
-			if (strpos($field, 'urls.') === 0) {
-				$context['language'] = $this->languageName(substr($field, 5));
-			}
-		} elseif (preg_match('/^routes\.(.+)\.route$/', $path, $match)) {
-			$context['page'] = $match[1];
-		} elseif (preg_match('/^routes\.(.+)$/', $path, $match)) {
-			$context['page'] = $this->routeLabel($match[1]);
-		} else		if (preg_match('/^colors\.(light|dark)(?:\.(backgroundColor|contentColor))?$/', $path, $match)) {
-			$context['mode'] = $this->colorModeLabel($match[1]);
-
-			if (isset($match[2]) && strlen($match[2])) {
-				$context['field'] = $this->colorFieldLabel($match[2]);
-			}
-		}
-
-		return $context;
-	}
-
-	private function configErrorKey($message) {
-		$keys = array(
-			'Configuration must be valid JSON smaller than 64 KB.' => 'error_json',
-			'Configuration is missing its tab sets. Submit the settings page again.' => 'error_config_shape',
-			'A maximum of 30 route-specific tab sets is allowed.' => 'error_routes_limit',
-			'Each route must be a valid OpenCart route such as checkout/cart.' => 'error_route',
-			'A tab set must contain no more than 8 tabs.' => 'error_tab_limit',
-			'Enter a valid, unique tab ID.' => 'error_tab_id',
-			'Tab IDs must be unique within each tab set.' => 'error_tab_id_unique',
-			'Choose a store page or enter a local URL, for example /home.' => 'error_tab_url',
-			'Add at least one localized URL.' => 'error_tab_urls',
-			'Use a valid OpenCart language code.' => 'error_tab_url_language',
-			'Enter a local URL, for example /home.' => 'error_tab_url_local',
-			'Enter a local URL for this language, even if the language is disabled.' => 'error_tab_url_required',
-			'Enter a label for each enabled store language.' => 'error_tab_labels',
-			'Choose an icon from the AppNuno catalog.' => 'error_tab_icon',
-			'The selected state must be true or false.' => 'error_tab_active',
-			'The visibility state must be true or false.' => 'error_tab_visible',
-			'The badge count must be zero or a positive integer.' => 'error_tab_badge',
-			'Choose whether the tab appears on every page.' => 'error_tab_all_pages',
-			'Choose no more than 30 store pages.' => 'error_tab_pages_limit',
-			'Choose a valid store page.' => 'error_tab_pages',
-			'Choose a valid cart badge tab.' => 'error_cart_tab',
-			'Choose a valid back-button configuration.' => 'error_back',
-			'Glass settings must be an object.' => 'error_glass',
-			'Choose a valid glass setting.' => 'error_glass_setting',
-			'Choose Automatic, Light or Dark.' => 'error_glass_color_scheme',
-			'Choose a valid glass style.' => 'error_glass_style',
-			'Enter a duration from 0 to 10 seconds.' => 'error_glass_duration',
-			'Enter a valid tint color and opacity.' => 'error_glass_tint',
-			'Navigation colors must be an object.' => 'error_colors',
-			'Navigation color values must be an object.' => 'error_color_scheme',
-			'Choose a valid six-digit color.' => 'error_color'
-		);
-
-		return isset($keys[$message]) ? $keys[$message] : '';
-	}
-
-	private function readableConfigPlace($path, $posted_config) {
-		$config = json_decode($posted_config, true);
-
-		if (!is_array($config)) {
-			$config = array();
-		}
-
-		if ($path === 'module_appnuno_config') {
-			return '';
-		}
-
-		if ($path === 'cartTabId') {
-			return $this->language->get('entry_cart_tab');
-		}
-
-		if ($path === 'back') {
-			return $this->language->get('text_back_button');
-		}
-
-		if ($path === 'glass') {
-			return $this->language->get('text_glass');
-		}
-
-		if ($path === 'colors') {
-			return $this->language->get('text_navigation_colors');
-		}
-
-		if ($path === 'defaultTabs') {
-			return $this->language->get('text_default_tabs');
-		}
-
-		if ($path === 'routes') {
-			return $this->language->get('text_shown_on_pages');
-		}
-
-		if (preg_match('/^glass\.(enabled|animate|isInteractive|colorScheme|style|animationDuration|tintColor|contentColor)$/', $path, $match)) {
-			$fields = array(
-				'enabled' => 'entry_glass_enabled',
-				'animate' => 'entry_glass_animate',
-				'isInteractive' => 'entry_glass_interactive',
-				'colorScheme' => 'entry_glass_color_scheme',
-				'style' => 'entry_glass_style',
-				'animationDuration' => 'entry_glass_duration',
-				'tintColor' => 'entry_glass_tint',
-				'contentColor' => 'entry_content'
-			);
-
-			return $this->joinPlace(array($this->language->get('text_glass'), $this->language->get($fields[$match[1]])));
-		}
-
-		if (preg_match('/^colors\.(light|dark)$/', $path, $match)) {
-			return $this->colorModeLabel($match[1]);
-		}
-
-		if (preg_match('/^colors\.(light|dark)\.(backgroundColor|contentColor)$/', $path, $match)) {
-			return $this->joinPlace(array($this->colorModeLabel($match[1]), $this->colorFieldLabel($match[2])));
-		}
-
-		if (preg_match('/^routes\.(.+)\.route$/', $path, $match)) {
-			return $this->joinPlace(array($this->language->get('text_shown_on_pages'), $this->routeLabel($match[1])));
-		}
-
-		if (preg_match('/^(defaultTabs|routes\.[^\[]+)\[(\d+)\](?:\.(.*))?$/', $path, $match)) {
-			$tabs = $this->tabsForPath($config, $match[1]);
-			$parts = array($this->tabTitle($tabs, (int)$match[2]));
-			$field = $this->tabFieldLabel(isset($match[3]) ? $match[3] : '');
-
-			if (strlen($field)) {
-				$parts[] = $field;
-			}
-
-			if (strpos($match[1], 'routes.') === 0) {
-				array_unshift($parts, $this->routeLabel(substr($match[1], 7)));
-			}
-
-			return $this->joinPlace($parts);
-		}
-
-		return '';
-	}
-
-	private function tabsForPath($config, $collection) {
-		if ($collection === 'defaultTabs') {
-			return isset($config['defaultTabs']) && is_array($config['defaultTabs']) ? array_values($config['defaultTabs']) : array();
-		}
-
-		$route = substr($collection, 7);
-
-		return isset($config['routes'][$route]) && is_array($config['routes'][$route]) ? array_values($config['routes'][$route]) : array();
-	}
-
-	private function tabTitle($tabs, $index) {
-		if (!isset($tabs[$index]) || !is_array($tabs[$index])) {
-			return $this->language->get('text_tab_list_empty');
-		}
-
-		return $this->singleTabTitle($tabs[$index]);
-	}
-
-	private function singleTabTitle($tab) {
-		$language_code = $this->config->get('config_language');
-
-		if (isset($tab['labels']) && is_array($tab['labels'])) {
-			if (is_string($language_code) && isset($tab['labels'][$language_code]) && is_string($tab['labels'][$language_code]) && strlen(trim($tab['labels'][$language_code]))) {
-				return trim($tab['labels'][$language_code]);
-			}
-
-			foreach ($tab['labels'] as $label) {
-				if (is_string($label) && strlen(trim($label))) {
-					return trim($label);
-				}
-			}
-		}
-
-		if (isset($tab['label']) && is_string($tab['label']) && strlen(trim($tab['label']))) {
-			return trim($tab['label']);
-		}
-
-		if (isset($tab['id']) && is_string($tab['id']) && preg_match('/^[A-Za-z0-9_-]{1,64}$/', $tab['id'])) {
-			return trim($tab['id']);
-		}
-
-		return $this->language->get('text_tab_list_empty');
-	}
-
-	private function tabFieldLabel($field) {
-		if ($field === 'id') {
-			return $this->language->get('text_tab_id');
-		}
-
-		if ($field === 'url' || $field === 'urls') {
-			return $this->language->get('text_destination');
-		}
-
-		if ($field === 'labels') {
-			return $this->language->get('text_language_labels');
-		}
-
-		if ($field === 'icon') {
-			return $this->language->get('text_icon');
-		}
-
-		if ($field === 'visible') {
-			return $this->language->get('text_tab_visible');
-		}
-
-		if ($field === 'badge') {
-			return $this->language->get('entry_cart_tab');
-		}
-
-		if ($field === 'allPages' || $field === 'pages') {
-			return $this->language->get('text_shown_on_pages');
-		}
-
-		if (strpos($field, 'urls.') === 0) {
-			return $this->joinPlace(array($this->languageName(substr($field, 5)), $this->language->get('text_custom_url')));
-		}
-
-		if (strpos($field, 'labels.') === 0) {
-			return $this->joinPlace(array($this->languageName(substr($field, 7)), $this->language->get('text_label')));
-		}
-
-		return '';
 	}
 
 	private function languageName($code) {
@@ -602,23 +366,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 	}
 
-	private function colorModeLabel($mode) {
-		return $this->language->get($mode === 'light' ? 'text_light_mode' : 'text_dark_mode');
-	}
+	private function activeLanguageCode() {
+		$language_code = $this->config->get('config_language');
 
-	private function colorFieldLabel($field) {
-		return $this->language->get($field === 'backgroundColor' ? 'entry_background' : 'entry_content');
-	}
-
-	private function joinPlace($parts) {
-		$labels = array();
-
-		foreach ($parts as $part) {
-			if (is_string($part) && strlen($part)) {
-				$labels[] = $part;
-			}
-		}
-
-		return implode(' > ', $labels);
+		return is_string($language_code) ? $language_code : '';
 	}
 }

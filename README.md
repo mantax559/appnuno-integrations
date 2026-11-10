@@ -2,7 +2,7 @@
 
 | Platform | Version | Instruction | Download |
 | --- | --- | --- | --- |
-| WooCommerce | 11.x | Instruction in preparation | — |
+| WooCommerce | 11.x | [Instruction](downloads/woocommerce/11.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/11.x/appnuno-woocommerce-11.x.zip) |
 | WooCommerce | 10.x | Instruction in preparation | — |
 | WooCommerce | 9.x | Instruction in preparation | — |
 | WooCommerce | 8.x | Instruction in preparation | — |
@@ -46,6 +46,14 @@ PrestaShop support currently verifies only that the official PrestaShop 8.x or 9
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-docker.ps1 -PrestaShopTag 8.2-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-docker.ps1 -PrestaShopTag 9.0-apache
+```
+
+## Generate the WooCommerce 11.x package
+
+Run this command from the repository root. PHP must have the `zip` extension enabled. It builds `downloads/woocommerce/11.x/appnuno-woocommerce-11.x.zip`.
+
+```powershell
+php tools/wordpress/build-package.php
 ```
 
 ## Generate WordPress and OpenCart workflows

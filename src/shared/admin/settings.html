@@ -1,0 +1,246 @@
+  <div class="container-fluid appnuno-page">
+    {{alert_success}}
+    {{alert_warning}}
+    {{alert_config}}
+    <div class="appnuno-settings">
+      <div class="appnuno-toolbar">
+        <div class="appnuno-watermark" aria-hidden="true"></div>
+        <div class="appnuno-brand">
+          <img class="appnuno-brand-mark" src="https://appnuno.com/logo-dark.png" alt="AppNuno">
+          <div class="appnuno-version-group">
+            <span class="appnuno-version">v{{appnuno_version}}</span>
+            <a class="appnuno-documentation" href="{{documentation_url}}" target="_blank" rel="noopener noreferrer"><span class="appnuno-icon appnuno-icon-document" aria-hidden="true"></span>{{text_documentation}}</a>
+          </div>
+        </div>
+        <div class="appnuno-toolbar-actions appnuno-button-group">
+          <a href="{{cancel}}" class="appnuno-button">{{button_cancel}}</a>
+          <button type="submit" form="form-appnuno" class="appnuno-button appnuno-button-primary">{{button_save}}</button>
+        </div>
+      </div>
+      <div class="appnuno-body">
+        <form action="{{form_action}}" method="post" enctype="multipart/form-data" id="form-appnuno">
+          {{form_nonce}}
+          <input type="hidden" name="module_appnuno_config" id="input-config-json" value="" />
+          <div class="appnuno-section-toolbar">
+            <div class="appnuno-switch appnuno-section-switch">
+              <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+              <ul class="appnuno-section-list">
+                <li class="active"><a href="#tab-navigation">{{text_default_tabs}}</a></li>
+                <li><a href="#tab-glass">{{text_glass}}</a></li>
+                <li><a href="#tab-colors">{{text_navigation_colors}}</a></li>
+              </ul>
+            </div>
+            <div class="appnuno-field appnuno-status-field">
+              <label class="appnuno-field-label" id="input-status-label" for="input-status">{{entry_status}}</label>
+              <div class="appnuno-field-control">
+                <div class="appnuno-switch" data-status-switch="input-status">
+                  <span class="appnuno-switch-indicator" aria-hidden="true"></span>
+                  <button type="button" data-value="1" aria-pressed="{{status_enabled_pressed}}">{{text_enabled}}</button>
+                  <button type="button" data-value="0" aria-pressed="{{status_disabled_pressed}}">{{text_disabled}}</button>
+                </div>
+                <input type="hidden" name="module_appnuno_status" id="input-status" value="{{status_value}}" />
+              </div>
+            </div>
+          </div>
+          <div class="appnuno-sections">
+            <div class="appnuno-section appnuno-section-open" id="tab-navigation">
+              <div id="default-tabs"></div>
+            </div>
+            <div class="appnuno-section" id="tab-glass">
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title">{{text_back_button}}</h2>
+              <div class="appnuno-setting-card-body">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="back-enabled">{{entry_back_enabled}}</label>
+                <div class="appnuno-field-control">
+                  <select id="back-enabled" class="appnuno-input">
+                    <option value="1">{{text_yes}}</option>
+                    <option value="0">{{text_no}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="back-enabled">
+                <label class="appnuno-field-label" for="back-placement">{{entry_back_placement}}</label>
+                <div class="appnuno-field-control">
+                  <select id="back-placement" class="appnuno-input">
+                    <option value="separate">{{text_placement_separate}}</option>
+                    <option value="bar">{{text_placement_bar}}</option>
+                  </select>
+                </div>
+              </div>
+              </div>
+              </section>
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title">{{text_glass_button}}</h2>
+              <div class="appnuno-setting-card-body">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="glass-enabled">{{entry_glass_enabled}}</label>
+                <div class="appnuno-field-control">
+                  <select id="glass-enabled" class="appnuno-input">
+                    <option value="1">{{text_yes}}</option>
+                    <option value="0">{{text_no}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-color-scheme">{{entry_glass_color_scheme}}</label>
+                <div class="appnuno-field-control">
+                  <select id="glass-color-scheme" class="appnuno-input">
+                    <option value="auto">{{text_color_auto}}</option>
+                    <option value="light">{{text_color_light}}</option>
+                    <option value="dark">{{text_color_dark}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-style">{{entry_glass_style}}</label>
+                <div class="appnuno-field-control">
+                  <select id="glass-style" class="appnuno-input">
+                    <option value="regular">{{text_style_regular}}</option>
+                    <option value="clear">{{text_style_clear}}</option>
+                    <option value="none">{{text_style_none}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-animate">{{entry_glass_animate}}</label>
+                <div class="appnuno-field-control">
+                  <select id="glass-animate" class="appnuno-input">
+                    <option value="1">{{text_enabled}}</option>
+                    <option value="0">{{text_disabled}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-duration">{{entry_glass_duration}}</label>
+                <div class="appnuno-field-control">
+                  <input type="number" min="0" max="10" step="0.1" id="glass-duration" class="appnuno-input appnuno-compact-control" placeholder="0.3" required="required" />
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-interactive">{{entry_glass_interactive}}</label>
+                <div class="appnuno-field-control">
+                  <select id="glass-interactive" class="appnuno-input">
+                    <option value="1">{{text_enabled}}</option>
+                    <option value="0">{{text_disabled}}</option>
+                  </select>
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-tint-color">{{entry_glass_tint}}</label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="glass-tint-color" class="appnuno-input" value="#000000" />
+                </div>
+              </div>
+              <div class="appnuno-field" data-show-when="glass-enabled">
+                <label class="appnuno-field-label" for="glass-tint-alpha">{{entry_glass_opacity}}</label>
+                <div class="appnuno-field-control">
+                  <input type="number" min="0" max="1" step="0.01" id="glass-tint-alpha" class="appnuno-input appnuno-compact-control" value="0.02" placeholder="0.02" required="required" />
+                </div>
+              </div>
+              </div>
+              </section>
+            </div>
+            <div class="appnuno-section" id="tab-colors">
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title">{{text_light_mode}}</h2>
+              <div class="appnuno-setting-card-body">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="light-background">{{entry_background}}</label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="light-background" class="appnuno-input" value="#FFFFFF" />
+                </div>
+              </div>
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="light-content">{{entry_content}}</label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="light-content" class="appnuno-input" value="#2C3136" />
+                </div>
+              </div>
+              </div>
+              </section>
+              <section class="appnuno-setting-card">
+              <h2 class="appnuno-setting-title">{{text_dark_mode}}</h2>
+              <div class="appnuno-setting-card-body">
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="dark-background">{{entry_background}}</label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="dark-background" class="appnuno-input" value="#2C3136" />
+                </div>
+              </div>
+              <div class="appnuno-field">
+                <label class="appnuno-field-label" for="dark-content">{{entry_content}}</label>
+                <div class="appnuno-field-control">
+                  <input type="color" id="dark-content" class="appnuno-input" value="#FFFFFF" />
+                </div>
+              </div>
+              </div>
+              </section>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="appnuno-dialog" id="page-picker-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="page-picker-title">
+  <div class="appnuno-dialog-window" role="document">
+    <div class="appnuno-dialog-panel">
+      <div class="appnuno-dialog-header">
+        <button type="button" class="appnuno-modal-close" data-appnuno-dismiss="dialog" aria-label="{{button_cancel}}"><span aria-hidden="true">&times;</span></button>
+        <h4 class="appnuno-dialog-title" id="page-picker-title">{{text_shown_on_pages}}</h4>
+      </div>
+      <div class="appnuno-dialog-body">
+        <div id="page-picker-all-pages"></div>
+        <div class="appnuno-page-picker-actions appnuno-button-group">
+          <button type="button" class="appnuno-button" id="page-picker-select-all">{{button_select_all_pages}}</button>
+          <button type="button" class="appnuno-button" id="page-picker-clear">{{button_clear_pages}}</button>
+        </div>
+        <div id="page-picker-choices" class="appnuno-page-picker-choices"></div>
+      </div>
+      <div class="appnuno-dialog-footer">
+        <div class="appnuno-button-group">
+          <button type="button" class="appnuno-button" data-appnuno-dismiss="dialog">{{button_cancel_pages}}</button>
+          <button type="button" class="appnuno-button appnuno-button-primary" id="page-picker-apply">{{button_apply_pages}}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="appnuno-dialog" id="icon-picker-dialog" hidden role="dialog" aria-modal="true" aria-labelledby="icon-picker-title">
+  <div class="appnuno-dialog-window" role="document">
+    <div class="appnuno-dialog-panel">
+      <div class="appnuno-dialog-header">
+        <button type="button" class="appnuno-modal-close" data-appnuno-dismiss="dialog" aria-label="{{button_cancel}}"><span aria-hidden="true">&times;</span></button>
+        <h4 class="appnuno-dialog-title" id="icon-picker-title">{{text_icon}}</h4>
+      </div>
+      <div class="appnuno-dialog-body">
+        <div class="appnuno-icon-toolbar">
+          <input type="search" id="icon-picker-search" class="appnuno-input" aria-label="{{text_icon_catalog_search}}" maxlength="120" placeholder="{{text_icon_catalog_search}}" />
+        </div>
+        <div class="appnuno-icon-meta">
+          <p id="icon-picker-count"></p>
+          <div class="appnuno-icon-pager appnuno-button-group" hidden></div>
+        </div>
+        <div class="appnuno-icon-stage">
+          <div id="icon-picker-grid"></div>
+          <div id="icon-picker-loading" class="appnuno-icon-loading" hidden>
+            <span class="appnuno-spinner" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div id="icon-picker-status" role="status"></div>
+        <div class="appnuno-icon-meta appnuno-icon-meta-bottom">
+          <div class="appnuno-icon-pager appnuno-button-group" hidden></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="application/json" id="appnuno-configuration">{{configuration_json}}</script>
+<script type="application/json" id="appnuno-text">{{text_json}}</script>
+<script type="application/json" id="appnuno-languages">{{languages_json}}</script>
+<script type="application/json" id="appnuno-destinations">{{destinations_json}}</script>
+<script type="application/json" id="appnuno-route-options">{{route_options_json}}</script>
+<script type="application/json" id="appnuno-validation-path">{{error_config_path_json}}</script>
+<script type="application/json" id="appnuno-default-language">{{default_language_json}}</script>
+<script src="{{settings_script}}"></script>

@@ -19,12 +19,19 @@ $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
     throw new RuntimeException('Unable to create OpenCart release directory.');
 }
+$shared_admin = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'admin';
 $entries = array(
     'install.xml' => $source . DIRECTORY_SEPARATOR . 'install.xml',
     'README.md' => $readme,
-    'upload/admin/view/javascript/appnuno/settings.css' => $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'settings.css'
+    'upload/admin/view/javascript/appnuno/settings.css' => $shared_admin . DIRECTORY_SEPARATOR . 'settings.css',
+    'upload/admin/view/javascript/appnuno/settings.js' => $shared_admin . DIRECTORY_SEPARATOR . 'settings.js',
+    'upload/admin/view/javascript/appnuno/settings.html' => $shared_admin . DIRECTORY_SEPARATOR . 'settings.html',
+    'upload/system/library/appnuno-config.php' => $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'appnuno-config.php'
 );
-$ui_asset_version = substr(hash('sha256', hash_file('sha256', $entries['upload/admin/view/javascript/appnuno/settings.css']) . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'javascript' . DIRECTORY_SEPARATOR . 'appnuno' . DIRECTORY_SEPARATOR . 'adapter.css') . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.tpl')), 0, 12);
+foreach (glob($shared_admin . DIRECTORY_SEPARATOR . 'icons' . DIRECTORY_SEPARATOR . '*.svg') as $icon) {
+    $entries['upload/admin/view/javascript/appnuno/icons/' . basename($icon)] = $icon;
+}
+$ui_asset_version = substr(hash('sha256', hash_file('sha256', $entries['upload/admin/view/javascript/appnuno/settings.css']) . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'javascript' . DIRECTORY_SEPARATOR . 'appnuno' . DIRECTORY_SEPARATOR . 'adapter.css') . hash_file('sha256', $entries['upload/admin/view/javascript/appnuno/settings.js']) . hash_file('sha256', $entries['upload/admin/view/javascript/appnuno/settings.html']) . hash_file('sha256', $source . DIRECTORY_SEPARATOR . 'upload' . DIRECTORY_SEPARATOR . 'admin' . DIRECTORY_SEPARATOR . 'view' . DIRECTORY_SEPARATOR . 'template' . DIRECTORY_SEPARATOR . 'extension' . DIRECTORY_SEPARATOR . 'module' . DIRECTORY_SEPARATOR . 'appnuno.tpl')), 0, 12);
 $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($source . DIRECTORY_SEPARATOR . 'upload', FilesystemIterator::SKIP_DOTS));
 foreach ($iterator as $file) {
     if ($file->isFile()) {
@@ -64,17 +71,38 @@ foreach ($entries as $name => $path) {
         }
     }
     if (strpos($name, '/view/template/') !== false && preg_match('/\.(tpl|twig)$/', $name)) {
-        if (!preg_match('~<script type="text/javascript">\s*(.*?)\s*</script>~s', $body, $script)) {
-            throw new RuntimeException('The OpenCart settings template is missing its shared JavaScript entry point.');
+        if (strpos($body, '<script type="text/javascript">') !== false) {
+            throw new RuntimeException('The OpenCart settings template must keep its script in the shared settings file.');
         }
-        $script_name = in_array($line, array('4'), true) ? 'admin/view/javascript/appnuno/settings.js' : 'upload/admin/view/javascript/appnuno/settings.js';
-        $prepared[$script_name] = trim($script[1]);
-        $body = str_replace($script[0], '<script src="view/javascript/appnuno/settings.js"></script>', $body);
         $body = str_replace(
-            array('view/javascript/appnuno/settings.css', 'view/javascript/appnuno/adapter.css', 'view/javascript/appnuno/settings.js'),
-            array('view/javascript/appnuno/settings.css?v=' . $ui_asset_version, 'view/javascript/appnuno/adapter.css?v=' . $ui_asset_version, 'view/javascript/appnuno/settings.js?v=' . $ui_asset_version),
+            array('view/javascript/appnuno/settings.css', 'view/javascript/appnuno/adapter.css'),
+            array('view/javascript/appnuno/settings.css?v=' . $ui_asset_version, 'view/javascript/appnuno/adapter.css?v=' . $ui_asset_version),
             $body
         );
+    }
+    if (substr($name, -13) === 'settings.html') {
+        $body = str_replace(
+            array('{{settings_script}}', '{{documentation_url}}'),
+            array('view/javascript/appnuno/settings.js?v=' . $ui_asset_version, 'https://appnuno.com/opencart'),
+            $body
+        );
+    }
+    $prepared[$name] = $body;
+}
+foreach (array('en-gb', 'lt-lt', 'de-de') as $locale) {
+    $name = 'upload/admin/language/' . $locale . '/extension/module/appnuno.php';
+    $body = appnuno_language_php($shared_admin . DIRECTORY_SEPARATOR . 'i18n' . DIRECTORY_SEPARATOR . $locale . '.json');
+    if (in_array($line, array('2.0', '2.1', '2.2'), true)) {
+        $name = str_replace('/extension/module/', '/module/', $name);
+        $body = opencart_module_layout($line, $name, $body);
+    }
+    if ($line === '3.0') {
+        $body = opencart_30_layout($name, $body);
+    }
+    if ($line === '4') {
+        $name = substr($name, strlen('upload/'));
+        $name = str_replace('/extension/module/', '/module/', $name);
+        $body = opencart_40_layout($name, $body);
     }
     $prepared[$name] = $body;
 }
@@ -135,6 +163,25 @@ try {
     rmdir($staging);
 }
 echo $package . PHP_EOL;
+}
+
+function appnuno_language_php($path) {
+    $catalog = json_decode(file_get_contents($path), true);
+    if (!is_array($catalog)) {
+        throw new RuntimeException('Unable to read shared translations.');
+    }
+    ksort($catalog, SORT_STRING);
+    $lines = array('<?php');
+    foreach ($catalog as $key => $value) {
+        $prefix = "\$_['" . $key . "']";
+        $pad = strlen($prefix) < 35 ? str_repeat(' ', 35 - strlen($prefix)) : ' ';
+        $lines[] = $prefix . $pad . '= ' . appnuno_php_string($value) . ';';
+    }
+    return implode("\n", $lines) . "\n";
+}
+
+function appnuno_php_string($value) {
+    return "'" . str_replace(array('\\', "'"), array('\\\\', "\\'"), $value) . "'";
 }
 
 function opencart_module_layout($line, $name, $content) {
@@ -244,7 +291,7 @@ function opencart_twig_template($content) {
             return '{{ ' . $variable[1] . '.' . $variable[2] . ' }}';
         }
         if (preg_match('/^echo\s+\$([A-Za-z_][A-Za-z0-9_]*);$/', $code, $variable)) {
-            if (substr($variable[1], -5) === '_json') {
+            if (substr($variable[1], -5) === '_json' || $variable[1] === 'appnuno_settings') {
                 return '{{ ' . $variable[1] . '|raw }}';
             }
             return '{{ ' . $variable[1] . ' }}';
