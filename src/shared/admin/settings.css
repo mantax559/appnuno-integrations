@@ -428,6 +428,7 @@ body .appnuno-settings .appnuno-field-control > button.appnuno-button[data-icon-
   .appnuno-settings .appnuno-tab.active { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 900px) {
+  .appnuno-settings .appnuno-toolbar { flex-wrap: wrap; align-items: flex-start; }
   .appnuno-settings .appnuno-section-switch { flex: 1 1 100%; width: 100%; min-width: 0; max-width: 100%; }
   .appnuno-settings .appnuno-section-switch .appnuno-section-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; }
   .appnuno-settings .appnuno-section-switch .appnuno-section-list > li { flex: none; width: auto; min-width: 0; }

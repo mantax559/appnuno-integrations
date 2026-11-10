@@ -330,7 +330,7 @@ def assert_responsive_layout(page: Page) -> None:
                     for area in ("settings", "section"):
                         if measurement[f"{area}ScrollWidth"] > measurement[f"{area}ClientWidth"] + 1:
                             raise AssertionError(f"The {area} clips or scrolls horizontally ({context}): {measurement}.")
-                    if measurement["sidebarVisible"] and (state != "expanded" or width >= 768) and measurement["contentLeft"] < measurement["sidebarRight"] - 1:
+                    if width >= 768 and measurement["sidebarVisible"] and measurement["contentLeft"] < measurement["sidebarRight"] - 1:
                         raise AssertionError(f"The settings content is covered by the OpenCart sidebar ({context}): {measurement}.")
                     if measurement["settingsLeft"] < measurement["contentLeft"] - 1 or measurement["settingsRight"] > measurement["contentRight"] + 1:
                         raise AssertionError(f"The settings panel escapes the OpenCart content area ({context}): {measurement}.")
