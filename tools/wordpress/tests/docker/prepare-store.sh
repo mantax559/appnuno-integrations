@@ -61,8 +61,19 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     if ! wp user get customer --field=ID --allow-root --path=/var/www/html >/dev/null 2>&1; then
         wp user create customer customer@example.test --role=customer --user_pass='appnuno-local' --allow-root --path=/var/www/html >/dev/null
     fi
+    if ! wp user get limited --field=ID --allow-root --path=/var/www/html >/dev/null 2>&1; then
+        wp user create limited limited@example.test --role=subscriber --user_pass='appnuno-local' --allow-root --path=/var/www/html >/dev/null
+    fi
+    wp option update woocommerce_enable_myaccount_registration yes --allow-root --path=/var/www/html
+    wp option update woocommerce_registration_generate_password no --allow-root --path=/var/www/html
+    wp language core install lt_LT --allow-root --path=/var/www/html
+    mkdir -p /var/www/html/wp-content/mu-plugins /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade
+    cp /scripts/appnuno-languages.php /var/www/html/wp-content/mu-plugins/appnuno-languages.php
+    chown -R www-data:www-data /var/www/html/wp-content
     wp plugin install /appnuno/package/appnuno-woocommerce-11.x.zip --activate --force --allow-root --path=/var/www/html
     wp plugin is-active appnuno --allow-root --path=/var/www/html
+    wp option delete module_appnuno_status --allow-root --path=/var/www/html || true
+    wp option delete module_appnuno_config --allow-root --path=/var/www/html || true
     wp rewrite flush --hard --allow-root --path=/var/www/html
     if [ ! -f /var/www/html/.htaccess ]; then
         cat > /var/www/html/.htaccess <<'EOF'

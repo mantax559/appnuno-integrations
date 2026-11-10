@@ -67,6 +67,90 @@ if (!$installed) {
     $module->enable();
 }
 
+$defaultLanguage = new Language($idLang);
+$defaultLanguage->locale = 'en-GB';
+$defaultLanguage->language_code = 'en-gb';
+if (!$defaultLanguage->update()) {
+    fwrite(STDERR, "Unable to set the English locale.\n");
+    exit(1);
+}
+if (!(int) Language::getIdByIso('lt')) {
+    $lithuanian = new Language();
+    $lithuanian->name = 'Lietuvių';
+    $lithuanian->iso_code = 'lt';
+    $lithuanian->language_code = 'lt-lt';
+    $lithuanian->locale = 'lt-LT';
+    $lithuanian->date_format_lite = 'Y-m-d';
+    $lithuanian->date_format_full = 'Y-m-d H:i:s';
+    $lithuanian->active = true;
+    $lithuanian->is_rtl = false;
+    if (!$lithuanian->add()) {
+        fwrite(STDERR, "Unable to add Lithuanian.\n");
+        $validation = $lithuanian->validateFields(false);
+        if (is_string($validation) && $validation !== '') {
+            fwrite(STDERR, $validation . "\n");
+        }
+        exit(1);
+    }
+}
+if (!Employee::employeeExists('limited@example.test')) {
+    $adminProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "admin@example.test"');
+    $profile = new Profile();
+    $profileNames = array();
+    $profileLanguages = Language::getLanguages(false);
+    if (is_array($profileLanguages)) {
+        foreach ($profileLanguages as $language) {
+            if (isset($language['id_lang'])) {
+                $profileNames[(int) $language['id_lang']] = 'AppNuno Limited';
+            }
+        }
+    }
+    $profile->name = $profileNames;
+    if (!$profile->add()) {
+        fwrite(STDERR, "Unable to create the limited employee profile.\n");
+        exit(1);
+    }
+    $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+    $access = Db::getInstance()->executeS('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'access` WHERE id_profile = ' . $adminProfile);
+    if (is_array($access)) {
+        foreach ($access as $row) {
+            if (!isset($row['id_authorization_role'])) {
+                continue;
+            }
+            $roleId = (int) $row['id_authorization_role'];
+            if ($updateRole && $roleId === $updateRole) {
+                continue;
+            }
+            Db::getInstance()->insert('access', array(
+                'id_profile' => (int) $profile->id,
+                'id_authorization_role' => $roleId,
+            ));
+        }
+    }
+    $limited = new Employee();
+    $limited->firstname = 'Limited';
+    $limited->lastname = 'User';
+    $limited->email = 'limited@example.test';
+    $limited->passwd = (new PrestaShop\PrestaShop\Core\Crypto\Hashing())->hash('appnuno-local');
+    $limited->id_profile = (int) $profile->id;
+    $limited->id_lang = $idLang;
+    $limited->active = 1;
+    $limited->default_tab = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminDashboard"');
+    if (!$limited->add()) {
+        fwrite(STDERR, "Unable to create the limited employee.\n");
+        $validation = $limited->validateFields(false);
+        if (is_string($validation) && $validation !== '') {
+            fwrite(STDERR, $validation . "\n");
+        }
+        exit(1);
+    }
+}
+$updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+$limitedProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "limited@example.test"');
+if ($updateRole && $limitedProfile) {
+    Db::getInstance()->delete('access', 'id_profile = ' . (int) $limitedProfile . ' AND id_authorization_role = ' . (int) $updateRole);
+}
+
 $domain = getenv('APPNUNO_PUBLIC_DOMAIN');
 if (!is_string($domain) || $domain === '') {
     $domain = '127.0.0.1:8088';
@@ -152,6 +236,8 @@ if (!Customer::customerExists('customer@example.test')) {
     }
 }
 
+Configuration::updateValue('module_appnuno_status', '0');
+Configuration::updateValue('module_appnuno_config', AppnunoConfig::defaultConfig(), true);
 if (method_exists('Tools', 'clearSf2Cache')) {
     Tools::clearSf2Cache();
 }

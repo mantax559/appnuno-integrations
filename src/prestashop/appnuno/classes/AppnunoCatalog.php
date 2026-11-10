@@ -30,8 +30,10 @@ final class AppnunoCatalog
     public static function chromeLocale(): string
     {
         $code = self::normalizeLocale(self::contextLocale());
-        if (is_file(self::catalogPath($code))) {
-            return $code;
+        foreach (self::catalogCandidates($code) as $candidate) {
+            if (is_file(self::catalogPath($candidate))) {
+                return $candidate;
+            }
         }
 
         return 'en-gb';
@@ -400,5 +402,92 @@ final class AppnunoCatalog
     private static function catalogPath(string $locale): string
     {
         return AppnunoPaths::adminDirectory() . '/i18n/' . $locale . '.json';
+    }
+
+    private static function catalogCandidates(string $code): array
+    {
+        $candidates = array($code);
+        $canonical = self::canonicalLocale($code);
+        if ($canonical !== '' && !in_array($canonical, $candidates, true)) {
+            $candidates[] = $canonical;
+        }
+        $dash = strpos($code, '-');
+        if ($dash !== false) {
+            $language = self::canonicalLocale(substr($code, 0, $dash));
+            if ($language !== '' && !in_array($language, $candidates, true)) {
+                $candidates[] = $language;
+            }
+        }
+        if (!in_array('en-gb', $candidates, true)) {
+            $candidates[] = 'en-gb';
+        }
+
+        return $candidates;
+    }
+
+    private static function canonicalLocale(string $code): string
+    {
+        $locales = array(
+            'ar' => 'ar-sa',
+            'be' => 'be-by',
+            'bg' => 'bg-bg',
+            'cs' => 'cs-cz',
+            'da' => 'da-dk',
+            'de' => 'de-de',
+            'de-at' => 'de-de',
+            'de-ch' => 'de-de',
+            'de-li' => 'de-de',
+            'de-lu' => 'de-de',
+            'el' => 'el-gr',
+            'en' => 'en-gb',
+            'en-au' => 'en-gb',
+            'en-ca' => 'en-gb',
+            'en-ie' => 'en-gb',
+            'en-nz' => 'en-gb',
+            'en-za' => 'en-gb',
+            'es' => 'es-es',
+            'es-ar' => 'es-es',
+            'es-mx' => 'es-es',
+            'et' => 'et-ee',
+            'fi' => 'fi-fi',
+            'fr' => 'fr-fr',
+            'fr-be' => 'fr-fr',
+            'fr-ca' => 'fr-fr',
+            'fr-ch' => 'fr-fr',
+            'hi' => 'hi-in',
+            'hr' => 'hr-hr',
+            'hu' => 'hu-hu',
+            'hy' => 'hy-am',
+            'is' => 'is-is',
+            'it' => 'it-it',
+            'ja' => 'ja-jp',
+            'ka' => 'ka-ge',
+            'ko' => 'ko-kr',
+            'lt' => 'lt-lt',
+            'lv' => 'lv-lv',
+            'nb' => 'nb-no',
+            'nl' => 'nl-nl',
+            'nl-be' => 'nl-nl',
+            'no' => 'nb-no',
+            'pl' => 'pl-pl',
+            'pt' => 'pt-pt',
+            'pt-br' => 'pt-pt',
+            'ro' => 'ro-ro',
+            'ru' => 'ru-ru',
+            'sk' => 'sk-sk',
+            'sl' => 'sl-si',
+            'sq' => 'sq-al',
+            'sv' => 'sv-se',
+            'tr' => 'tr-tr',
+            'uk' => 'uk-ua',
+            'zh' => 'zh-cn',
+            'zh-hans' => 'zh-cn',
+            'zh-hant' => 'zh-tw',
+            'zh-hk' => 'zh-tw',
+            'zh-mo' => 'zh-tw',
+            'zh-sg' => 'zh-cn',
+        );
+
+        return isset($locales[$code]) ? $locales[$code] : '';
     }
 }

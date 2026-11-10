@@ -100,10 +100,21 @@ jobs:
 
       - name: Check the AppNuno admin and storefront
         if: ${{ matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to' }}
+        env:
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/wordpress-artifacts
         run: |
           python3 -m pip install -r tools/wordpress/tests/requirements-ci.txt
           python3 -m playwright install --with-deps chromium
           python3 tools/wordpress/tests/integration/admin.py
+
+      - name: Upload browser test artifacts
+        if: ${{ always() && matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: wordpress-woocommerce-11.2.1-browser-artifacts
+          path: ${{ runner.temp }}/wordpress-artifacts
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Remove the temporary WordPress environment
         if: always()

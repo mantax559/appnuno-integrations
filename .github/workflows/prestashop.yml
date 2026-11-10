@@ -53,10 +53,20 @@ jobs:
         if: matrix.install-module
         env:
           PRESTASHOP_SITE_URL: http://127.0.0.1:8088
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
         run: |
           python3 -m pip install -r tools/prestashop/tests/requirements-ci.txt
           python3 -m playwright install --with-deps chromium
           python3 tools/prestashop/tests/integration/admin.py
+
+      - name: Upload browser test artifacts
+        if: ${{ always() && matrix.install-module }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: prestashop-${{ matrix.prestashop-tag }}-browser-artifacts
+          path: ${{ runner.temp }}/prestashop-artifacts
+          if-no-files-found: warn
+          retention-days: 7
 
       - name: Remove the temporary PrestaShop environment
         if: always()

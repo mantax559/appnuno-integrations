@@ -39,6 +39,8 @@ services:
       - store-workspace:/var/www/html
       - ./check-install.php:/scripts/check-install.php:ro
       - ./prepare-module.php:/scripts/prepare-module.php:ro
+      - ./set-employee-language.php:/scripts/set-employee-language.php:ro
+      - ./module-action.php:/scripts/module-action.php:ro
       - ../../../../downloads/prestashop/9.x:/appnuno/package:ro
     depends_on:
       mysql:

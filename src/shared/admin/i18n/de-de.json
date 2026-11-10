@@ -87,7 +87,7 @@
     "help_glass_animate": "Aktivieren Sie dies, damit sich das Aussehen der Navigation fließend statt sofort ändert.",
     "help_glass_color_scheme": "Legen Sie fest, ob die Glasleiste automatisch dem Erscheinungsbild des Geräts folgt oder immer helle beziehungsweise dunkle Farben verwendet.",
     "help_glass_duration": "Legen Sie fest, wie viele Sekunden der Übergang dauert. Geben Sie 0 ein, wenn die Änderung ohne Animation erfolgen soll.",
-    "help_glass_enabled": "Aktivieren Sie die durchscheinende Liquid-Glass-Optik ab iOS 26. Auf anderen Geräten bleibt die normale Darstellung.",
+    "help_glass_enabled": "Aktivieren Sie die durchscheinende Darstellung Liquid Glass ab iOS 26. Auf anderen Geräten bleibt die normale Darstellung.",
     "help_glass_interactive": "Aktivieren Sie dies, damit die Glasoptik auf unterstützten Geräten auf Berührungen und Bewegungen reagiert.",
     "help_glass_opacity": "Legen Sie fest, wie stark die gewählte Tönung sichtbar ist. Geben Sie einen Wert von 0 bis 1 ein: 0 bedeutet keine Tönung, 1 die stärkste Tönung.",
     "help_glass_style": "Normal behält das übliche Glas, Klar macht es durchsichtiger und Keiner schaltet den Effekt aus.",

@@ -285,6 +285,31 @@ body.appnuno-admin-screen .sf-minitoolbar {
   text-align: left;
 }
 
+.appnuno-admin .appnuno-settings .appnuno-field,
+.appnuno-admin .appnuno-settings .appnuno-field-control,
+.appnuno-admin .appnuno-settings .appnuno-input-group,
+.appnuno-admin .appnuno-settings .appnuno-tab,
+.appnuno-admin .appnuno-settings .appnuno-tab-panels {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.appnuno-admin .appnuno-settings input.appnuno-input,
+.appnuno-admin .appnuno-settings select.appnuno-input {
+  min-width: 0 !important;
+  max-width: 100%;
+}
+
+.appnuno-admin .appnuno-settings :is(a, button, [role="button"]):focus-visible,
+.appnuno-admin .appnuno-settings input[type="checkbox"]:focus-visible,
+.appnuno-admin .appnuno-settings :is(input, select, textarea):focus,
+.appnuno-admin .appnuno-settings :is(input, select, textarea):focus-visible {
+  outline: 2px solid #71717a !important;
+  outline-offset: 2px;
+  box-shadow: none !important;
+  border-color: #e4e4e7 !important;
+}
+
 .appnuno-admin .appnuno-page .appnuno-input-group > .appnuno-input-addon + input.appnuno-input {
   border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
 }

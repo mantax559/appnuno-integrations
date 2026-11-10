@@ -159,7 +159,7 @@
 .appnuno-section-switch .appnuno-section-list > li:not(.active) > a:active { border: 0; outline: none; background: transparent; color: #18181b; box-shadow: none; }
 .appnuno-section-switch .appnuno-section-list > li > a:focus-visible,
 .appnuno-section-switch .appnuno-section-list > li.active > a:focus-visible,
-.appnuno-section-switch .appnuno-section-list > li > a.active:focus-visible { outline: none; }
+.appnuno-section-switch .appnuno-section-list > li > a.active:focus-visible { outline: 2px solid #71717a; outline-offset: 3px; }
 .appnuno-section-switch { width: max-content; max-width: 100%; margin: 0; padding: 4px; border-radius: 11px; }
 .appnuno-section-switch .appnuno-switch-indicator,
 .appnuno-section-switch .appnuno-section-list > li > a { border-radius: 7px; }
@@ -232,7 +232,7 @@
 .appnuno-settings .appnuno-setting-card-body > .appnuno-field > .appnuno-field-control { display: flex; width: 100%; max-width: 320px; justify-self: end; }
 .appnuno-settings .appnuno-select-switch { margin-left: auto; }
 .appnuno-settings .appnuno-page-manage { align-self: flex-end; min-width: 220px; }
-.appnuno-settings .appnuno-select-switch-source { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); clip-path: inset(50%); white-space: nowrap; }
+.appnuno-settings .appnuno-select-switch-source { position: absolute !important; width: 1px !important; height: 1px !important; min-width: 0 !important; max-width: 1px !important; margin: 0 !important; padding: 0 !important; border: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; clip-path: inset(50%) !important; white-space: nowrap !important; }
 .appnuno-settings .appnuno-setting-card-body input[type="color"] { max-width: 112px; margin-left: auto; }
 .appnuno-settings .appnuno-setting-card-body input.appnuno-compact-control { width: 96px; max-width: 96px; margin-left: auto; }
 .appnuno-settings .appnuno-input-group { display: flex; flex-wrap: nowrap; align-items: stretch; width: 100%; min-width: 0; }
@@ -253,7 +253,7 @@
 .appnuno-settings input[type="checkbox"]::after,
 .appnuno-settings input[type="checkbox"]:checked::before,
 .appnuno-settings input[type="checkbox"]:checked::after { display: none; content: none; }
-.appnuno-settings input[type="checkbox"]:focus-visible { outline: none; }
+.appnuno-settings input[type="checkbox"]:focus-visible { outline: 2px solid #71717a; outline-offset: 2px; }
 .appnuno-settings .appnuno-check,
 .appnuno-settings .appnuno-check { position: relative; display: flex; flex-direction: row; align-items: center; gap: 10px; margin: 0; min-height: 44px; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #f9f9f9; }
 .appnuno-settings .appnuno-check label,
@@ -441,10 +441,17 @@ body .appnuno-settings .appnuno-field-control > button.appnuno-button[data-icon-
   .appnuno-settings .appnuno-brand { flex-direction: column; align-items: flex-start; width: 100%; }
   .appnuno-settings .appnuno-toolbar-actions { width: auto; }
   .appnuno-settings .appnuno-switch > button,
-  .appnuno-section-switch .appnuno-section-list > li > a { min-height: 44px; }
+  .appnuno-section-switch .appnuno-section-list > li > a { min-height: 44px !important; height: auto !important; }
   .appnuno-settings .appnuno-body { padding: var(--appnuno-gap); }
+  .appnuno-settings .appnuno-field,
+  .appnuno-settings .appnuno-field-control,
+  .appnuno-settings .appnuno-input-group,
+  .appnuno-settings .appnuno-tab,
+  .appnuno-settings .appnuno-tab-panels { min-width: 0; max-width: 100%; }
   .appnuno-settings .appnuno-input,
   .appnuno-settings select,
+  .appnuno-settings input.appnuno-input,
+  .appnuno-settings select.appnuno-input { min-width: 0; }
   .appnuno-settings .appnuno-button,
   .appnuno-settings #default-tabs .appnuno-button[data-add-tab],
   .appnuno-settings input[type="text"],

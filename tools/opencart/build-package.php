@@ -89,9 +89,31 @@ foreach ($entries as $name => $path) {
     }
     $prepared[$name] = $body;
 }
-foreach (array('en-gb', 'lt-lt', 'de-de') as $locale) {
+$language_sources = array();
+foreach (glob($shared_admin . DIRECTORY_SEPARATOR . 'i18n' . DIRECTORY_SEPARATOR . '*.json') as $catalog) {
+    $language_sources[basename($catalog, '.json')] = $catalog;
+}
+$language_aliases = array(
+    'ar' => 'ar-sa',
+    'el' => 'el-gr',
+    'et' => 'et-ee',
+    'fi' => 'fi-fi',
+    'hr' => 'hr-hr',
+    'hy' => 'hy-am',
+    'ja' => 'ja-jp',
+    'lv' => 'lv-lv',
+    'sq' => 'sq-al',
+    'uk' => 'uk-ua'
+);
+foreach ($language_aliases as $alias => $source) {
+    if (isset($language_sources[$source]) && !isset($language_sources[$alias])) {
+        $language_sources[$alias] = $language_sources[$source];
+    }
+}
+ksort($language_sources, SORT_STRING);
+foreach ($language_sources as $locale => $catalog) {
     $name = 'upload/admin/language/' . $locale . '/extension/module/appnuno.php';
-    $body = appnuno_language_php($shared_admin . DIRECTORY_SEPARATOR . 'i18n' . DIRECTORY_SEPARATOR . $locale . '.json');
+    $body = appnuno_language_php($catalog);
     if (in_array($line, array('2.0', '2.1', '2.2'), true)) {
         $name = str_replace('/extension/module/', '/module/', $name);
         $body = opencart_module_layout($line, $name, $body);
@@ -234,11 +256,56 @@ function opencart_module_layout($line, $name, $content) {
         $content = preg_replace('/\s*<file path="admin\/view\/template\/extension\/extension\/module\.tpl">.*?<\/file>/s', '', $content);
     }
     $labels = array(
+        'ar' => 'الوحدات',
+        'ar-sa' => 'الوحدات',
+        'be-by' => 'Модулі',
+        'bg-bg' => 'Модули',
+        'cs-cz' => 'Moduly',
+        'da-dk' => 'Moduler',
+        'de-de' => 'Module',
+        'el' => 'Ενότητες',
+        'el-gr' => 'Ενότητες',
         'en-gb' => 'Modules',
+        'en-us' => 'Modules',
+        'es-es' => 'Módulos',
+        'et' => 'Moodulid',
+        'et-ee' => 'Moodulid',
+        'fi' => 'Moduulit',
+        'fi-fi' => 'Moduulit',
+        'fr-fr' => 'Modules',
+        'hi-in' => 'मॉड्यूल',
+        'hr' => 'Moduli',
+        'hr-hr' => 'Moduli',
+        'hu-hu' => 'Modulok',
+        'hy' => 'Մոդուլներ',
+        'hy-am' => 'Մոդուլներ',
+        'is-is' => 'Einingar',
+        'it-it' => 'Moduli',
+        'ja' => 'モジュール',
+        'ja-jp' => 'モジュール',
+        'ka-ge' => 'მოდულები',
+        'ko-kr' => '모듈',
         'lt-lt' => 'Moduliai',
-        'de-de' => 'Module'
+        'lv' => 'Moduļi',
+        'lv-lv' => 'Moduļi',
+        'nb-no' => 'Moduler',
+        'nl-nl' => 'Modules',
+        'pl-pl' => 'Moduły',
+        'pt-pt' => 'Módulos',
+        'ro-ro' => 'Module',
+        'ru-ru' => 'Модули',
+        'sk-sk' => 'Moduly',
+        'sl-si' => 'Moduli',
+        'sq' => 'Modulet',
+        'sq-al' => 'Modulet',
+        'sv-se' => 'Moduler',
+        'tr-tr' => 'Modüller',
+        'uk' => 'Модулі',
+        'uk-ua' => 'Модулі',
+        'zh-cn' => '模块',
+        'zh-tw' => '模組'
     );
-    if (preg_match('#language/([a-z]{2}-[a-z]{2})/module/appnuno\\.php$#', $name, $match) && isset($labels[$match[1]])) {
+    if (preg_match('#language/([a-z]{2}(?:-[a-z]{2})?)/module/appnuno\\.php$#', $name, $match) && isset($labels[$match[1]])) {
         $content = str_replace("\$_['text_extension']", "\$_['text_module']                 = '" . $labels[$match[1]] . "';" . $newline . "\$_['text_extension']", $content);
     }
     return $content;

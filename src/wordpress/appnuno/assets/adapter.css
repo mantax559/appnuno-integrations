@@ -264,6 +264,34 @@ body.wp-admin.appnuno-admin-screen .appnuno-page button[data-icon-picker] {
   text-align: left;
 }
 
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-field,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-field-control,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-input-group,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-tab,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-tab-panels {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-settings input.appnuno-input,
+body.wp-admin.appnuno-admin-screen .appnuno-settings select.appnuno-input,
+body.wp-admin.appnuno-admin-screen #icon-picker-search {
+  min-width: 0 !important;
+  min-height: 44px !important;
+  height: auto !important;
+  max-width: 100%;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(a, button, [role="button"]):focus-visible,
+body.wp-admin.appnuno-admin-screen .appnuno-settings input[type="checkbox"]:focus-visible,
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(input, select, textarea):focus,
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(input, select, textarea):focus-visible {
+  outline: 2px solid #71717a !important;
+  outline-offset: 2px;
+  box-shadow: none !important;
+  border-color: #e4e4e7 !important;
+}
+
 body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-input-group > .appnuno-input-addon + input.appnuno-input {
   border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
 }

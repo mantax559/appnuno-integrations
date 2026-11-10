@@ -8,7 +8,7 @@ final class AppnunoAdmin
     public static function persist(): array
     {
         $employee = Context::getContext()->employee;
-        if (!$employee instanceof Employee || !(int) $employee->id) {
+        if (!$employee instanceof Employee || !(int) $employee->id || !self::canModify($employee)) {
             return array(
                 'warning' => self::text('error_permission'),
                 'config' => '',
@@ -74,6 +74,21 @@ final class AppnunoAdmin
     public static function text(string $key): string
     {
         return AppnunoCatalog::text($key);
+    }
+
+    private static function canModify(Employee $employee): bool
+    {
+        $profileId = (int) $employee->id_profile;
+        if (!$profileId) {
+            return false;
+        }
+        $roleId = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+        if (!$roleId) {
+            return false;
+        }
+        $granted = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'access` WHERE id_profile = ' . $profileId . ' AND id_authorization_role = ' . $roleId);
+
+        return (bool) $granted;
     }
 
     private static function settingsMarkup(bool $posted, string $success, array $errors): string

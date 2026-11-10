@@ -1,4 +1,12 @@
 <?php
+function language_tokens($value) {
+    preg_match_all('/\{[a-z]+\}|%s/', $value, $tokens);
+    $found = $tokens[0];
+    sort($found, SORT_STRING);
+
+    return $found;
+}
+
 function language_entries($path) {
     $catalog = json_decode(file_get_contents($path), true);
     if (!is_array($catalog) || !count($catalog)) {
@@ -41,6 +49,19 @@ foreach ($language_paths as $path) {
     }
     if (count($extra)) {
         $errors[] = $locale . ' has keys absent from en-gb: ' . implode(', ', $extra);
+    }
+    $catalog = json_decode(file_get_contents($path), true);
+    $english_catalog = json_decode(file_get_contents($english_path), true);
+    foreach ($english_keys as $key) {
+        if (!isset($catalog[$key], $english_catalog[$key]) || !is_string($catalog[$key]) || !is_string($english_catalog[$key])) {
+            continue;
+        }
+        if (language_tokens($catalog[$key]) !== language_tokens($english_catalog[$key])) {
+            $errors[] = $locale . ' changes placeholders in ' . $key;
+        }
+        if (in_array($key, array('text_destination_category', 'text_destination_information', 'text_destination_page'), true) && substr($catalog[$key], -1) !== ' ') {
+            $errors[] = $locale . ' must keep a trailing space in ' . $key;
+        }
     }
 }
 
