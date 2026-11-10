@@ -13,7 +13,7 @@
 | WooCommerce | 3.x | Instruction in preparation | — |
 | WooCommerce | 2.x | Instruction in preparation | — |
 | WooCommerce | 1.x | Instruction in preparation | — |
-| PrestaShop | 9.x | Instruction in preparation | — |
+| PrestaShop | 9.x | [Instruction](downloads/prestashop/9.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/9.x/appnuno-prestashop-9.x.zip) |
 | PrestaShop | 8.x | Instruction in preparation | — |
 | PrestaShop | 1.7.x | Instruction in preparation | — |
 | PrestaShop | 1.6.x | Instruction in preparation | — |
@@ -39,13 +39,21 @@ Run this command from the repository root. PHP must have the `zip` extension ena
 php tools/opencart/build-package.php
 ```
 
+## Generate the PrestaShop 9.x package
+
+Run this command from the repository root. PHP must have the `zip` extension enabled. It builds `downloads/prestashop/9.x/appnuno-prestashop-9.x.zip`.
+
+```powershell
+php tools/prestashop/build-package.php
+```
+
 ## Run PrestaShop installation tests
 
-PrestaShop support currently verifies only that the official PrestaShop 8.x or 9.x container installs successfully against MySQL and serves the storefront. No AppNuno PrestaShop module or downloadable package is included yet. Docker must be installed.
+PrestaShop 8.2 verifies that the official container installs successfully against MySQL and serves the storefront. PrestaShop 9.0 also installs the AppNuno module. Docker must be installed.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-docker.ps1 -PrestaShopTag 8.2-apache
-powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-docker.ps1 -PrestaShopTag 9.0-apache
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.0-apache
 ```
 
 ## Generate the WooCommerce 11.x package

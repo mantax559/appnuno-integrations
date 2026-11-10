@@ -30,11 +30,16 @@ services:
       PS_COUNTRY: us
       PS_LANGUAGE: en
       PS_ENABLE_SSL: 0
+      ADMIN_MAIL: admin@example.test
+      ADMIN_PASSWD: appnuno-local
+      APPNUNO_PUBLIC_DOMAIN: 127.0.0.1:${PRESTASHOP_PORT:-8088}
     ports:
       - "127.0.0.1:${PRESTASHOP_PORT:-8088}:80"
     volumes:
       - store-workspace:/var/www/html
       - ./check-install.php:/scripts/check-install.php:ro
+      - ./prepare-module.php:/scripts/prepare-module.php:ro
+      - ../../../../downloads/prestashop/9.x:/appnuno/package:ro
     depends_on:
       mysql:
         condition: service_healthy
