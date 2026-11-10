@@ -476,7 +476,7 @@ body .appnuno-settings .appnuno-field-control > button.appnuno-button[data-icon-
   .appnuno-settings .appnuno-tab.active .appnuno-cart-field .appnuno-cart-switch,
   .appnuno-settings .appnuno-setting-card-body input[type="color"],
   .appnuno-settings .appnuno-setting-card-body input.appnuno-compact-control { margin-left: 0; }
-  .appnuno-settings .appnuno-page-manage { align-self: flex-start; }
+  .appnuno-settings .appnuno-page-manage { align-self: flex-start; min-width: 0; max-width: 100%; }
   .appnuno-settings .appnuno-setting-title { padding: 16px; }
   .appnuno-settings .appnuno-setting-card-body { padding: 0 16px; }
   #page-picker-dialog .appnuno-dialog-window { width: auto; margin: 12px; }
