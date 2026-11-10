@@ -161,8 +161,7 @@ try {
         $staged = $staging . DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $name);
         if (!$archive->addFile($staged, $name)
             || !$archive->setCompressionName($name, ZipArchive::CM_DEFLATE, 9)
-            || !$archive->setExternalAttributesName($name, ZipArchive::OPSYS_UNIX, 0100644 << 16)
-            || !$archive->setMtimeName($name, 946684800)) {
+            || !$archive->setExternalAttributesName($name, ZipArchive::OPSYS_UNIX, 0100644 << 16)) {
             throw new RuntimeException('Unable to add a normalized file to the OpenCart extension archive.');
         }
     }

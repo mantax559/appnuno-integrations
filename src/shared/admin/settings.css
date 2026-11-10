@@ -131,7 +131,7 @@
 .appnuno-settings select:focus,
 .appnuno-settings input:focus,
 .appnuno-settings textarea:focus { border-color: var(--appnuno-line); outline: none; box-shadow: none; }
-.appnuno-settings :is(input, select, textarea):focus-visible { outline: none; box-shadow: none; }
+.appnuno-settings :is(input, select, textarea):focus-visible { outline: 2px solid #71717a; outline-offset: 2px; box-shadow: none; }
 .appnuno-settings :disabled { opacity: .5; cursor: not-allowed; }
 
 .appnuno-switch-indicator { position: absolute; top: 0; left: 0; z-index: 0; border-radius: 7px; background: #fff; pointer-events: none; box-shadow: 0 1px 3px rgb(0 0 0 / 12%); }
@@ -355,7 +355,7 @@
 #icon-picker-dialog .appnuno-dialog-body { flex: 1 1 auto; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: var(--appnuno-gap); scrollbar-color: #d4d4d8 transparent; scrollbar-width: thin; }
 #icon-picker-dialog .appnuno-input { display: block; width: 100%; min-width: 0; height: 44px; padding: 10px 12px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #fff; color: #27272a; font: inherit; box-shadow: none; }
 #icon-picker-dialog .appnuno-input:focus { border-color: var(--appnuno-line); outline: none; box-shadow: none; }
-#icon-picker-dialog :is(input, select, textarea):focus-visible { outline: none; box-shadow: none; }
+#icon-picker-dialog :is(input, select, textarea):focus-visible { outline: 2px solid #71717a; outline-offset: 2px; box-shadow: none; }
 #icon-picker-dialog .appnuno-input::placeholder { color: #a1a1aa; }
 #icon-picker-dialog .appnuno-button { min-height: 44px; padding: 10px 14px; border: 1px solid var(--appnuno-line); border-radius: var(--appnuno-radius-control); background: #fff; color: #3f3f46; font: 500 12px/20px ui-sans-serif, system-ui, sans-serif; text-shadow: none; white-space: normal; box-shadow: none; }
 #icon-picker-dialog .appnuno-button:hover { border-color: var(--appnuno-line); background: #f3f3f3; }
