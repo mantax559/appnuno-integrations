@@ -119,13 +119,19 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
     )
     page.wait_for_function("() => document.querySelector('.appnuno-section-switch').getAttribute('data-placed') === 'true'")
     seed_builtin_tabs(page)
-    switch_states = settings_shell.locator('[data-status-switch]').evaluate_all("""controls => controls.map(control => ({
-        id: control.getAttribute('data-status-switch'),
-        selected: control.querySelectorAll('button[aria-pressed="true"]').length,
-        placed: control.getAttribute('data-placed') === 'true'
-    }))""")
-    if any(state['selected'] != 1 or not state['placed'] for state in switch_states):
-        raise AssertionError(f"Every segmented setting switch should start with one selected option and a positioned indicator: {switch_states}.")
+    for section in ("#tab-navigation", "#tab-glass", "#tab-colors"):
+        page.locator(f'.appnuno-settings a[href="{section}"]').dispatch_event("click")
+        page.locator(section).wait_for(state="visible")
+        switch_states = settings_shell.locator(f"{section} [data-status-switch], .appnuno-status-field [data-status-switch]").evaluate_all(
+            """controls => controls.filter(control => control.getClientRects().length && control.getBoundingClientRect().width > 0).map(control => ({
+                id: control.getAttribute('data-status-switch'),
+                selected: control.querySelectorAll('button[aria-pressed="true"]').length,
+                placed: control.getAttribute('data-placed') === 'true'
+            }))"""
+        )
+        if any(state["selected"] != 1 or not state["placed"] for state in switch_states):
+            raise AssertionError(f"Every visible segmented switch in {section} should have one selected option and a positioned indicator: {switch_states}.")
+    page.locator('a[href="#tab-navigation"]').dispatch_event("click")
     if settings_shell.locator('.appnuno-fieldset, fieldset').count():
         raise AssertionError("Buttons and navigation color settings should use panel sections, not fieldsets.")
     page.locator('.appnuno-page-manage').first.click()
