@@ -1,5 +1,4 @@
 import os
-import secrets
 import time
 from pathlib import Path
 
@@ -85,8 +84,7 @@ class WordPressAdapter(StoreAdapter):
         password = page.locator("#reg_password")
         if password.count():
             password.click()
-            password.press_sequentially(secrets.token_urlsafe(32), delay=5)
-            page.locator(".woocommerce-password-strength.strong").wait_for()
+            password.press_sequentially("R7!vQ3#nL9@xT5$wP2", delay=5)
         page.locator("button[name='register']").click()
         page.locator(".woocommerce-error, a[href*='customer-logout'], .woocommerce-MyAccount-navigation").first.wait_for()
         if page.locator(".woocommerce-error").count() or "stronger password" in (page.locator("body").inner_text() or ""):
@@ -139,8 +137,11 @@ class WordPressAdapter(StoreAdapter):
         row.locator(".delete a").click()
         confirmation = page.locator('input[type="submit"][name="submit"][value="Yes, delete these files and data"]')
         page.wait_for_function(
-            """() => document.querySelector('input[type="submit"][name="submit"][value="Yes, delete these files and data"]')
-                || document.body.innerText.includes("AppNuno was successfully deleted.")"""
+            """() => {
+                const confirmation = document.querySelector('input[type="submit"][name="submit"][value="Yes, delete these files and data"]');
+                const row = document.querySelector("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']");
+                return confirmation || !row || row.classList.contains("deleted");
+            }"""
         )
         if confirmation.count():
             confirmation.wait_for()
@@ -151,13 +152,14 @@ class WordPressAdapter(StoreAdapter):
                 confirmation.click()
             if deleted.value.status >= 400:
                 raise AssertionError(f"WordPress did not delete the AppNuno plugin: HTTP {deleted.value.status}.")
-        page.get_by_text("AppNuno was successfully deleted.", exact=True).wait_for()
         page.wait_for_function(
             """() => {
                 const row = document.querySelector("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']");
                 return !row || row.classList.contains("deleted");
             }"""
         )
+        if row.count() and not row.evaluate("element => element.classList.contains('deleted')"):
+            raise AssertionError("WordPress did not remove the AppNuno plugin: " + (page.locator("body").inner_text() or "")[:500])
 
     def install(self, page: Page) -> None:
         if not Path(self.package).is_file():
