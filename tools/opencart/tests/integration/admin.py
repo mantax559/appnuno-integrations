@@ -120,7 +120,7 @@ def module_list_row(runtime: Runtime, page: Page, token: str, appnuno_branding_e
 
 def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
     page.on("pageerror", lambda error: print("OpenCart admin JavaScript error: " + str(error)))
-    page.goto(admin_page(runtime, admin_module_route(runtime), token))
+    page.goto(admin_page(runtime, admin_module_route(runtime), token), wait_until="domcontentloaded")
     settings_shell = page.locator(".appnuno-settings")
     settings_shell.wait_for()
     brand = settings_shell.locator('.appnuno-brand')
@@ -534,7 +534,6 @@ def upload_extension(runtime: Runtime, page: Page, token: str) -> None:
 
 
 def upload_opencart4_extension(runtime: Runtime, page: Page, token: str) -> None:
-    # Uploading registers the package; the Install action extracts it into extension/appnuno.
     page.goto(admin_page(runtime, "marketplace/installer", token))
 
     def accept_dialog(dialog: Dialog) -> None:

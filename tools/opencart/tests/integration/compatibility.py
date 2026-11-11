@@ -15,7 +15,8 @@ def admin_method_route(runtime: Runtime, route: str, method: str) -> str:
 
 def admin_module_route(runtime: Runtime) -> str:
     if opencart4(runtime):
-        return "extension/appnuno/module/appnuno"
+        extension = runtime.package.name.removesuffix(".ocmod.zip")
+        return f"extension/{extension}/module/appnuno"
     if legacy_module_layout(runtime):
         return "module/appnuno"
     return "extension/module/appnuno"
