@@ -431,9 +431,9 @@ def assert_mouse_and_keyboard_focus(page: Page, target: Locator) -> None:
     keyboard = focus_appearance(target)
     if not keyboard["focused"] or not keyboard["focusVisible"] or keyboard["outlineStyle"] != "solid" or keyboard["outlineWidth"] != "2px" or keyboard["outlineColor"] != "rgb(113, 113, 122)" or not keyboard["neutralShadow"]:
         raise AssertionError(f"Keyboard Tab must reveal the neutral 2px focus outline without a Bootstrap focus shadow: {keyboard}.")
-    page.locator('.appnuno-settings .panel-title').click()
+    page.locator('.appnuno-settings .appnuno-toolbar').click(position={"x": 1, "y": 1})
     if target.evaluate("element => document.activeElement === element"):
-        raise AssertionError("Clicking the settings heading must move focus away from the keyboard-focused control.")
+        raise AssertionError("Clicking the neutral settings toolbar area must move focus away from the keyboard-focused control.")
     target.click()
     mouse_again = focus_appearance(target)
     if not mouse_again["focused"] or (mouse_again["outlineStyle"] != "none" and mouse_again["outlineWidth"] != "0px") or not mouse_again["neutralShadow"]:
