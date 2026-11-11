@@ -959,7 +959,12 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     first_tab.locator('[data-cart-switch] [data-cart-value="0"]').click()
     if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count():
         raise AssertionError("Disabling the selected tab should allow no cart badge tab to be selected.")
-    page.locator('#default-tabs .appnuno-tab').nth(1).locator('[data-cart-switch] [data-cart-value="1"]').click()
+    second_tab = page.locator('#default-tabs .appnuno-tab').nth(1)
+    second_key = second_tab.get_attribute("data-tab-key")
+    if not second_key:
+        raise AssertionError("A second seeded tab is required to verify cart badge exclusivity.")
+    page.locator(f'#default-tabs [data-tab-target="{second_key}"]').click()
+    second_tab.locator('[data-cart-switch] [data-cart-value="1"]').click()
     if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
         raise AssertionError("Re-enabling a tab should restore exactly one cart badge selection.")
     original_viewport = page.viewport_size or {"width": 1280, "height": 900}
