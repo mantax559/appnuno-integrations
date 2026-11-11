@@ -1,13 +1,14 @@
 <?php
 $package_lines = array(
-    '9' => array('directory' => '9.x', 'requires_at_least' => '6.4'),
-    '10' => array('directory' => '10.x', 'requires_at_least' => '6.7'),
-    '11' => array('directory' => '11.x', 'requires_at_least' => '6.9'),
+    '8' => array('directory' => '8.x', 'requires_at_least' => '6.2', 'requires_php' => '7.3'),
+    '9' => array('directory' => '9.x', 'requires_at_least' => '6.4', 'requires_php' => '7.4'),
+    '10' => array('directory' => '10.x', 'requires_at_least' => '6.7', 'requires_php' => '7.4'),
+    '11' => array('directory' => '11.x', 'requires_at_least' => '6.9', 'requires_php' => '7.4'),
 );
 $package_line = '11';
 if (isset($argv[1])) {
     if (!is_string($argv[1]) || !isset($package_lines[$argv[1]])) {
-        throw new RuntimeException('The WooCommerce package line must be 9, 10, or 11.');
+        throw new RuntimeException('The WooCommerce package line must be 8, 9, 10, or 11.');
     }
     $package_line = $argv[1];
 }
@@ -59,8 +60,12 @@ function wordpress_build_package(array $package_line): void {
     if (!isset($prepared['appnuno/appnuno.php'])) {
         throw new RuntimeException('The WooCommerce plugin header version was not written.');
     }
-    $prepared['appnuno/appnuno.php'] = str_replace('Requires at least: 6.9', 'Requires at least: ' . $package_line['requires_at_least'], $prepared['appnuno/appnuno.php']);
-    if (strpos($prepared['appnuno/appnuno.php'], 'Version: ' . $version) === false || strpos($prepared['appnuno/appnuno.php'], 'Requires at least: ' . $package_line['requires_at_least']) === false) {
+    $prepared['appnuno/appnuno.php'] = str_replace(
+        array('Requires at least: 6.9', 'Requires PHP: 7.4'),
+        array('Requires at least: ' . $package_line['requires_at_least'], 'Requires PHP: ' . $package_line['requires_php']),
+        $prepared['appnuno/appnuno.php']
+    );
+    if (strpos($prepared['appnuno/appnuno.php'], 'Version: ' . $version) === false || strpos($prepared['appnuno/appnuno.php'], 'Requires at least: ' . $package_line['requires_at_least']) === false || strpos($prepared['appnuno/appnuno.php'], 'Requires PHP: ' . $package_line['requires_php']) === false) {
         throw new RuntimeException('The WooCommerce plugin header version was not written.');
     }
     ksort($prepared, SORT_STRING);
