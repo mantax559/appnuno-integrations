@@ -1157,7 +1157,7 @@ def fill_builtin_tab_labels(page: Page) -> None:
 
 def submit_module_settings(page: Page) -> None:
     page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-success").filter(has_text="modified AppNuno").wait_for(timeout=15000)
+    page.locator(".appnuno-alert-success").filter(has_text="modified AppNuno").wait_for(timeout=15000)
     page.reload()
     page.locator("#default-tabs .appnuno-tab").nth(2).wait_for(state="attached")
 
@@ -1302,7 +1302,7 @@ def save_module_status(page: Page, enabled: bool) -> None:
     choose_switch(page, "input-status", "1" if enabled else "0")
     with page.expect_navigation():
         page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-success").wait_for()
+    page.locator(".appnuno-alert-success").wait_for()
 
 
 def assert_disabled_module_is_not_published(runtime: Runtime, page: Page, token: str) -> None:
@@ -1369,7 +1369,7 @@ def reject_invalid_module_configuration(runtime: Runtime, page: Page, token: str
     page.locator(f'#default-tabs [data-tab-target="{home_key}"]').click()
     page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{home_key}"] [data-field="id"]').fill("")
     page.locator('button[form="form-appnuno"]').click()
-    page.locator(".alert-danger:not(#client-validation-error)").wait_for()
+    page.locator(".appnuno-alert-danger").wait_for()
     if setting_value(runtime, "module_appnuno_config") != original_config:
         raise AssertionError("Invalid AppNuno settings changed the stored module configuration.")
 
@@ -1389,7 +1389,7 @@ def reject_save_without_modify_permission(runtime: Runtime, page: Page, token: s
     try:
         choose_switch(page, "input-status", "0")
         page.locator('button[form="form-appnuno"]').click()
-        server_error = page.locator(".alert-danger:not(#client-validation-error)")
+        server_error = page.locator(".appnuno-alert-danger")
         server_error.wait_for()
         if "permission" not in server_error.inner_text().lower():
             raise AssertionError("The module settings controller did not reject a user without modify permission.")
