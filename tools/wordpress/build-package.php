@@ -1,12 +1,13 @@
 <?php
 $package_lines = array(
+    '9' => array('directory' => '9.x', 'requires_at_least' => '6.4'),
     '10' => array('directory' => '10.x', 'requires_at_least' => '6.7'),
     '11' => array('directory' => '11.x', 'requires_at_least' => '6.9'),
 );
 $package_line = '11';
 if (isset($argv[1])) {
     if (!is_string($argv[1]) || !isset($package_lines[$argv[1]])) {
-        throw new RuntimeException('The WooCommerce package line must be 10 or 11.');
+        throw new RuntimeException('The WooCommerce package line must be 9, 10, or 11.');
     }
     $package_line = $argv[1];
 }

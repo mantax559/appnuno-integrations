@@ -4,7 +4,7 @@
 | --- | --- | --- | --- |
 | WooCommerce | 11.x | [Instruction](downloads/woocommerce/11.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/11.x/appnuno-woocommerce-11.x.zip) |
 | WooCommerce | 10.x | [Instruction](downloads/woocommerce/10.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/10.x/appnuno-woocommerce-10.x.zip) |
-| WooCommerce | 9.x | Instruction in preparation | — |
+| WooCommerce | 9.x | [Instruction](downloads/woocommerce/9.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/9.x/appnuno-woocommerce-9.x.zip) |
 | WooCommerce | 8.x | Instruction in preparation | — |
 | WooCommerce | 7.x | Instruction in preparation | — |
 | WooCommerce | 6.x | Instruction in preparation | — |
@@ -58,9 +58,10 @@ powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -
 
 ## Generate the WooCommerce packages
 
-Run these commands from the repository root. PHP must have the `zip` extension enabled. They build `downloads/woocommerce/10.x/appnuno-woocommerce-10.x.zip` and `downloads/woocommerce/11.x/appnuno-woocommerce-11.x.zip`.
+Run these commands from the repository root. PHP must have the `zip` extension enabled. They build the WooCommerce 9.x, 10.x, and 11.x packages.
 
 ```powershell
+php tools/wordpress/build-package.php 9
 php tools/wordpress/build-package.php 10
 php tools/wordpress/build-package.php
 ```
