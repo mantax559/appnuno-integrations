@@ -153,9 +153,13 @@ class WordPressAdapter(StoreAdapter):
                 confirmation.click()
             if deleted.value.status >= 400:
                 raise AssertionError(f"WordPress did not delete the AppNuno plugin: HTTP {deleted.value.status}.")
-        else:
-            page.get_by_text("AppNuno was successfully deleted.", exact=True).wait_for()
-        page.locator("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']").wait_for(state="detached")
+        page.get_by_text("AppNuno was successfully deleted.", exact=True).wait_for()
+        page.wait_for_function(
+            """() => {
+                const row = document.querySelector("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']");
+                return !row || row.classList.contains("deleted");
+            }"""
+        )
 
     def install(self, page: Page) -> None:
         if not Path(self.package).is_file():
