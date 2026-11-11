@@ -104,7 +104,7 @@ jobs:
           APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/wordpress-artifacts
         run: |
           python3 -m pip install -r tools/wordpress/tests/requirements-ci.txt
-          python3 -m playwright install --with-deps chromium
+          python3 -m playwright install chromium
           python3 tools/wordpress/tests/integration/admin.py
 
       - name: Upload browser test artifacts
