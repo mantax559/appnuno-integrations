@@ -358,7 +358,7 @@ def assert_responsive_layout(runtime: Runtime, page: Page) -> None:
                         or abs(measurement["settingsRight"] - measurement["parentInnerRight"]) > 1
                     ):
                         raise AssertionError(f"The settings panel must fill its parent's inner width ({context}): {measurement}.")
-                mobile_sidebar = width < 768 or (width < 992 and runtime.line == "4.0")
+                mobile_sidebar = width < 768 or (width < 992 and runtime.line.startswith("4."))
                 if mobile_sidebar and runtime.version == "2.0.0.0":
                     collapsed_sidebar = layout["collapsed"]
                     expanded_sidebar = layout["expanded"]
