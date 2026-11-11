@@ -926,7 +926,7 @@ def add_hidden_tab(page: Page) -> None:
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
     tab.locator('[data-status-switch] button[data-value="0"]').click()
     tab_key = tab.get_attribute("data-tab-key")
-    hidden_marker = page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .fa-eye-slash')
+    hidden_marker = page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .appnuno-icon-eye-off')
     if hidden_marker.count() != 1 or hidden_marker.evaluate("icon => icon.textContent.trim()") or hidden_marker.get_attribute("data-appnuno-tooltip") != "Hidden":
         raise AssertionError("A hidden tab should show only the eye icon with a Hidden tooltip.")
     if hidden_marker.evaluate("icon => icon.nextElementSibling && icon.nextElementSibling.hasAttribute('data-remove-tab')") is not True:
@@ -1028,8 +1028,8 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     add_button = page.locator('#default-tabs [data-add-tab="default-tabs"]')
     if tab_layout["addTop"] < tab_layout["listBottom"] - 1:
         raise AssertionError(f"The add-tab button should appear below the vertical tab list: {tab_layout}.")
-    if not add_button.is_enabled() or not add_button.locator('.fa-plus-circle, .fa-circle-plus').count():
-        raise AssertionError("The tab list must expose an enabled add button with a plus-circle icon.")
+    if not add_button.is_enabled() or not add_button.locator('.appnuno-icon-plus').count():
+        raise AssertionError("The tab list must expose an enabled add button with a plus icon.")
     if page.locator("#default-tabs .appnuno-tab [data-remove-tab]").count():
         raise AssertionError("The remove-tab icon should not be inside the tab editor panel.")
     original_tab_count = page.locator("#default-tabs .appnuno-tab").count()
