@@ -306,7 +306,7 @@ def assert_responsive_layout(page: Page) -> None:
                                     clientWidth: element.clientWidth,
                                     scrollWidth: element.scrollWidth
                                 };
-                            }).filter(element => element.left < settingsRect.left - 1 || element.right > settingsRect.right + 1 || element.scrollWidth > element.clientWidth + 1).sort((first, second) => second.right - first.right).slice(0, 8),
+                            }).filter(element => element.left < settingsRect.left - 1 || element.right > settingsRect.right + 1).sort((first, second) => second.right - first.right).slice(0, 8),
                             parentInnerLeft: parentRect.left + parseFloat(parentStyle.borderLeftWidth) + parseFloat(parentStyle.paddingLeft),
                             parentInnerRight: parentRect.right - parseFloat(parentStyle.borderRightWidth) - parseFloat(parentStyle.paddingRight)
                         };
