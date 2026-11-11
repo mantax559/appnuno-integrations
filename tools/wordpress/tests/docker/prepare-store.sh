@@ -21,6 +21,7 @@ if ! wp core is-installed --allow-root --path=/var/www/html >/dev/null 2>&1; the
         --skip-email
 fi
 
+wp config set FS_METHOD direct --type=constant --allow-root --path=/var/www/html
 wp core is-installed --allow-root --path=/var/www/html
 wp core version --allow-root --path=/var/www/html | grep -Fx "$WORDPRESS_VERSION"
 if ! wp plugin is-installed woocommerce --allow-root --path=/var/www/html >/dev/null 2>&1; then
@@ -69,8 +70,8 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     wp language core install lt_LT --allow-root --path=/var/www/html
     mkdir -p /var/www/html/wp-content/mu-plugins /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade
     cp /scripts/appnuno-languages.php /var/www/html/wp-content/mu-plugins/appnuno-languages.php
-    chown -R www-data:www-data /var/www/html/wp-content
     wp plugin install /appnuno/package/appnuno-woocommerce-11.x.zip --activate --force --allow-root --path=/var/www/html
+    chown -R 33:33 /var/www/html/wp-content
     wp plugin is-active appnuno --allow-root --path=/var/www/html
     wp option delete module_appnuno_status --allow-root --path=/var/www/html || true
     wp option delete module_appnuno_config --allow-root --path=/var/www/html || true

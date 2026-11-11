@@ -84,7 +84,7 @@ class WordPressAdapter(StoreAdapter):
         password = page.locator("#reg_password")
         if password.count():
             password.click()
-            password.press_sequentially("sunlit-harbor-ticket-48!", delay=5)
+            password.press_sequentially("R7!vQ3#nL9@xT5$wP2", delay=5)
             page.locator(".woocommerce-password-strength.strong").wait_for()
         page.locator("button[name='register']").click()
         page.locator(".woocommerce-error, a[href*='customer-logout'], .woocommerce-MyAccount-navigation").first.wait_for()
@@ -138,11 +138,17 @@ class WordPressAdapter(StoreAdapter):
             page.locator("#adminmenu").wait_for()
             row = page.locator("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']").first
         page.once("dialog", lambda dialog: dialog.accept())
-        with page.expect_response(lambda response: "delete-plugin" in (response.request.post_data or ""), timeout=30000) as deleted:
-            row.locator(".delete a").click()
-        if deleted.value.status != 200:
+        row.locator(".delete a").click()
+        confirmation = page.locator('input[type="submit"][name="submit"][value="Yes, delete these files and data"]')
+        confirmation.wait_for()
+        with page.expect_response(
+            lambda response: response.request.method == "POST" and "/wp-admin/plugins.php" in response.url,
+            timeout=30000,
+        ) as deleted:
+            confirmation.click()
+        if deleted.value.status >= 400:
             raise AssertionError(f"WordPress did not delete the AppNuno plugin: HTTP {deleted.value.status}.")
-        page.locator("#appnuno-deleted").wait_for()
+        page.locator("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']").wait_for(state="detached")
 
     def install(self, page: Page) -> None:
         if not Path(self.package).is_file():
