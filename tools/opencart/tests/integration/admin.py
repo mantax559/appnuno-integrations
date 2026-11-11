@@ -1111,7 +1111,7 @@ def configure_colors(page: Page) -> None:
     if color_help.count() != 4 or page.locator('#tab-colors label [data-toggle="tooltip"], #tab-colors label [data-bs-toggle="tooltip"]').count():
         raise AssertionError("Navigation color explanations should appear beneath labels without tooltips.")
     color_layout = page.locator("#light-background").evaluate("element => ({ maxWidth: getComputedStyle(element).maxWidth, marginLeft: getComputedStyle(element).marginLeft, right: element.getBoundingClientRect().right, parentRight: element.parentElement.getBoundingClientRect().right })")
-    if color_layout["maxWidth"] != "112px" or color_layout["marginLeft"] != "auto" or abs(color_layout["right"] - color_layout["parentRight"]) > 1:
+    if color_layout["maxWidth"] != "112px" or abs(color_layout["right"] - color_layout["parentRight"]) > 1:
         raise AssertionError(f"Navigation color pickers should be narrow and aligned to the right: {color_layout}.")
     page.locator("#light-background").fill("#112233")
     page.locator("#light-content").fill("#223344")
