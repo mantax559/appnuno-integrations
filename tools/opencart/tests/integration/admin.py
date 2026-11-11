@@ -926,8 +926,9 @@ def add_hidden_tab(page: Page) -> None:
     tab.locator('[data-language-url="lt-lt"]').fill("/lt/pasleptas")
     tab.locator('[data-status-switch] button[data-value="0"]').click()
     tab_key = tab.get_attribute("data-tab-key")
-    hidden_marker = page.locator(f'#default-tabs [data-tab-target="{tab_key}"] .appnuno-icon-eye-off')
-    if hidden_marker.count() != 1 or hidden_marker.evaluate("icon => icon.textContent.trim()") or hidden_marker.get_attribute("data-appnuno-tooltip") != "Hidden":
+    hidden_marker = page.locator(f'#default-tabs [data-tab-target="{tab_key}"] [data-visibility-indicator]')
+    hidden_icon = hidden_marker.locator(".appnuno-icon-eye-off")
+    if hidden_marker.count() != 1 or hidden_icon.count() != 1 or hidden_icon.evaluate("icon => icon.textContent.trim()") or hidden_marker.get_attribute("data-appnuno-tooltip") != "Hidden":
         raise AssertionError("A hidden tab should show only the eye icon with a Hidden tooltip.")
     if hidden_marker.evaluate("icon => icon.nextElementSibling && icon.nextElementSibling.hasAttribute('data-remove-tab')") is not True:
         raise AssertionError("The hidden icon should sit immediately before the remove action.")
