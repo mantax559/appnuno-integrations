@@ -140,14 +140,21 @@ class WordPressAdapter(StoreAdapter):
         page.once("dialog", lambda dialog: dialog.accept())
         row.locator(".delete a").click()
         confirmation = page.locator('input[type="submit"][name="submit"][value="Yes, delete these files and data"]')
-        confirmation.wait_for()
-        with page.expect_response(
-            lambda response: response.request.method == "POST" and "/wp-admin/plugins.php" in response.url,
-            timeout=30000,
-        ) as deleted:
-            confirmation.click()
-        if deleted.value.status >= 400:
-            raise AssertionError(f"WordPress did not delete the AppNuno plugin: HTTP {deleted.value.status}.")
+        page.wait_for_function(
+            """() => document.querySelector('input[type="submit"][name="submit"][value="Yes, delete these files and data"]')
+                || document.body.innerText.includes("AppNuno was successfully deleted.")"""
+        )
+        if confirmation.count():
+            confirmation.wait_for()
+            with page.expect_response(
+                lambda response: response.request.method == "POST" and "/wp-admin/plugins.php" in response.url,
+                timeout=30000,
+            ) as deleted:
+                confirmation.click()
+            if deleted.value.status >= 400:
+                raise AssertionError(f"WordPress did not delete the AppNuno plugin: HTTP {deleted.value.status}.")
+        else:
+            page.get_by_text("AppNuno was successfully deleted.", exact=True).wait_for()
         page.locator("tr[data-slug='appnuno'], tr[data-plugin='appnuno/appnuno.php']").wait_for(state="detached")
 
     def install(self, page: Page) -> None:
