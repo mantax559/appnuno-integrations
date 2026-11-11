@@ -40,13 +40,16 @@ def choose_switch(page: Page, field_id: str, value: str) -> None:
 
 
 def seed_builtin_tabs(page: Page) -> None:
-    if page.locator("#default-tabs .appnuno-tab").count():
-        return
     specs = (
         ("home", "/", "Home", "Pradžia"),
         ("cart", "/index.php?route=checkout/cart", "Cart", "Krepšelis"),
     )
+    existing_ids = set(page.locator('#default-tabs .appnuno-tab [data-field="id"]').evaluate_all(
+        "inputs => inputs.map(input => input.value)"
+    ))
     for tab_id, url, english, lithuanian in specs:
+        if tab_id in existing_ids:
+            continue
         page.locator('button[data-add-tab="default-tabs"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").last
         tab.locator('[data-field="id"]').wait_for(state="attached", timeout=5000)
@@ -55,7 +58,14 @@ def seed_builtin_tabs(page: Page) -> None:
         if tab.locator('[data-language-label="lt-lt"]').count():
             tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
         tab.locator('[data-url-select]').select_option(url)
-    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
+        existing_ids.add(tab_id)
+    home_key = page.locator("#default-tabs .appnuno-tab").evaluate_all("""tabs => {
+        const home = tabs.find(tab => tab.querySelector('[data-field="id"]')?.value === 'home');
+        return home?.dataset.tabKey || '';
+    }""")
+    if not home_key:
+        raise AssertionError("The Home tab must be available for the default tab integration tests.")
+    page.locator(f'#default-tabs [data-tab-target="{home_key}"]').click()
 
 
 def admin_token(runtime: Runtime, page: Page) -> str:
@@ -359,11 +369,15 @@ def assert_responsive_layout(page: Page) -> None:
         page.locator('#default-tabs [data-add-tab="default-tabs"]').click()
         temporary_tab = page.locator("#default-tabs .appnuno-tab").last
         temporary_tab_key = temporary_tab.get_attribute("data-tab-key")
+        page.locator(f'#default-tabs [data-tab-target="{temporary_tab_key}"]').click()
+        if not temporary_tab.is_visible():
+            raise AssertionError("Selecting a newly added tab did not show its editor at mobile width.")
         page.locator(f'#default-tabs [data-tab-target="{temporary_tab_key}"] [data-remove-tab]').click()
         if page.locator("#default-tabs .appnuno-tab").count() != original_tab_count:
             raise AssertionError("Adding and removing a tab did not work at mobile width.")
-        page.locator('#default-tabs [data-tab-target="appnuno-tab-1"]').click()
-        if not page.locator("#default-tabs .appnuno-tab").nth(1).is_visible():
+        target_tab = next((key for key in original_keys if key != original_tab), original_tab)
+        page.locator(f'#default-tabs [data-tab-target="{target_tab}"]').click()
+        if not page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{target_tab}"]').is_visible():
             raise AssertionError("Selecting a tab did not work at mobile width.")
     finally:
         page.set_viewport_size(original_viewport)
