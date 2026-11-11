@@ -150,7 +150,7 @@ echo "OpenCart package structure tests passed.\n";
 
 function opencart_40_package($repository) {
     $platform_versions = json_decode(file_get_contents($repository . DIRECTORY_SEPARATOR . 'platform-versions.json'), true);
-    $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '4.x' . DIRECTORY_SEPARATOR . 'appnuno-opencart-4.x.ocmod.zip';
+    $package = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . '4.x' . DIRECTORY_SEPARATOR . 'appnuno.ocmod.zip';
     $required = array(
         'install.json',
         'README.md',
@@ -198,6 +198,8 @@ function opencart_40_package($repository) {
     $library = $archive->getFromName('system/library/appnuno-config.php');
     $controller = $archive->getFromName('admin/controller/module/appnuno.php');
     $catalog_controller = $archive->getFromName('catalog/controller/module/appnuno.php');
+    $admin_model = $archive->getFromName('admin/model/module/appnuno.php');
+    $catalog_model = $archive->getFromName('catalog/model/module/appnuno.php');
     $english = $archive->getFromName('admin/language/en-gb/module/appnuno.php');
     $lithuanian = $archive->getFromName('admin/language/lt-lt/module/appnuno.php');
     $german = $archive->getFromName('admin/language/de-de/module/appnuno.php');
@@ -215,23 +217,31 @@ function opencart_40_package($repository) {
     if (!is_string($settings_css) || !strstr($settings_css, '.appnuno-settings') || !strstr($settings_css, '--appnuno-primary: #18181b;') || !strstr($settings_css, '--appnuno-muted-surface: #f3f3f3;') || !strstr($settings_css, ':focus-visible') || !strstr($settings_css, '#icon-picker-dialog .appnuno-dialog-panel') || !is_string($adapter_css) || !strstr($adapter_css, '#column-left.active ~ #content') || !is_string($settings_js) || !strstr($settings_js, 'readSettingsData') || !is_string($view) || !strstr($view, 'view/javascript/appnuno/settings.css') || !strstr($view, 'view/javascript/appnuno/adapter.css') || !strstr($view, 'view/javascript/appnuno/settings.js') || strstr($view, '<script type="text/javascript">') || !strstr($view, "'language/' + language.code + '/' + language.code + '.png'") || !strstr($view, 'data-language-url') || !strstr($view, 'text.text_custom_url') || !strstr($view, 'text.text_shown_on_pages') || !strstr($view, 'data-pages') || !strstr($view, 'data-all-pages') || !strstr($view, 'data-page-choice') || !strstr($view, 'page-picker-dialog') || !strstr($view, 'text.text_show_on_all_pages') || !strstr($view, 'text.text_show_on_selected_pages') || !strstr($view, 'text.text_show_on_no_pages') || !strstr($view, 'text.text_all_pages') || !strstr($view, 'button_select_all_pages') || !strstr($view, 'appnuno-field-label') || !strstr($view, 'appnuno-field-control') || !strstr($view, 'appnuno-tab-list') || !strstr($view, 'appnuno-status-field') || !strstr($view, 'appnuno-tab-panels') || !strstr($view, 'data-remove-tab') || !strstr($view, 'appnunoIcon(\'trash\')') || !strstr($view, 'appnuno-button appnuno-button-primary') || strstr($view, 'tabRow.style.display') || strstr($view, 'fa-question-circle') || strstr($view, 'initializeTooltip') || !strstr($view, 'type="color"') || !strstr($view, 'rgba(0, 0, 0, 0.02)') || !strstr($view, 'id="default-tabs"') || !strstr($view, 'text.entry_cart_tab') || !strstr($view, 'data-cart-switch') || strstr($view, 'id="cart-tab-id"') || !strstr($view, 'logo-dark.png') || !strstr($view, 'alt="AppNuno"') || !strstr($view, 'appnuno-section-list') || strstr($view, 'data-toggle="tab"') || strstr($view, '<?php') || !strstr($view, '{{ appnuno_settings|raw }}') || !strstr($settings_js, 'function showDialog(dialog)') || !strstr($view, 'appnuno-check') || !strstr($view, 'data-tab-target') || !strstr($view, 'data-tab-visibility') || !strstr($view, 'button_clear_pages') || !strstr($view, 'appnuno-toolbar') || !strstr($view, 'appnunoIcon(\'eyeOff\')') || strstr($view, 'panel panel-default') || strstr($view, 'class="form-group"')) {
         throw new RuntimeException('OpenCart 4 archive is missing the Twig settings form.');
     }
+    if (!is_string($view) || !strstr($view, '../extension/appnuno/admin/view/javascript/appnuno/settings.css?v=') || !strstr($view, '../extension/appnuno/admin/view/javascript/appnuno/adapter.css?v=') || !is_string($settings_html) || !strstr($settings_html, '../extension/appnuno/admin/view/javascript/appnuno/settings.js?v=') || !is_string($controller) || !strstr($controller, "DIR_EXTENSION . 'appnuno/admin/view/javascript/appnuno/settings.html'") || !strstr($controller, '../extension/appnuno/admin/view/javascript/appnuno/settings.js?v=')) {
+        throw new RuntimeException('OpenCart 4 archive is missing extension-scoped settings asset paths.');
+    }
     if (!is_string($english) || !strstr($english, "\$_['heading_title']                = 'AppNuno'") || !strstr($english, 'Settings data was not submitted') || !is_string($lithuanian) || !strstr($lithuanian, "\$_['heading_title']                = 'AppNuno'") || !is_string($german) || !strstr($german, "\$_['heading_title']                = 'AppNuno'")) {
         throw new RuntimeException('OpenCart 4 archive is missing the English, Lithuanian or German module language.');
     }
-    if (!is_string($controller) || !strstr($controller, 'namespace Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module;') || !strstr($controller, 'class Appnuno extends \\Opencart\\System\\Engine\\Controller') || !strstr($controller, 'function repairEvent()') || !strstr($controller, "deleteEventByCode('appnuno')") || !strstr($controller, "session->data['user_token']") || strstr($controller, "session->data['token']") || strstr($controller, 'model_extension_event') || !strstr($controller, 'extension/appnuno/module/appnuno')) {
+    if (!is_string($controller) || !opencart_40_namespace_is_first($controller, 'Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module') || !strstr($controller, "dirname(__FILE__) . '/../../../system/library/appnuno-config.php'") || !strstr($controller, "DIR_EXTENSION . 'appnuno/admin/view/javascript/appnuno/version.txt'") || !strstr($controller, '\AppnunoConfig::') || !strstr($controller, 'class Appnuno extends \\Opencart\\System\\Engine\\Controller') || !strstr($controller, 'function repairEvent()') || !strstr($controller, "deleteEventByCode('appnuno')") || !strstr($controller, "session->data['user_token']") || strstr($controller, "session->data['token']") || strstr($controller, 'model_extension_event') || !strstr($controller, 'extension/appnuno/module/appnuno')) {
         throw new RuntimeException('OpenCart 4 archive is missing the extension controller, user_token links or event repair.');
     }
-    if (!is_string($catalog_controller) || !is_string($library) || !strstr($catalog_controller, 'namespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;') || !strstr($catalog_controller, "version_compare(VERSION, '4.0.2.0', '<')") || !strstr($catalog_controller, "array('href' => \$script_url)") || !strstr($library, "['urls'][\$language_code]") || !strstr($library, 'unset($tab[\'urls\'])')) {
+    if (!is_string($catalog_controller) || !opencart_40_namespace_is_first($catalog_controller, 'Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module') || !strstr($catalog_controller, "dirname(__FILE__) . '/../../../system/library/appnuno-config.php'") || !strstr($catalog_controller, '\AppnunoConfig::') || !is_string($library) || !opencart_40_namespace_is_first($admin_model, 'Opencart\\Admin\\Model\\Extension\\Appnuno\\Module') || !strstr($admin_model, "dirname(__FILE__) . '/../../../system/library/appnuno-config.php'") || !strstr($admin_model, '\AppnunoConfig::') || !opencart_40_namespace_is_first($catalog_model, 'Opencart\\Catalog\\Model\\Extension\\Appnuno\\Module') || !strstr($catalog_controller, "version_compare(VERSION, '4.0.2.0', '<')") || !strstr($catalog_controller, "array('href' => \$script_url)") || !strstr($library, "['urls'][\$language_code]") || !strstr($library, 'unset($tab[\'urls\'])')) {
         throw new RuntimeException('OpenCart 4 archive is missing the catalog bootstrap controller.');
     }
     if (!is_string($manifest) || !strstr($manifest, '"name": "AppNuno OpenCart 4.x"') || !strstr($manifest, '"code": "appnuno"') || !strstr($manifest, '"version": "' . $platform_versions['opencart'] . '"') || !is_string($version_file) || !strstr(trim($version_file), $platform_versions['opencart'])) {
         throw new RuntimeException('OpenCart 4 archive is missing install.json.');
     }
-    if (!is_string($readme) || !strstr($readme, 'appnuno-opencart-4.x.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
+    if (!is_string($readme) || !strstr($readme, 'appnuno.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
         throw new RuntimeException('OpenCart 4 archive is missing its installation instructions.');
     }
     $missing = array_diff($required, $entries);
     if (count($missing)) {
         throw new RuntimeException('Missing OpenCart package files: ' . implode(', ', $missing));
     }
+}
+
+function opencart_40_namespace_is_first(string $content, string $namespace): bool {
+    $prefix = "<?php\nnamespace " . $namespace . ";";
+    return strstr(substr($content, 0, strlen($prefix)), $prefix);
 }

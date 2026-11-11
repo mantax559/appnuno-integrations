@@ -256,7 +256,7 @@ def open_module_editor(runtime: Runtime, page: Page, token: str) -> None:
             raise AssertionError(f"Tab ID copy and description must align left of the control: {field_layout}.")
 
 
-def assert_responsive_layout(page: Page) -> None:
+def assert_responsive_layout(runtime: Runtime, page: Page) -> None:
     original_viewport = page.viewport_size or {"width": 1440, "height": 1000}
     original_section = page.locator('.appnuno-settings .appnuno-section-list a').evaluate_all(
         "links => links.find(link => link.classList.contains('active') || link.parentElement.classList.contains('active')).getAttribute('href')"
@@ -358,9 +358,15 @@ def assert_responsive_layout(page: Page) -> None:
                         or abs(measurement["settingsRight"] - measurement["parentInnerRight"]) > 1
                     ):
                         raise AssertionError(f"The settings panel must fill its parent's inner width ({context}): {measurement}.")
-                if width < 768 and (layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
+                mobile_sidebar = width < 768 or (width < 992 and runtime.line == "4.0")
+                if mobile_sidebar and runtime.version == "2.0.0.0":
+                    collapsed_sidebar = layout["collapsed"]
+                    expanded_sidebar = layout["expanded"]
+                    if not collapsed_sidebar["sidebarVisible"] or abs(collapsed_sidebar["sidebarWidth"] - 50) > 1 or not expanded_sidebar["sidebarVisible"] or expanded_sidebar["sidebarWidth"] <= collapsed_sidebar["sidebarWidth"] + 1:
+                        raise AssertionError(f"OpenCart 2.0.0.0 should retain its 50px collapsed mobile sidebar and expand it when selected at {width}px: {layout}.")
+                elif mobile_sidebar and (layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
                     raise AssertionError(f"The mobile sidebar should hide when collapsed and appear when expanded at {width}px: {layout}.")
-                if width >= 768 and (not layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
+                if not mobile_sidebar and (not layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
                     raise AssertionError(f"The desktop sidebar should remain visible at {width}px: {layout}.")
         page.locator('a[href="#tab-navigation"]').click()
         page.set_viewport_size({"width": 390, "height": 844})
@@ -718,7 +724,7 @@ def install_module(runtime: Runtime, page: Page, token: str) -> None:
     module_row.locator("a.btn-danger").wait_for()
     open_module_editor(runtime, page, token)
     seed_builtin_tabs(page)
-    assert_responsive_layout(page)
+    assert_responsive_layout(runtime, page)
     assert_settings_focus(page)
 
 

@@ -23,7 +23,7 @@
 | PrestaShop | 1.2.x | Instruction in preparation | — |
 | PrestaShop | 1.1.x | Instruction in preparation | — |
 | PrestaShop | 1.0.x | Instruction in preparation | — |
-| OpenCart | 4.x | [Instruction](downloads/opencart/4.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/4.x/appnuno-opencart-4.x.ocmod.zip) |
+| OpenCart | 4.x | [Instruction](downloads/opencart/4.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/4.x/appnuno.ocmod.zip) |
 | OpenCart | 3.x | [Instruction](downloads/opencart/3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/3.x/appnuno-opencart-3.x.ocmod.zip) |
 | OpenCart | 2.3.x | [Instruction](downloads/opencart/2.3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip) |
 | OpenCart | 2.2.x | [Instruction](downloads/opencart/2.2.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.2.x/appnuno-opencart-2.2.x.ocmod.zip) |

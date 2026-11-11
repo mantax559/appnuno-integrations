@@ -7,13 +7,14 @@ function opencart_build_package($line) {
 $repository = dirname(__DIR__, 2);
 $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'opencart';
 $release_lines = array('3.0' => '3.x', '4' => '4.x');
+$package_files = array('4.x' => 'appnuno.ocmod.zip');
 $release_line = isset($release_lines[$line]) ? $release_lines[$line] : $line . '.x';
 $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'opencart' . DIRECTORY_SEPARATOR . $release_line;
 $platform_versions = json_decode(file_get_contents($repository . DIRECTORY_SEPARATOR . 'platform-versions.json'), true);
 if (!is_array($platform_versions) || empty($platform_versions['opencart'])) {
     throw new RuntimeException('The OpenCart integration version is missing from platform-versions.json.');
 }
-$package_file = 'appnuno-opencart-' . $release_line . '.ocmod.zip';
+$package_file = isset($package_files[$release_line]) ? $package_files[$release_line] : 'appnuno-opencart-' . $release_line . '.ocmod.zip';
 $package = $release . DIRECTORY_SEPARATOR . $package_file;
 $readme = $release . DIRECTORY_SEPARATOR . 'README.md';
 if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
@@ -71,19 +72,21 @@ foreach ($entries as $name => $path) {
         }
     }
     if (strpos($name, '/view/template/') !== false && preg_match('/\.(tpl|twig)$/', $name)) {
+        $asset_path = in_array($line, array('4'), true) ? '../extension/appnuno/admin/view/javascript/appnuno/' : 'view/javascript/appnuno/';
         if (strpos($body, '<script type="text/javascript">') !== false) {
             throw new RuntimeException('The OpenCart settings template must keep its script in the shared settings file.');
         }
         $body = str_replace(
-            array('view/javascript/appnuno/settings.css', 'view/javascript/appnuno/adapter.css'),
-            array('view/javascript/appnuno/settings.css?v=' . $ui_asset_version, 'view/javascript/appnuno/adapter.css?v=' . $ui_asset_version),
+            array($asset_path . 'settings.css', $asset_path . 'adapter.css'),
+            array($asset_path . 'settings.css?v=' . $ui_asset_version, $asset_path . 'adapter.css?v=' . $ui_asset_version),
             $body
         );
     }
     if (substr($name, -13) === 'settings.html') {
+        $asset_path = in_array($line, array('4'), true) ? '../extension/appnuno/admin/view/javascript/appnuno/' : 'view/javascript/appnuno/';
         $body = str_replace(
             array('{{settings_script}}', '{{documentation_url}}'),
-            array('view/javascript/appnuno/settings.js?v=' . $ui_asset_version, 'https://appnuno.com/opencart'),
+            array($asset_path . 'settings.js?v=' . $ui_asset_version, 'https://appnuno.com/opencart'),
             $body
         );
     }
@@ -391,10 +394,32 @@ function opencart_twig_template($content) {
 function opencart_40_layout($name, $content) {
     // OpenCart 4 installs the zip into extension/{filename} and autoloads Opencart\{Application}\Controller\Extension\Appnuno.
     $content = str_replace("\r\n", "\n", $content);
+    $content = str_replace(
+        array(
+            "require_once dirname(__FILE__) . '/../../../../../../shared/php/appnuno-config.php';",
+            "DIR_APPLICATION . 'view/javascript/appnuno/"
+        ),
+        array(
+            "require_once dirname(__FILE__) . '/../../../system/library/appnuno-config.php';",
+            "DIR_EXTENSION . 'appnuno/admin/view/javascript/appnuno/"
+        ),
+        $content
+    );
+    $content = str_replace(
+        array('"view/javascript/appnuno/', "'view/javascript/appnuno/"),
+        array('"../extension/appnuno/admin/view/javascript/appnuno/', "'../extension/appnuno/admin/view/javascript/appnuno/"),
+        $content
+    );
+    $content = str_replace('AppnunoConfig::', '\AppnunoConfig::', $content);
     if (substr($name, -4) !== '.php') {
         return $content;
     }
     if ($name === 'admin/controller/module/appnuno.php') {
+        $content = str_replace(
+            "DIR_APPLICATION . 'view/javascript/appnuno/version.txt'",
+            "DIR_EXTENSION . 'appnuno/admin/view/javascript/appnuno/version.txt'",
+            $content
+        );
         $content = str_replace(
             "\t\t\t\$this->load->model('extension/event');\n\n\t\t\t\$this->model_extension_event->deleteEvent('appnuno');\n\t\t\t\$this->model_extension_event->addEvent('appnuno', 'catalog/view/common/header/before', 'extension/module/appnuno/inject');\n",
             "\t\t\t\$this->repairEvent();\n",
@@ -412,7 +437,8 @@ function opencart_40_layout($name, $content) {
         );
         $method = "\n\tprivate function repairEvent() {\n\t\t// OpenCart 4.0.0.0 takes positional event arguments. 4.0.1.0+ takes one array, and 4.0.2.0+ separates the action method with a dot.\n\t\t\$this->load->model('setting/event');\n\t\t\$this->model_setting_event->deleteEventByCode('appnuno');\n\t\t\$action = 'extension/appnuno/module/appnuno' . (version_compare(VERSION, '4.0.2.0', '<') ? '|' : '.') . 'inject';\n\t\tif (version_compare(VERSION, '4.0.1.0', '<')) {\n\t\t\t\$this->model_setting_event->addEvent('appnuno', 'AppNuno header script', 'catalog/view/common/header/before', \$action, true, 0);\n\n\t\t\treturn;\n\t\t}\n\t\t\$this->model_setting_event->addEvent(array(\n\t\t\t'code' => 'appnuno',\n\t\t\t'description' => 'AppNuno header script',\n\t\t\t'trigger' => 'catalog/view/common/header/before',\n\t\t\t'action' => \$action,\n\t\t\t'status' => true,\n\t\t\t'sort_order' => 0\n\t\t));\n\t}\n";
         $content = preg_replace('/\}\s*$/', $method . "}\n", $content, 1);
-        $content = str_replace('class ControllerExtensionModuleAppnuno extends Controller {', "namespace Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module;\nclass Appnuno extends \\Opencart\\System\\Engine\\Controller {", $content);
+        $content = str_replace('class ControllerExtensionModuleAppnuno extends Controller {', 'class Appnuno extends \\Opencart\\System\\Engine\\Controller {', $content);
+        $content = preg_replace('/^<\?php\s*/', "<?php\nnamespace Opencart\\Admin\\Controller\\Extension\\Appnuno\\Module;\n", $content, 1);
     }
     if ($name === 'catalog/controller/module/appnuno.php') {
         $content = str_replace(
@@ -435,13 +461,16 @@ function opencart_40_layout($name, $content) {
             "\tprivate function languageCode() {\n\t\t// OpenCart 4 startup writes the active request language into config_language. The session can still hold the previous code.\n\t\t\$language_code = \$this->config->get('config_language');\n\n\t\tif (is_string(\$language_code) && strlen(\$language_code)) {\n\t\t\treturn \$language_code;\n\t\t}\n\n\t\tif (isset(\$this->session->data['language']) && is_string(\$this->session->data['language']) && strlen(\$this->session->data['language'])) {\n\t\t\treturn \$this->session->data['language'];\n\t\t}\n\n\t\treturn '';\n\t}",
             $content
         );
-        $content = str_replace('class ControllerExtensionModuleAppnuno extends Controller {', "namespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;\nclass Appnuno extends \\Opencart\\System\\Engine\\Controller {", $content);
+        $content = str_replace('class ControllerExtensionModuleAppnuno extends Controller {', 'class Appnuno extends \\Opencart\\System\\Engine\\Controller {', $content);
+        $content = preg_replace('/^<\?php\s*/', "<?php\nnamespace Opencart\\Catalog\\Controller\\Extension\\Appnuno\\Module;\n", $content, 1);
     }
     if ($name === 'admin/model/module/appnuno.php') {
-        $content = str_replace('class ModelExtensionModuleAppnuno extends Model {', "namespace Opencart\\Admin\\Model\\Extension\\Appnuno\\Module;\nclass Appnuno extends \\Opencart\\System\\Engine\\Model {", $content);
+        $content = str_replace('class ModelExtensionModuleAppnuno extends Model {', 'class Appnuno extends \\Opencart\\System\\Engine\\Model {', $content);
+        $content = preg_replace('/^<\?php\s*/', "<?php\nnamespace Opencart\\Admin\\Model\\Extension\\Appnuno\\Module;\n", $content, 1);
     }
     if ($name === 'catalog/model/module/appnuno.php') {
-        $content = str_replace('class ModelExtensionModuleAppnuno extends Model {', "namespace Opencart\\Catalog\\Model\\Extension\\Appnuno\\Module;\nclass Appnuno extends \\Opencart\\System\\Engine\\Model {", $content);
+        $content = str_replace('class ModelExtensionModuleAppnuno extends Model {', 'class Appnuno extends \\Opencart\\System\\Engine\\Model {', $content);
+        $content = preg_replace('/^<\?php\s*/', "<?php\nnamespace Opencart\\Catalog\\Model\\Extension\\Appnuno\\Module;\n", $content, 1);
     }
     $content = str_replace(
         array(

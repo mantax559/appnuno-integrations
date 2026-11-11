@@ -82,9 +82,9 @@ jobs:
           TZ: UTC
         run: |
           php tools/opencart/build-package.php
-          first_hash=$(sha256sum downloads/opencart/4.x/appnuno-opencart-4.x.ocmod.zip | cut -d ' ' -f 1)
+          first_hash=$(sha256sum downloads/opencart/4.x/appnuno.ocmod.zip | cut -d ' ' -f 1)
           php tools/opencart/build-package.php
-          second_hash=$(sha256sum downloads/opencart/4.x/appnuno-opencart-4.x.ocmod.zip | cut -d ' ' -f 1)
+          second_hash=$(sha256sum downloads/opencart/4.x/appnuno.ocmod.zip | cut -d ' ' -f 1)
           test "$first_hash" = "$second_hash"
           php tools/opencart/tests/package-validation.php 4
           php tools/opencart/tests/config-validation.php

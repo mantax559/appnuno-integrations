@@ -77,8 +77,7 @@ def load_runtime() -> Runtime:
     elif line == "3.0":
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/{OPENCART_30_ASSETS[version]}"
     elif version.startswith("4."):
-        # OpenCart 4 uses the uploaded filename as its extension code.
-        package = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno-opencart-4.x.ocmod.zip"
+        package = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno.ocmod.zip"
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/opencart-{version}.zip"
     else:
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/{version}-compiled.zip"
