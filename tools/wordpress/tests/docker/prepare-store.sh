@@ -63,8 +63,9 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
         wp user create customer customer@example.test --role=customer --user_pass='appnuno-local' --allow-root --path=/var/www/html >/dev/null
     fi
     if ! wp user get limited --field=ID --allow-root --path=/var/www/html >/dev/null 2>&1; then
-        wp user create limited limited@example.test --role=subscriber --user_pass='appnuno-local' --allow-root --path=/var/www/html >/dev/null
+        wp user create limited limited@example.test --role=contributor --user_pass='appnuno-local' --allow-root --path=/var/www/html >/dev/null
     fi
+    wp user set-role limited contributor --allow-root --path=/var/www/html >/dev/null
     wp option update woocommerce_enable_myaccount_registration yes --allow-root --path=/var/www/html
     wp option update woocommerce_registration_generate_password no --allow-root --path=/var/www/html
     wp language core install lt_LT --allow-root --path=/var/www/html

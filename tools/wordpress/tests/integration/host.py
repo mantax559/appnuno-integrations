@@ -1,4 +1,5 @@
 import os
+import secrets
 import time
 from pathlib import Path
 
@@ -84,7 +85,7 @@ class WordPressAdapter(StoreAdapter):
         password = page.locator("#reg_password")
         if password.count():
             password.click()
-            password.press_sequentially("R7!vQ3#nL9@xT5$wP2", delay=5)
+            password.press_sequentially(secrets.token_urlsafe(32), delay=5)
             page.locator(".woocommerce-password-strength.strong").wait_for()
         page.locator("button[name='register']").click()
         page.locator(".woocommerce-error, a[href*='customer-logout'], .woocommerce-MyAccount-navigation").first.wait_for()
@@ -110,10 +111,7 @@ class WordPressAdapter(StoreAdapter):
         prepare_context(context, self)
         limited = context.new_page()
         try:
-            limited.goto(self.base_url + "/wp-login.php")
-            limited.locator("#user_login").fill("limited")
-            limited.locator("#user_pass").fill(self.admin_password)
-            limited.locator("#wp-submit").click()
+            self.login(limited, "limited")
             limited.goto(self.base_url + "/wp-admin/admin.php?page=appnuno")
             limited.locator("body").wait_for()
             if limited.locator("#form-appnuno").count():
