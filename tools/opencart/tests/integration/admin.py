@@ -460,7 +460,9 @@ def assert_settings_focus(page: Page) -> None:
         appearance = focus_appearance(field)
         if not appearance["focused"] or not appearance["neutralBorder"] or not appearance["neutralShadow"] or not appearance["neutralOutline"]:
             raise AssertionError(f"Input focus must use neutral borders and shadows, not Bootstrap blue: {appearance}.")
-        checkbox = page.locator('#default-tabs .appnuno-tab.active [data-all-pages]')
+        page.locator('#default-tabs .appnuno-tab.active [data-page-manage]').click()
+        checkbox = page.locator('#page-picker-all')
+        checkbox.wait_for(state="visible")
         decorations = checkbox.evaluate("""element => ['::before', '::after'].map(pseudo => {
             const style = getComputedStyle(element, pseudo);
             return { content: style.content, display: style.display };
@@ -474,6 +476,8 @@ def assert_settings_focus(page: Page) -> None:
         if not appearance["focused"] or not appearance["focusVisible"] or appearance["outlineStyle"] != "solid" or appearance["outlineWidth"] != "2px" or not appearance["neutralBorder"] or not appearance["neutralShadow"]:
             raise AssertionError(f"Keyboard-focused checkboxes must retain a neutral visible focus indicator: {appearance}.")
     finally:
+        if page.locator('#page-picker-dialog').is_visible():
+            page.locator('#page-picker-apply').click()
         page.locator('a[href="#tab-navigation"]').click()
         current_keys = page.locator('#default-tabs .appnuno-tab').evaluate_all(
             "tabs => tabs.map(tab => tab.dataset.tabKey)"
