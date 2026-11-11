@@ -1,11 +1,22 @@
 <?php
-wordpress_build_package();
+$package_lines = array(
+    '10' => array('directory' => '10.x', 'requires_at_least' => '6.7'),
+    '11' => array('directory' => '11.x', 'requires_at_least' => '6.9'),
+);
+$package_line = '11';
+if (isset($argv[1])) {
+    if (!is_string($argv[1]) || !isset($package_lines[$argv[1]])) {
+        throw new RuntimeException('The WooCommerce package line must be 10 or 11.');
+    }
+    $package_line = $argv[1];
+}
+wordpress_build_package($package_lines[$package_line]);
 
-function wordpress_build_package() {
+function wordpress_build_package(array $package_line): void {
     $repository = dirname(__DIR__, 2);
     $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'wordpress' . DIRECTORY_SEPARATOR . 'appnuno';
     $shared_admin = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'admin';
-    $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'woocommerce' . DIRECTORY_SEPARATOR . '11.x';
+    $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'woocommerce' . DIRECTORY_SEPARATOR . $package_line['directory'];
     $platform_versions = json_decode(file_get_contents($repository . DIRECTORY_SEPARATOR . 'platform-versions.json'), true);
     if (!is_array($platform_versions) || empty($platform_versions['wordpress'])) {
         throw new RuntimeException('The WooCommerce integration version is missing from platform-versions.json.');
@@ -14,7 +25,7 @@ function wordpress_build_package() {
     if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
         throw new RuntimeException('Unable to create the WooCommerce release directory.');
     }
-    $package = $release . DIRECTORY_SEPARATOR . 'appnuno-woocommerce-11.x.zip';
+    $package = $release . DIRECTORY_SEPARATOR . 'appnuno-woocommerce-' . $package_line['directory'] . '.zip';
     $entries = array(
         'appnuno/includes/appnuno-config.php' => $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'appnuno-config.php',
         'appnuno/assets/settings.css' => $shared_admin . DIRECTORY_SEPARATOR . 'settings.css',
@@ -44,7 +55,11 @@ function wordpress_build_package() {
         $body = str_replace('__APPNUNO_VERSION__', $version, $body);
         $prepared[$name] = $body;
     }
-    if (!isset($prepared['appnuno/appnuno.php']) || strpos($prepared['appnuno/appnuno.php'], 'Version: ' . $version) === false) {
+    if (!isset($prepared['appnuno/appnuno.php'])) {
+        throw new RuntimeException('The WooCommerce plugin header version was not written.');
+    }
+    $prepared['appnuno/appnuno.php'] = str_replace('Requires at least: 6.9', 'Requires at least: ' . $package_line['requires_at_least'], $prepared['appnuno/appnuno.php']);
+    if (strpos($prepared['appnuno/appnuno.php'], 'Version: ' . $version) === false || strpos($prepared['appnuno/appnuno.php'], 'Requires at least: ' . $package_line['requires_at_least']) === false) {
         throw new RuntimeException('The WooCommerce plugin header version was not written.');
     }
     ksort($prepared, SORT_STRING);

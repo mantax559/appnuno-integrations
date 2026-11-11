@@ -37,7 +37,8 @@ wp plugin is-active woocommerce --allow-root --path=/var/www/html
 wp plugin get woocommerce --field=version --allow-root --path=/var/www/html | grep -Fx "$WOOCOMMERCE_VERSION"
 
 if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
-    if [ ! -f /appnuno/package/appnuno-woocommerce-11.x.zip ]; then
+    package_line="${APPNUNO_WOOCOMMERCE_LINE:-11.x}"
+    if [ ! -f "/appnuno/package/appnuno-woocommerce-${package_line}.zip" ]; then
         echo "AppNuno WooCommerce package is missing." >&2
         exit 1
     fi
@@ -71,7 +72,7 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     wp language core install lt_LT --allow-root --path=/var/www/html
     mkdir -p /var/www/html/wp-content/mu-plugins /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade
     cp /scripts/appnuno-languages.php /var/www/html/wp-content/mu-plugins/appnuno-languages.php
-    wp plugin install /appnuno/package/appnuno-woocommerce-11.x.zip --activate --force --allow-root --path=/var/www/html
+    wp plugin install "/appnuno/package/appnuno-woocommerce-${package_line}.zip" --activate --force --allow-root --path=/var/www/html
     chown -R 33:33 /var/www/html/wp-content
     wp plugin is-active appnuno --allow-root --path=/var/www/html
     wp option delete module_appnuno_status --allow-root --path=/var/www/html || true

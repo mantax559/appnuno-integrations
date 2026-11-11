@@ -25,11 +25,12 @@ services:
       WORDPRESS_ADMIN_PASSWORD: appnuno-local
       WORDPRESS_ADMIN_EMAIL: admin@example.test
       APPNUNO_INSTALL_PLUGIN: ${APPNUNO_INSTALL_PLUGIN:-}
+      APPNUNO_WOOCOMMERCE_LINE: ${APPNUNO_WOOCOMMERCE_LINE:-11.x}
     volumes:
       - store-workspace:/var/www/html
       - ./prepare-store.sh:/scripts/prepare-store.sh:ro
       - ./mu-plugins/appnuno-languages.php:/scripts/appnuno-languages.php:ro
-      - ../../../../downloads/woocommerce/11.x:/appnuno/package:ro
+      - ../../../../downloads/woocommerce/${APPNUNO_WOOCOMMERCE_LINE:-11.x}:/appnuno/package:ro
     depends_on:
       wordpress:
         condition: service_healthy

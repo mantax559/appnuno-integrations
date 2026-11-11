@@ -20,7 +20,8 @@ class WordPressAdapter(StoreAdapter):
     special_path = "/shop/?on_sale=1"
     admin_user = "admin"
     admin_password = "appnuno-local"
-    package = REPOSITORY / "downloads" / "woocommerce" / "11.x" / "appnuno-woocommerce-11.x.zip"
+    package_line = os.environ.get("APPNUNO_WOOCOMMERCE_LINE", "11.x")
+    package = REPOSITORY / "downloads" / "woocommerce" / package_line / f"appnuno-woocommerce-{package_line}.zip"
 
     def state_url(self) -> str:
         return self.base_url + "/?appnuno=state"

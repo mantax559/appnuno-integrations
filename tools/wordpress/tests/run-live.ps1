@@ -1,14 +1,18 @@
 param(
-    [ValidateSet("7.1", "7.1.1", "7.1.2", "7.1.3", "7.1.4")]
     [string]$WordPressVersion = "7.1.4",
     [int]$WordPressPort = 8080,
-    [string]$WooCommerceVersion = "11.2.1"
+    [string]$WooCommerceVersion = "11.2.1",
+    [string]$WooCommerceLine = ""
 )
 
 $ErrorActionPreference = "Stop"
+if (-not $WooCommerceLine) {
+    $WooCommerceLine = ($WooCommerceVersion.Split('.')[0]) + ".x"
+}
 $env:WORDPRESS_VERSION = $WordPressVersion
 $env:WORDPRESS_PORT = "$WordPressPort"
 $env:WOOCOMMERCE_VERSION = $WooCommerceVersion
+$env:APPNUNO_WOOCOMMERCE_LINE = $WooCommerceLine
 $env:APPNUNO_INSTALL_PLUGIN = "1"
 $composeFile = Join-Path $PSScriptRoot "docker\docker-compose.yml"
 $liveComposeFile = Join-Path $PSScriptRoot "docker\docker-compose.live.yml"

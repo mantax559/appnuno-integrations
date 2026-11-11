@@ -298,12 +298,20 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      WORDPRESS_VERSION: ${{ matrix.wordpress_version }}')
     $lines.Add('      WOOCOMMERCE_VERSION: ${{ matrix.woocommerce_version }}')
     $lines.Add('      PHP_VERSION: ${{ matrix.php_version }}')
+    if (@(10, 11) -contains [int]$woocommerceMajor) {
+        $lines.Add("      APPNUNO_WOOCOMMERCE_LINE: `"$woocommerceMajor.x`"")
+    }
     $lines.Add('')
     $lines.Add('    steps:')
     $lines.Add('      - uses: actions/checkout@v6')
     $lines.Add('')
-    if ([int]$woocommerceMajor -eq 11) {
-        $browserCheck = 'matrix.wordpress_version == ''7.1.4'' && matrix.woocommerce_version == ''11.2.1'' && matrix.compatibility_target == ''tested-up-to'''
+    $browserTargets = @{
+        10 = @{ WordPress = '7.0.8'; WooCommerce = '10.9.4'; BuildArgument = ' 10' }
+        11 = @{ WordPress = '7.1.4'; WooCommerce = '11.2.1'; BuildArgument = '' }
+    }
+    if ($browserTargets.ContainsKey([int]$woocommerceMajor)) {
+        $browserTarget = $browserTargets[[int]$woocommerceMajor]
+        $browserCheck = "matrix.wordpress_version == '$($browserTarget.WordPress)' && matrix.woocommerce_version == '$($browserTarget.WooCommerce)' && matrix.compatibility_target == 'tested-up-to'"
         $lines.Add('      - name: Prepare PHP for the WooCommerce package build')
         $lines.Add('        uses: shivammathur/setup-php@v2')
         $lines.Add('        with:')
@@ -311,8 +319,8 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
         $lines.Add('          extensions: zip')
         $lines.Add('          coverage: none')
         $lines.Add('')
-        $lines.Add('      - name: Build the WooCommerce 11.x package')
-        $lines.Add('        run: php tools/wordpress/build-package.php')
+        $lines.Add("      - name: Build the WooCommerce $woocommerceMajor.x package")
+        $lines.Add("        run: php tools/wordpress/build-package.php$($browserTarget.BuildArgument)")
         $lines.Add('')
         $lines.Add('      - name: Install WordPress ${{ matrix.wordpress_version }} and WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}')
         $lines.Add('        if: ${{ !(' + $browserCheck + ') }}')
@@ -320,7 +328,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
         $lines.Add('          APPNUNO_INSTALL_PLUGIN: "1"')
         $lines.Add('        run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer')
         $lines.Add('')
-        $lines.Add('      - name: Install WordPress 7.1.4 and WooCommerce 11.2.1 and keep the store running')
+        $lines.Add("      - name: Install WordPress $($browserTarget.WordPress) and WooCommerce $($browserTarget.WooCommerce) and keep the store running")
         $lines.Add('        if: ${{ ' + $browserCheck + ' }}')
         $lines.Add('        env:')
         $lines.Add('          APPNUNO_INSTALL_PLUGIN: "1"')
@@ -332,14 +340,14 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
         $lines.Add('          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/wordpress-artifacts')
         $lines.Add('        run: |')
         $lines.Add('          python3 -m pip install -r tools/wordpress/tests/requirements-ci.txt')
-        $lines.Add('          python3 -m playwright install --with-deps chromium')
+        $lines.Add('          python3 -m playwright install chromium')
         $lines.Add('          python3 tools/wordpress/tests/integration/admin.py')
         $lines.Add('')
         $lines.Add('      - name: Upload browser test artifacts')
         $lines.Add('        if: ${{ always() && ' + $browserCheck + ' }}')
         $lines.Add('        uses: actions/upload-artifact@v7')
         $lines.Add('        with:')
-        $lines.Add('          name: wordpress-woocommerce-11.2.1-browser-artifacts')
+        $lines.Add("          name: wordpress-woocommerce-$($browserTarget.WooCommerce)-browser-artifacts")
         $lines.Add('          path: ${{ runner.temp }}/wordpress-artifacts')
         $lines.Add('          if-no-files-found: warn')
         $lines.Add('          retention-days: 7')
