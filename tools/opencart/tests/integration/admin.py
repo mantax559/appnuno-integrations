@@ -261,6 +261,7 @@ def assert_responsive_layout(page: Page) -> None:
         return state;
     }""")
     try:
+        page.add_style_tag(content=".appnuno-settings .appnuno-switch-indicator { transition: none !important; }")
         for width in (320, 360, 375, 390, 414, 540, 767, 768, 820, 1024, 1280, 1440, 1600, 1920):
             page.set_viewport_size({"width": width, "height": 1000})
             page.evaluate("() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))")
