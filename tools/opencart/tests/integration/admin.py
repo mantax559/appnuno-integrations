@@ -59,12 +59,13 @@ def seed_builtin_tabs(page: Page) -> None:
             tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
         tab.locator('[data-url-select]').select_option(url)
         existing_ids.add(tab_id)
-    home_key = page.locator("#default-tabs .appnuno-tab").evaluate_all("""tabs => {
-        const home = tabs.find(tab => tab.querySelector('[data-field="id"]')?.value === 'home');
-        return home?.dataset.tabKey || '';
-    }""")
+    tab_state = page.locator("#default-tabs .appnuno-tab").evaluate_all("""tabs => tabs.map(tab => ({
+        key: tab.getAttribute('data-tab-key'),
+        id: tab.querySelector('[data-field="id"]')?.value || ''
+    }))""")
+    home_key = next((tab["key"] for tab in tab_state if tab["id"] == "home" and tab["key"]), "")
     if not home_key:
-        raise AssertionError("The Home tab must be available for the default tab integration tests.")
+        raise AssertionError(f"The Home tab must be available for the default tab integration tests: {tab_state}.")
     page.locator(f'#default-tabs [data-tab-target="{home_key}"]').click()
 
 
