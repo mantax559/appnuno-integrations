@@ -173,8 +173,8 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		$replacements = array(
 			'appnuno_version' => htmlspecialchars($data['appnuno_version'], ENT_QUOTES, 'UTF-8'),
 			'documentation_url' => 'https://appnuno.com/opencart',
-			'cancel' => htmlspecialchars($data['cancel'], ENT_QUOTES, 'UTF-8'),
-			'form_action' => htmlspecialchars($data['action'], ENT_QUOTES, 'UTF-8'),
+			'cancel' => htmlspecialchars(html_entity_decode($data['cancel'], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8'),
+			'form_action' => htmlspecialchars(html_entity_decode($data['action'], ENT_QUOTES, 'UTF-8'), ENT_QUOTES, 'UTF-8'),
 			'form_nonce' => '',
 			'status_enabled_pressed' => $enabled ? 'true' : 'false',
 			'status_disabled_pressed' => $enabled ? 'false' : 'true',

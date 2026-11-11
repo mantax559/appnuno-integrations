@@ -101,7 +101,7 @@ def login_admin(runtime: Runtime, page: Page, web_root: Path) -> None:
     page.locator("#column-left").wait_for()
 
 
-def module_list_row(runtime: Runtime, page: Page, token: str) -> Locator:
+def module_list_row(runtime: Runtime, page: Page, token: str, appnuno_branding_expected: bool = True) -> Locator:
     if legacy_module_layout(runtime):
         page.goto(admin_page(runtime, "extension/module", token))
         return page.locator("#content table tr").filter(has_text="AppNuno").first
@@ -109,7 +109,7 @@ def module_list_row(runtime: Runtime, page: Page, token: str) -> Locator:
     module_filter = page.locator('select[name="type"]')
     module_filter.select_option(module_filter.locator("option").filter(has_text="Modules").first.get_attribute("value"))
     module_row = page.locator("#extension tr").filter(has=page.locator('a[href*="extension=appnuno"]')).first
-    if runtime.line == "2.3":
+    if runtime.line == "2.3" and appnuno_branding_expected:
         module_row = module_row.filter(has=page.locator('img[src="https://appnuno.com/logo-dark.png"][alt="AppNuno"]'))
         version = json.loads((REPOSITORY / "platform-versions.json").read_text(encoding="utf-8"))["opencart"]
         if "AppNuno Native Navigation" in module_row.inner_text() or f"v{version}" not in module_row.inner_text():
@@ -891,12 +891,11 @@ def add_cart_page_tab(page: Page) -> None:
         raise AssertionError("Clearing all modal choices should hide the tab on every page and update its summary.")
     summary.click()
     dialog.wait_for(state="visible")
-    dialog.locator('#page-picker-choices [data-page-choice][value="common/home"]').check()
     dialog.locator('#page-picker-choices [data-page-choice][value="checkout/cart"]').check()
     dialog.locator('#page-picker-apply').click()
     dialog.wait_for(state="hidden")
-    if page_tab.locator('[data-pages] input:checked').count() != 2:
-        raise AssertionError("Applying the modal should update the serialized source page selection.")
+    if page_tab.locator('[data-pages] input:checked').count() != 1:
+        raise AssertionError("The final page selection should limit the test tab to checkout/cart.")
 
 
 def add_contact_tab(page: Page) -> None:
@@ -1083,7 +1082,7 @@ def assert_module_settings_persisted(page: Page) -> None:
     if saved_page_tab.locator('[data-all-pages]').is_checked():
         raise AssertionError("The cart page tab did not persist its restricted-page setting.")
     selected_pages = saved_page_tab.locator("[data-pages]").evaluate("list => Array.from(list.querySelectorAll('[data-page-choice]:checked')).map(input => input.value)")
-    if selected_pages != ["common/home", "checkout/cart"]:
+    if selected_pages != ["checkout/cart"]:
         raise AssertionError(f"The cart page selection did not persist after reloading the settings page: {selected_pages}.")
     hidden_tab = page.locator("#default-tabs .appnuno-tab").nth(4)
     if hidden_tab.locator('[data-field="id"]').input_value() != "ci-hidden-tab" or hidden_tab.locator('[data-tab-visibility]').input_value() != "0":
@@ -1156,7 +1155,23 @@ def fill_builtin_tab_labels(page: Page) -> None:
 
 
 def submit_module_settings(page: Page) -> None:
-    page.locator('button[form="form-appnuno"]').click()
+    form_token_is_preserved = page.locator("#form-appnuno").evaluate(
+        """form => {
+            const action = new URL(form.action);
+            const current = new URL(window.location.href);
+            const tokenName = ["user_token", "token"].find(name => current.searchParams.has(name));
+            return Boolean(tokenName) && action.searchParams.get(tokenName) === current.searchParams.get(tokenName);
+        }"""
+    )
+    if not form_token_is_preserved:
+        raise AssertionError("The AppNuno settings form action must preserve the active OpenCart admin token.")
+    invalid_controls = page.locator("#form-appnuno :invalid").evaluate_all(
+        "elements => elements.map(element => ({ id: element.id, name: element.name, value: element.value, validationMessage: element.validationMessage }))"
+    )
+    if invalid_controls:
+        raise AssertionError(f"The AppNuno settings form is invalid before save: {invalid_controls}.")
+    with page.expect_navigation():
+        page.locator('button[form="form-appnuno"]').click()
     page.locator(".appnuno-alert-success").filter(has_text="modified AppNuno").wait_for(timeout=15000)
     page.reload()
     page.locator("#default-tabs .appnuno-tab").nth(2).wait_for(state="attached")
@@ -1189,6 +1204,10 @@ def expect_module_language(runtime: Runtime, page: Page, phrases: tuple[str, ...
     page.locator('#page-picker-dialog').wait_for(state="visible")
     content = page.locator("#content").inner_text() + "\n" + page.locator('#page-picker-dialog').inner_text() + "\n" + str(first_tab.locator('[data-page-manage]').get_attribute('aria-label'))
     page.locator('#page-picker-dialog [data-appnuno-dismiss="dialog"], #page-picker-dialog [data-appnuno-dismiss="dialog"]').first.click()
+    page.locator('[data-add-tab="default-tabs"]').click()
+    empty_tab = page.locator("#default-tabs .appnuno-tab").last
+    empty_tab.locator("[data-icon-picker]").wait_for(state="visible")
+    content += "\n" + empty_tab.locator("[data-icon-picker]").inner_text()
     for href in ("#tab-glass", "#tab-colors"):
         page.locator(f'a[href="{href}"]').click()
         page.locator(href).wait_for(state="visible")
@@ -1234,7 +1253,7 @@ def check_admin_module_languages(runtime: Runtime, page: Page) -> None:
         "Back button",
         "Glass button effect",
         "Choose an icon",
-        "Colors",
+        "Colours",
         "Light mode",
         "Tab labels by language",
         "Enabled",
@@ -1327,8 +1346,8 @@ def assert_enabled_module_bootstraps(runtime: Runtime, page: Page) -> str:
     return token
 
 
-def uninstall_module(runtime: Runtime, page: Page, token: str) -> None:
-    module_row = module_list_row(runtime, page, token)
+def uninstall_module(runtime: Runtime, page: Page, token: str, appnuno_branding_expected: bool = True) -> None:
+    module_row = module_list_row(runtime, page, token, appnuno_branding_expected)
     module_row.wait_for()
 
     def accept_uninstall_dialog(dialog: Dialog) -> None:
@@ -1451,7 +1470,7 @@ def check_extension_removal(runtime: Runtime, page: Page, token: str, web_root: 
     if not script_stays_while_module_enabled and bootstrap_present:
         raise AssertionError("Deleting the modification left the storefront bootstrap script in place.")
     assert_uploaded_module_files(runtime, web_root, True)
-    uninstall_module(runtime, page, token)
+    uninstall_module(runtime, page, token, appnuno_branding_expected=False)
     assert_uploaded_module_files(runtime, web_root, True)
     page.goto(runtime.base_url + "/")
     if page.locator('script[src*="appnuno"][src*="bootstrap"]').count():

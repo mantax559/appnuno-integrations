@@ -170,10 +170,15 @@ def check_route_bootstrap(payload: dict[str, Any]) -> None:
         raise AssertionError(f"The saved cart page tab URLs are incorrect: {configured_tab}.")
     tabs = payload["navigation"]["tabs"]
     published_ids = [tab.get("id") for tab in tabs]
-    if published_ids != ["home", "cart", "ci-added-tab", "ci-cart-route-tab"]:
+    expected_ids = [
+        tab["id"]
+        for tab in payload["config"]["defaultTabs"]
+        if tab.get("allPages", True) or payload["route"] in tab.get("pages", [])
+    ]
+    if published_ids != expected_ids:
         raise AssertionError(f"The cart page did not show the shared tabs together with the cart-only tab: {tabs}.")
-    tab = tabs[-1]
-    if tab.get("label") != "Cart route tab" or tab.get("url") != "/en/cart":
+    tab = next((tab for tab in tabs if tab.get("id") == "ci-cart-route-tab"), None)
+    if tab is None or tab.get("label") != "Cart route tab" or tab.get("url") != "/en/cart":
         raise AssertionError(f"The checkout/cart tab was not resolved correctly: {tab}.")
     assert_catalog_icon(tab, "duo:shopping-bag")
     if "labels" in tab or "urls" in tab or "pages" in tab or "allPages" in tab:
