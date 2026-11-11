@@ -75,6 +75,7 @@ def create_cart_product(runtime: Runtime) -> int:
                     ("location", "''"),
                     ("manufacturer_id", "0"),
                     ("quantity", "50"),
+                    ("rating", "0"),
                     ("stock_status_id", str(stock_status_id)),
                     ("shipping", "1"),
                     ("price", "1.00"),
