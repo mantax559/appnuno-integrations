@@ -4,10 +4,12 @@ from pathlib import Path
 
 from integration.admin import (
     add_store_language,
+    admin_page,
     admin_token,
     check_admin_module_languages,
     check_extension_removal,
     check_module_lifecycle_and_admin_validation,
+    grant_module_permissions,
     install_module,
     login_admin,
     refresh_modifications,
@@ -56,6 +58,10 @@ def run(runtime: Runtime) -> None:
                     configure_ftp(runtime)
                     ftp_server = start_ftp_server(runtime, web_root)
                     upload_extension(runtime, page, admin_token(runtime, page))
+                    if opencart4(runtime):
+                        grant_module_permissions(runtime)
+                        page.goto(admin_page(runtime, "common/logout", admin_token(runtime, page)))
+                        login_admin(runtime, page, web_root)
                     if not opencart4(runtime):
                         refresh_modifications(runtime, page, admin_token(runtime, page))
                     publish_admin_language_directories(runtime, web_root)

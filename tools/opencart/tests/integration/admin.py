@@ -93,7 +93,7 @@ def click_module_list_button(runtime: Runtime, page: Page, row: Locator, selecto
 
 
 def login_admin(runtime: Runtime, page: Page, web_root: Path) -> None:
-    shutil.rmtree(web_root / "install")
+    shutil.rmtree(web_root / "install", ignore_errors=True)
     page.goto(runtime.base_url + "/admin/")
     page.locator('input[name="username"]').fill(runtime.admin_user)
     page.locator('input[name="password"]').fill(runtime.admin_password)
@@ -358,8 +358,10 @@ def assert_responsive_layout(page: Page) -> None:
                         or abs(measurement["settingsRight"] - measurement["parentInnerRight"]) > 1
                     ):
                         raise AssertionError(f"The settings panel must fill its parent's inner width ({context}): {measurement}.")
-                if width >= 768 and layout["expanded"]["sidebarWidth"] > 0 and layout["expanded"]["sidebarRight"] <= layout["collapsed"]["sidebarRight"] + 1 and layout["expanded"]["contentLeft"] <= layout["collapsed"]["contentLeft"] + 1:
-                    raise AssertionError(f"Collapsed and expanded sidebar states did not produce distinct layouts at {width}px: {layout}.")
+                if width < 768 and (layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
+                    raise AssertionError(f"The mobile sidebar should hide when collapsed and appear when expanded at {width}px: {layout}.")
+                if width >= 768 and (not layout["collapsed"]["sidebarVisible"] or not layout["expanded"]["sidebarVisible"]):
+                    raise AssertionError(f"The desktop sidebar should remain visible at {width}px: {layout}.")
         page.locator('a[href="#tab-navigation"]').click()
         page.set_viewport_size({"width": 390, "height": 844})
         touch_targets = page.evaluate("""() => [
@@ -1273,6 +1275,35 @@ def encode_permissions(original_value: str, permissions: dict[str, Any]) -> str:
     if original_value.startswith("{"):
         return json.dumps(permissions)
     return serialize_php_value(permissions)
+
+
+def grant_module_permissions(runtime: Runtime) -> None:
+    if not opencart4(runtime):
+        return
+    route = admin_module_route(runtime)
+    with connect(runtime, autocommit=True) as connection:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT user_group_id FROM oc_user WHERE username = %s", (runtime.admin_user,))
+            user = cursor.fetchone()
+            if not user:
+                raise AssertionError("The OpenCart administrator user group could not be found.")
+            group_id = user[0]
+            cursor.execute("SELECT permission FROM oc_user_group WHERE user_group_id = %s", (group_id,))
+            permission = cursor.fetchone()
+            if not permission:
+                raise AssertionError("The OpenCart administrator permissions could not be found.")
+            original_value = permission[0]
+            permissions = decode_permissions(original_value)
+            for permission_type in ("access", "modify"):
+                routes = permissions.setdefault(permission_type, [])
+                if not isinstance(routes, list):
+                    raise AssertionError("The OpenCart administrator permissions have an unexpected format.")
+                if route not in routes:
+                    routes.append(route)
+            cursor.execute(
+                "UPDATE oc_user_group SET permission = %s WHERE user_group_id = %s",
+                (encode_permissions(original_value, permissions), group_id),
+            )
 
 
 def parse_php_value(value: str, index: int) -> tuple[Any, int]:
