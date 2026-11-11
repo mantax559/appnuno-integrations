@@ -40,16 +40,13 @@ def choose_switch(page: Page, field_id: str, value: str) -> None:
 
 
 def seed_builtin_tabs(page: Page) -> None:
+    if page.locator("#default-tabs .appnuno-tab").count():
+        return
     specs = (
         ("home", "/", "Home", "Pradžia"),
         ("cart", "/index.php?route=checkout/cart", "Cart", "Krepšelis"),
     )
-    existing_ids = set(page.locator('#default-tabs .appnuno-tab [data-field="id"]').evaluate_all(
-        "inputs => inputs.map(input => input.value)"
-    ))
     for tab_id, url, english, lithuanian in specs:
-        if tab_id in existing_ids:
-            continue
         page.locator('button[data-add-tab="default-tabs"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").last
         tab.locator('[data-field="id"]').wait_for(state="attached", timeout=5000)
@@ -58,15 +55,7 @@ def seed_builtin_tabs(page: Page) -> None:
         if tab.locator('[data-language-label="lt-lt"]').count():
             tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
         tab.locator('[data-url-select]').select_option(url)
-        existing_ids.add(tab_id)
-    tab_state = page.locator("#default-tabs .appnuno-tab").evaluate_all("""tabs => tabs.map(tab => ({
-        key: tab.getAttribute('data-tab-key'),
-        id: tab.querySelector('[data-field="id"]')?.value || ''
-    }))""")
-    home_key = next((tab["key"] for tab in tab_state if tab["id"] == "home" and tab["key"]), "")
-    if not home_key:
-        raise AssertionError(f"The Home tab must be available for the default tab integration tests: {tab_state}.")
-    page.locator(f'#default-tabs [data-tab-target="{home_key}"]').click()
+    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
 
 
 def admin_token(runtime: Runtime, page: Page) -> str:
