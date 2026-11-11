@@ -1123,7 +1123,9 @@ def configure_glass(page: Page) -> None:
     page.locator('a[href="#tab-glass"]').click()
     page.locator("#tab-glass").wait_for(state="visible")
     for field_id in ("glass-enabled", "glass-color-scheme", "glass-style", "glass-animate", "glass-interactive"):
-        if page.locator(f'[data-status-switch="{field_id}"] button[data-value]').count() != 2:
+        button_count = page.locator(f'[data-status-switch="{field_id}"] button[data-value]').count()
+        option_count = page.locator(f'#{field_id} option').count()
+        if button_count != option_count:
             raise AssertionError(f"{field_id} should use the shared segmented switch control.")
     if page.locator('#tab-glass .appnuno-field-description').count() != 10:
         raise AssertionError("Back and glass settings should show explanatory text below every field label.")
