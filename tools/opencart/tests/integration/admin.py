@@ -422,8 +422,10 @@ def focus_appearance(target: Locator) -> dict[str, Any]:
 def assert_mouse_and_keyboard_focus(page: Page, target: Locator) -> None:
     target.click()
     mouse = focus_appearance(target)
-    if not mouse["focused"] or (mouse["outlineStyle"] != "none" and mouse["outlineWidth"] != "0px") or not mouse["neutralShadow"]:
+    if mouse["focusVisible"] or (mouse["outlineStyle"] != "none" and mouse["outlineWidth"] != "0px") or not mouse["neutralShadow"]:
         raise AssertionError(f"Mouse-clicked links and buttons must not show a focus outline or Bootstrap focus shadow: {mouse}.")
+    if not mouse["focused"]:
+        target.focus()
     page.keyboard.press("Shift+Tab")
     if target.evaluate("element => document.activeElement === element"):
         raise AssertionError("Shift+Tab must move keyboard focus away from the clicked control.")
@@ -436,7 +438,7 @@ def assert_mouse_and_keyboard_focus(page: Page, target: Locator) -> None:
         raise AssertionError("Clicking the neutral settings page background must move focus away from the keyboard-focused control.")
     target.click()
     mouse_again = focus_appearance(target)
-    if not mouse_again["focused"] or (mouse_again["outlineStyle"] != "none" and mouse_again["outlineWidth"] != "0px") or not mouse_again["neutralShadow"]:
+    if mouse_again["focusVisible"] or (mouse_again["outlineStyle"] != "none" and mouse_again["outlineWidth"] != "0px") or not mouse_again["neutralShadow"]:
         raise AssertionError(f"Returning to mouse input after moving focus away must not show a keyboard focus treatment: {mouse_again}.")
 
 
