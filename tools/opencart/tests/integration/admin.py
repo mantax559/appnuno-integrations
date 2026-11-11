@@ -39,14 +39,30 @@ def choose_switch(page: Page, field_id: str, value: str) -> None:
     page.locator(f'[data-status-switch="{field_id}"] button[data-value="{value}"]').click()
 
 
+def tab_key_by_id(page: Page, tab_id: str) -> str:
+    return page.locator("#default-tabs .appnuno-tab").evaluate_all(
+        """(tabs, id) => {
+            const tab = tabs.find(card => {
+                const field = card.querySelector('[data-field="id"]');
+                return field && field.value === id;
+            });
+            return tab ? tab.dataset.tabKey : '';
+        }""",
+        tab_id
+    )
+
+
 def seed_builtin_tabs(page: Page) -> None:
-    if page.locator("#default-tabs .appnuno-tab").count():
-        return
+    existing_ids = page.locator("#default-tabs .appnuno-tab").evaluate_all(
+        "tabs => tabs.map(card => { const field = card.querySelector('[data-field=\"id\"]'); return field ? field.value : ''; })"
+    )
     specs = (
         ("home", "/", "Home", "Pradžia"),
         ("cart", "/index.php?route=checkout/cart", "Cart", "Krepšelis"),
     )
     for tab_id, url, english, lithuanian in specs:
+        if tab_id in existing_ids:
+            continue
         page.locator('button[data-add-tab="default-tabs"]').click()
         tab = page.locator("#default-tabs .appnuno-tab").last
         tab.locator('[data-field="id"]').wait_for(state="attached", timeout=5000)
@@ -55,7 +71,10 @@ def seed_builtin_tabs(page: Page) -> None:
         if tab.locator('[data-language-label="lt-lt"]').count():
             tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
         tab.locator('[data-url-select]').select_option(url)
-    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
+        existing_ids.append(tab_id)
+    first_key = page.locator("#default-tabs .appnuno-tab").first.get_attribute("data-tab-key")
+    if first_key:
+        page.locator(f'#default-tabs [data-tab-target="{first_key}"]').click()
 
 
 def admin_token(runtime: Runtime, page: Page) -> str:
@@ -477,7 +496,7 @@ def assert_settings_focus(page: Page) -> None:
             raise AssertionError(f"Keyboard-focused checkboxes must retain a neutral visible focus indicator: {appearance}.")
     finally:
         if page.locator('#page-picker-dialog').is_visible():
-            page.locator('#page-picker-apply').click()
+            page.locator('#page-picker-dialog [data-appnuno-dismiss="dialog"]').first.click()
         page.locator('a[href="#tab-navigation"]').click()
         current_keys = page.locator('#default-tabs .appnuno-tab').evaluate_all(
             "tabs => tabs.map(tab => tab.dataset.tabKey)"
@@ -960,10 +979,11 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
                 raise AssertionError(f"Changing the cart badge must not close the Cart editor panel at {width}px.")
     finally:
         page.set_viewport_size(original_viewport)
-    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
+    first_key = page.locator("#default-tabs .appnuno-tab").first.get_attribute("data-tab-key")
+    page.locator(f'#default-tabs [data-tab-target="{first_key}"]').click()
     if page.locator('#default-tabs .appnuno-tab.active').evaluate("card => getComputedStyle(card).borderTopWidth") != "1px":
         raise AssertionError("The open default tab editor should be contained by a visible card border.")
-    first_tab = page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]')
+    first_tab = page.locator(f'#default-tabs [data-tab-target="{first_key}"]')
     if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
         raise AssertionError("The first default tab should be active when the settings page opens.")
     remove_icon = first_tab.locator("[data-remove-tab]")
@@ -1113,11 +1133,14 @@ def configure_glass(page: Page) -> None:
 
 
 def fill_builtin_tab_labels(page: Page) -> None:
-    tabs = (("Home", "Pradžia", "duo:dashboard"), ("Cart", "Krepšelis", "duo:shopping-bag"))
-    for index, (english, lithuanian, icon_id) in enumerate(tabs):
-        page.locator(f'#default-tabs [data-tab-target="appnuno-tab-{index}"]').click()
-        tab = page.locator("#default-tabs .appnuno-tab").nth(index)
-        if not tab.is_visible() or page.locator("#default-tabs .appnuno-tab").nth(1 - index).is_visible():
+    tabs = (("home", "Home", "Pradžia", "duo:dashboard"), ("cart", "Cart", "Krepšelis", "duo:shopping-bag"))
+    for tab_id, english, lithuanian, icon_id in tabs:
+        tab_key = tab_key_by_id(page, tab_id)
+        if not tab_key:
+            raise AssertionError(f"The seeded {tab_id} tab is missing.")
+        page.locator(f'#default-tabs [data-tab-target="{tab_key}"]').click()
+        tab = page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{tab_key}"]')
+        if not tab.is_visible() or page.locator("#default-tabs .appnuno-tab:visible").count() != 1:
             raise AssertionError("The vertical tab list should display only the selected tab panel.")
         tab.locator('[data-language-label="en-gb"]').fill(english)
         tab.locator('[data-language-label="lt-lt"]').fill(lithuanian)
@@ -1332,8 +1355,11 @@ def reject_invalid_module_configuration(runtime: Runtime, page: Page, token: str
     original_config = setting_value(runtime, "module_appnuno_config")
     if not original_config:
         raise AssertionError("The AppNuno module configuration was not persisted.")
-    page.locator('#default-tabs [data-tab-target="appnuno-tab-0"]').click()
-    page.locator('#default-tabs .appnuno-tab').first.locator('[data-field="id"]').fill("")
+    home_key = tab_key_by_id(page, "home")
+    if not home_key:
+        raise AssertionError("The seeded Home tab is missing.")
+    page.locator(f'#default-tabs [data-tab-target="{home_key}"]').click()
+    page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{home_key}"] [data-field="id"]').fill("")
     page.locator('button[form="form-appnuno"]').click()
     page.locator(".alert-danger:not(#client-validation-error)").wait_for()
     if setting_value(runtime, "module_appnuno_config") != original_config:
