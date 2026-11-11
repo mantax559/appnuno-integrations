@@ -992,7 +992,7 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     if not page.locator("#default-tabs .appnuno-tab").first.evaluate("panel => panel.classList.contains('active')"):
         raise AssertionError("The first default tab should be active when the settings page opens.")
     remove_icon = first_tab.locator("[data-remove-tab]")
-    if remove_icon.count() != 1 or remove_icon.locator("svg").count() != 1:
+    if remove_icon.count() != 1 or remove_icon.locator(".appnuno-icon-trash").count() != 1:
         raise AssertionError("Each native-style tab link should contain its remove icon.")
     if remove_icon.get_attribute("data-appnuno-tooltip") != "Remove tab":
         raise AssertionError("The remove action should use the shared tooltip.")
