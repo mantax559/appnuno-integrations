@@ -1,0 +1,15 @@
+ARG PHP_VERSION=8.3
+
+FROM wordpress:cli-php${PHP_VERSION}
+
+ARG WP_CLI_VERSION
+
+USER root
+
+RUN if php -r 'exit(PHP_VERSION_ID < 70000 ? 0 : 1);'; then docker-php-ext-install mysql; fi
+
+COPY docker/cacert.pem /etc/ssl/certs/ca-certificates.crt
+RUN printf 'openssl.cafile=/etc/ssl/certs/ca-certificates.crt\ncurl.cainfo=/etc/ssl/certs/ca-certificates.crt\n' > /usr/local/etc/php/conf.d/cafile.ini
+RUN if [ -n "$WP_CLI_VERSION" ]; then curl -fsSL "https://github.com/wp-cli/wp-cli/releases/download/v${WP_CLI_VERSION}/wp-cli-${WP_CLI_VERSION}.phar" -o /usr/local/bin/wp && chmod +x /usr/local/bin/wp; fi
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt

@@ -1,8 +1,15 @@
 <?php
+if (!class_exists('AppnunoConfig', false)) {
+	if (defined('DIR_SYSTEM') && is_file(DIR_SYSTEM . 'library/appnuno-config.php')) {
+		require_once DIR_SYSTEM . 'library/appnuno-config.php';
+	} else {
+		require_once dirname(__FILE__) . '/../../../../../../shared/php/appnuno-config.php';
+	}
+}
+
 class ControllerExtensionModuleAppnuno extends Controller {
-	// OpenCart 3.0.3+ passes the template source as a third view-event argument. PHP 8 rejects that call when the method only declares two parameters.
 	public function inject(&$route, &$data, &$code = null) {
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			return;
 		}
 
@@ -19,11 +26,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	public function bootstrap() {
-		$this->response->addHeader('Content-Type: application/javascript; charset=utf-8');
-		$this->response->addHeader('Cache-Control: no-store, private');
-		$this->response->addHeader('X-Content-Type-Options: nosniff');
+		$this->responseHeaders('application/javascript; charset=utf-8');
 
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			$this->response->addHeader('HTTP/1.1 404 Not Found');
 			$this->response->setOutput('');
 
@@ -44,11 +49,9 @@ class ControllerExtensionModuleAppnuno extends Controller {
 	}
 
 	public function state() {
-		$this->response->addHeader('Content-Type: application/json; charset=utf-8');
-		$this->response->addHeader('Cache-Control: no-store, private');
-		$this->response->addHeader('X-Content-Type-Options: nosniff');
+		$this->responseHeaders('application/json; charset=utf-8');
 
-		if (!in_array($this->config->get('module_appnuno_status'), array('1', 1), true)) {
+		if (!$this->moduleEnabled()) {
 			$this->response->addHeader('HTTP/1.1 404 Not Found');
 			$this->response->setOutput('{}');
 
@@ -57,7 +60,7 @@ class ControllerExtensionModuleAppnuno extends Controller {
 
 		$this->load->model('extension/module/appnuno');
 
-		$this->response->setOutput(json_encode($this->model_extension_module_appnuno->getState(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT));
+		$this->response->setOutput($this->json($this->model_extension_module_appnuno->getState()));
 	}
 
 	private function getIntegrationJson() {
@@ -75,93 +78,26 @@ class ControllerExtensionModuleAppnuno extends Controller {
 			return '';
 		}
 
-		$state = $this->model_extension_module_appnuno->getState();
+		$page = isset($this->request->get['page']) && is_string($this->request->get['page']) ? $this->request->get['page'] : '';
 		$route = isset($this->request->get['page_route']) && is_string($this->request->get['page_route']) ? $this->request->get['page_route'] : 'common/home';
-		$tabs = $this->tabsForRoute($config, $route);
-		$cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
+		$query = isset($this->request->get) && is_array($this->request->get) ? $this->request->get : array();
+		$integration = AppnunoConfig::integration($config, $route, $this->model_extension_module_appnuno->getState(), $this->languageCode(), $page, $query);
 
-		foreach ($tabs as &$tab) {
-			if (isset($tab['urls']) && is_array($tab['urls']) && count($tab['urls'])) {
-				$language_code = $this->languageCode();
-
-				if (isset($tab['urls'][$language_code])) {
-					$tab['url'] = $tab['urls'][$language_code];
-				} elseif (!isset($tab['url'])) {
-					$tab['url'] = reset($tab['urls']);
-				}
-
-				unset($tab['urls']);
-			}
-
-			if (isset($tab['pages'])) {
-				unset($tab['pages']);
-			}
-
-			if (isset($tab['labels']) && is_array($tab['labels'])) {
-				$language_code = $this->languageCode();
-
-				if (isset($tab['labels'][$language_code])) {
-					$tab['label'] = $tab['labels'][$language_code];
-				} elseif (count($tab['labels'])) {
-					$tab['label'] = reset($tab['labels']);
-				}
-
-				unset($tab['labels']);
-			}
-
-			if (isset($tab['id']) && in_array($tab['id'], array($cart_tab_id), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
-				$tab['badge'] = (int)$state['cartCount'];
-			}
+		if (!is_array($integration)) {
+			return '';
 		}
 
-		unset($tab);
-		$tabs = $this->markActiveTab($tabs, $route);
+		$integration['stateUrl'] = html_entity_decode($this->url->link('extension/module/appnuno/state', '', true), ENT_QUOTES, 'UTF-8');
 
-		$navigation = array('tabs' => $tabs);
-
-		foreach (array('back', 'glass', 'colors') as $key) {
-			if (isset($config[$key]) && is_array($config[$key])) {
-				$navigation[$key] = $config[$key];
-			}
-		}
-
-		$integration = array(
-			'config' => $config,
-			'route' => $route,
-			'stateUrl' => html_entity_decode($this->url->link('extension/module/appnuno/state', '', true), ENT_QUOTES, 'UTF-8'),
-			'state' => $state,
-			'navigation' => $navigation
-		);
-
-		return json_encode($integration, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+		return $this->json($integration);
 	}
 
-	private function tabsForRoute($config, $route) {
-		if (isset($config['routes'][$route]) && is_array($config['routes'][$route]) && count($config['routes'][$route])) {
-			return $config['routes'][$route];
-		}
-
-		$tabs = array();
-
-		foreach ($config['defaultTabs'] as $tab) {
-			if (!is_array($tab)) {
-				continue;
-			}
-
-			if ($this->tabShownOnRoute($tab, $route)) {
-				$tabs[] = $tab;
-			}
-		}
-
-		return $tabs;
+	private function visibleTabs($tabs) {
+		return AppnunoConfig::visibleTabs($tabs);
 	}
 
 	private function tabShownOnRoute($tab, $route) {
-		if (!isset($tab['pages']) || !is_array($tab['pages']) || !count($tab['pages'])) {
-			return true;
-		}
-
-		return in_array($route, $tab['pages'], true);
+		return AppnunoConfig::tabShownOnRoute($tab, $route);
 	}
 
 	private function bootstrapArgs($page_route) {
@@ -177,109 +113,18 @@ class ControllerExtensionModuleAppnuno extends Controller {
 		return $args;
 	}
 
-	private function markActiveTab($tabs, $route) {
-		$page = isset($this->request->get['page']) && is_string($this->request->get['page']) ? $this->request->get['page'] : '';
-		$request_path = '/';
-		$parsed_path = $page !== '' ? parse_url($page, PHP_URL_PATH) : '/';
-
-		if (is_string($parsed_path) && $parsed_path !== '') {
-			$request_path = $parsed_path;
-		}
-
-		if (strlen($request_path) > 1 && substr($request_path, -1) === '/') {
-			$request_path = substr($request_path, 0, -1);
-		}
-
-		$best_index = -1;
-		$best_score = 0;
-
-		foreach ($tabs as $index => $tab) {
-			$score = $this->tabActiveScore($tab, $route, $request_path);
-
-			if ($score > $best_score) {
-				$best_score = $score;
-				$best_index = $index;
-			}
-		}
-
-		foreach ($tabs as $index => &$tab) {
-			$tab['active'] = $best_index === $index;
-		}
-
-		unset($tab);
-
-		return $tabs;
+	private function moduleEnabled() {
+		return in_array($this->config->get('module_appnuno_status'), array('1', 1), true);
 	}
 
-	private function tabActiveScore($tab, $route, $request_path) {
-		if (!isset($tab['url']) || !is_string($tab['url']) || $tab['url'] === '') {
-			return 0;
-		}
-
-		$parts = parse_url($tab['url']);
-
-		if ($parts === false) {
-			return 0;
-		}
-
-		$path = isset($parts['path']) && is_string($parts['path']) && $parts['path'] !== '' ? $parts['path'] : '/';
-
-		if (strlen($path) > 1 && substr($path, -1) === '/') {
-			$path = substr($path, 0, -1);
-		}
-
-		$query = array();
-
-		if (isset($parts['query']) && is_string($parts['query'])) {
-			parse_str($parts['query'], $query);
-		}
-
-		$detail_count = 0;
-
-		foreach ($query as $key => $value) {
-			if ($key !== 'route') {
-				$detail_count++;
-			}
-		}
-
-		$route_matches = isset($query['route']) && is_string($query['route']) && $query['route'] === $route;
-		$details_match = $this->queryDetailsMatch($query);
-
-		if ($path === $request_path) {
-			if (isset($query['route'])) {
-				if ($route_matches && $details_match) {
-					return 100 + $detail_count;
-				}
-
-				return 0;
-			}
-
-			return 90;
-		}
-
-		if ($route_matches && $details_match) {
-			return 70 + $detail_count;
-		}
-
-		if ($path === '/' && $route === 'common/home') {
-			return 80;
-		}
-
-		return 0;
+	private function responseHeaders($content_type) {
+		$this->response->addHeader('Content-Type: ' . $content_type);
+		$this->response->addHeader('Cache-Control: no-store, private');
+		$this->response->addHeader('X-Content-Type-Options: nosniff');
 	}
 
-	private function queryDetailsMatch($query) {
-		foreach ($query as $key => $value) {
-			if ($key === 'route') {
-				continue;
-			}
-
-			if (!isset($this->request->get[$key]) || !is_string($this->request->get[$key]) || !is_string($value) || $this->request->get[$key] !== $value) {
-				return false;
-			}
-		}
-
-		return true;
+	private function json($value) {
+		return json_encode($value, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
 	}
 
 	private function languageCode() {

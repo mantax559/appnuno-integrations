@@ -1,11 +1,15 @@
+import os
 import tempfile
 from pathlib import Path
 
 from integration.admin import (
     add_store_language,
+    admin_page,
     admin_token,
     check_admin_module_languages,
+    check_extension_removal,
     check_module_lifecycle_and_admin_validation,
+    grant_module_permissions,
     install_module,
     login_admin,
     refresh_modifications,
@@ -40,7 +44,8 @@ def run(runtime: Runtime) -> None:
     if not runtime.package.is_file():
         raise FileNotFoundError("Build the OCMOD package before running the integration test: " + str(runtime.package))
     artifact_dir = prepare_artifact_dir(runtime)
-    with tempfile.TemporaryDirectory(prefix="appnuno-opencart-") as temporary:
+    workspace_root = Path(os.environ["OPENCART_WORKSPACE_ROOT"]) if os.environ.get("OPENCART_WORKSPACE_ROOT") else None
+    with tempfile.TemporaryDirectory(prefix="appnuno-opencart-", dir=workspace_root) as temporary:
         web_root = prepare_store(runtime, Path(temporary))
         patch_installer_directory_listing(runtime, web_root)
         patch_installer_storage_path(runtime, web_root)
@@ -53,6 +58,10 @@ def run(runtime: Runtime) -> None:
                     configure_ftp(runtime)
                     ftp_server = start_ftp_server(runtime, web_root)
                     upload_extension(runtime, page, admin_token(runtime, page))
+                    if opencart4(runtime):
+                        grant_module_permissions(runtime)
+                        page.goto(admin_page(runtime, "common/logout", admin_token(runtime, page)))
+                        login_admin(runtime, page, web_root)
                     if not opencart4(runtime):
                         refresh_modifications(runtime, page, admin_token(runtime, page))
                     publish_admin_language_directories(runtime, web_root)
@@ -64,12 +73,20 @@ def run(runtime: Runtime) -> None:
                     add_store_language(runtime, page, web_root, "Lithuanian", "lt-lt", "lt_LT.UTF-8,lt_LT,lt-lt,lithuanian")
                     install_module(runtime, page, admin_token(runtime, page))
                     capture_screenshot(page, artifact_dir, "01-admin-settings-initial.png")
+                    original_viewport = page.viewport_size or {"width": 1440, "height": 1000}
+                    page.set_viewport_size({"width": 820, "height": 1000})
+                    capture_screenshot(page, artifact_dir, "admin-settings-tablet.png")
+                    page.set_viewport_size({"width": 390, "height": 844})
+                    capture_screenshot(page, artifact_dir, "admin-settings-mobile.png")
+                    page.set_viewport_size(original_viewport)
                     save_module_settings(page, artifact_dir)
                     check_admin_module_languages(runtime, page)
                     token = admin_token(runtime, page)
                     check_storefront(runtime, page, artifact_dir)
                     check_cart_and_customer_state(runtime, page)
-                    check_module_lifecycle_and_admin_validation(runtime, page, token)
+                    token = check_module_lifecycle_and_admin_validation(runtime, page, token)
+                    if not opencart4(runtime):
+                        check_extension_removal(runtime, page, token, web_root)
             finally:
                 if ftp_server is not None:
                     ftp_server.close_all()

@@ -1,0 +1,297 @@
+body.wp-admin.appnuno-admin-screen #screen-meta,
+body.wp-admin.appnuno-admin-screen #screen-meta-links {
+  display: none;
+}
+
+body.wp-admin.appnuno-admin-screen #wpbody-content,
+body.wp-admin.appnuno-admin-screen #wpbody-content > .wrap,
+body.wp-admin.appnuno-admin-screen .appnuno-page,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog {
+  overflow: visible;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog {
+  color: #18181b;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page h2.appnuno-setting-title {
+  margin: 0;
+  padding: 16px var(--appnuno-gap);
+  color: #18181b;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-dialog-title,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-dialog-title {
+  margin: 0;
+  padding: 0;
+  color: #18181b;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: normal;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page a,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog a,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog a {
+  color: inherit;
+  text-decoration: none;
+  box-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page button,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog button,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  text-shadow: none;
+  vertical-align: baseline;
+  box-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 9px 16px;
+  border: 1px solid #e4e4e7;
+  background: #fff;
+  color: #18181b;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-primary,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-primary:hover,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-primary:focus,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-primary,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-primary:hover,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-primary:focus,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-primary,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-primary:hover,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-primary:focus {
+  border-color: #18181b;
+  background: #18181b;
+  color: #fafafa;
+  text-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="text"],
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="search"],
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="number"],
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="color"],
+body.wp-admin.appnuno-admin-screen .appnuno-page select,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog input[type="text"],
+body.wp-admin.appnuno-admin-screen #page-picker-dialog input[type="search"],
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog input[type="text"],
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog input[type="search"] {
+  width: 100%;
+  max-width: none;
+  height: 42px;
+  min-height: 42px;
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid #e4e4e7;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #27272a;
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 2%);
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page select,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog select {
+  appearance: none;
+  padding-right: 34px;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%2371717a' stroke-width='1.5'%3E%3Cpath d='m5 6 3 3 3-3'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="checkbox"],
+body.wp-admin.appnuno-admin-screen #page-picker-dialog input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0;
+  border: 1px solid #e4e4e7;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="checkbox"]::before,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog input[type="checkbox"]::before {
+  content: none !important;
+  display: none !important;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-switch > button,
+body.wp-admin.appnuno-admin-screen .appnuno-section-switch .appnuno-section-list > li > a {
+  min-height: 32px;
+  border: 0;
+  background: transparent;
+  color: #18181b;
+  box-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page ul,
+body.wp-admin.appnuno-admin-screen .appnuno-page li,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog ul,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog ul {
+  list-style: none;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page img.appnuno-brand-mark {
+  max-width: none;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.wp-admin.appnuno-admin-screen #wpfooter {
+  position: static;
+  bottom: auto;
+  left: auto;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-toolbar-actions .appnuno-button,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-icon-pager > .appnuno-button {
+  margin: 0;
+  border-radius: 0;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-group > .appnuno-button,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-icon-pager > .appnuno-button {
+  margin-left: -1px;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-toolbar-actions .appnuno-button:first-child,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-group > .appnuno-button:first-child,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-group > .appnuno-button:first-child,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-group > .appnuno-button:first-child,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-icon-pager > .appnuno-button:first-child {
+  margin-left: 0;
+  border-radius: var(--appnuno-radius-control) 0 0 var(--appnuno-radius-control);
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-toolbar-actions .appnuno-button:last-child,
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-button-group > .appnuno-button:last-child,
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-button-group > .appnuno-button:last-child,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-button-group > .appnuno-button:last-child,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-icon-pager > .appnuno-button:last-child {
+  border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-toolbar-actions .appnuno-button {
+  border-width: 0;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-toolbar-actions a.appnuno-button {
+  border: 1px solid #e4e4e7;
+}
+
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-icon-pager > .appnuno-button {
+  min-height: 32px;
+  height: 32px;
+  padding: 0 10px;
+  font-size: 12px;
+  line-height: 30px;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page input.appnuno-compact-control {
+  width: 96px;
+  max-width: 96px;
+  margin-left: auto;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page input[type="color"].appnuno-input {
+  width: 112px;
+  max-width: 112px;
+  height: 44px;
+  margin-left: auto;
+  padding: 3px;
+}
+
+body.wp-admin.appnuno-admin-screen #page-picker-dialog .appnuno-modal-close,
+body.wp-admin.appnuno-admin-screen #icon-picker-dialog .appnuno-modal-close {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page #default-tabs [data-remove-tab] {
+  width: 28px;
+  height: 28px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page button[data-icon-picker] {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-field,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-field-control,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-input-group,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-tab,
+body.wp-admin.appnuno-admin-screen .appnuno-settings .appnuno-tab-panels {
+  min-width: 0;
+  max-width: 100%;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-settings input.appnuno-input,
+body.wp-admin.appnuno-admin-screen .appnuno-settings select.appnuno-input,
+body.wp-admin.appnuno-admin-screen #icon-picker-search {
+  min-width: 0 !important;
+  min-height: 44px !important;
+  height: auto !important;
+  max-width: 100%;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(a, button, [role="button"]):focus-visible,
+body.wp-admin.appnuno-admin-screen .appnuno-settings input[type="checkbox"]:focus-visible,
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(input, select, textarea):focus,
+body.wp-admin.appnuno-admin-screen .appnuno-settings :is(input, select, textarea):focus-visible {
+  outline: 2px solid #71717a !important;
+  outline-offset: 2px;
+  box-shadow: none !important;
+  border-color: #e4e4e7 !important;
+}
+
+body.wp-admin.appnuno-admin-screen .appnuno-page .appnuno-input-group > .appnuno-input-addon + input.appnuno-input {
+  border-radius: 0 var(--appnuno-radius-control) var(--appnuno-radius-control) 0;
+}

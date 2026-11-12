@@ -1,0 +1,21 @@
+ARG WORDPRESS_VERSION=7.1.4
+ARG PHP_VERSION=8.3
+
+FROM wordpress:php${PHP_VERSION}-apache
+
+ARG WORDPRESS_VERSION
+ARG PHP_VERSION
+
+RUN if php -r 'exit(PHP_VERSION_ID < 70000 ? 0 : 1);'; then docker-php-ext-install mysql; fi
+
+COPY docker/cacert.pem /etc/ssl/certs/ca-certificates.crt
+RUN printf 'openssl.cafile=/etc/ssl/certs/ca-certificates.crt\ncurl.cainfo=/etc/ssl/certs/ca-certificates.crt\n' > /usr/local/etc/php/conf.d/cafile.ini
+ENV SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt
+ENV CURL_CA_BUNDLE=/etc/ssl/certs/ca-certificates.crt
+
+RUN set -eu; \
+    curl -fsSL "https://wordpress.org/wordpress-${WORDPRESS_VERSION}.tar.gz" -o /tmp/wordpress.tar.gz; \
+    rm -rf /usr/src/wordpress; \
+    mkdir -p /usr/src/wordpress; \
+    tar -xzf /tmp/wordpress.tar.gz --strip-components=1 -C /usr/src/wordpress; \
+    rm /tmp/wordpress.tar.gz

@@ -2,7 +2,7 @@
 <modification>
   <name>AppNuno OpenCart 2.3.x</name>
   <code>appnuno_opencart_2302</code>
-  <version>1.2.0</version>
+  <version>__APPNUNO_VERSION__</version>
   <author>AppNuno</author>
   <link>https://appnuno.com</link>
   <file path="catalog/controller/common/header.php">
@@ -24,6 +24,12 @@
             }
         }
       ]]></add>
+    </operation>
+  </file>
+  <file path="admin/view/template/extension/extension/module.tpl">
+    <operation>
+      <search><![CDATA[<td><b><?php echo $extension['name']; ?></b></td>]]></search>
+      <add position="replace"><![CDATA[<td><b><?php if (strpos($extension['edit'], 'module/appnuno') !== false) { ?><img src="https://appnuno.com/logo-dark.png" alt="AppNuno" style="max-height:20px;width:auto;vertical-align:middle"> <span>v__APPNUNO_VERSION__</span><?php } else { ?><?php echo $extension['name']; ?><?php } ?></b></td>]]></add>
     </operation>
   </file>
 </modification>

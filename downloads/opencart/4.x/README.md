@@ -2,7 +2,7 @@
 
 ## Installation
 
-1. In OpenCart admin, go to **Extensions → Extension Installer** and upload `appnuno.ocmod.zip`. The file name is the extension code, so keep this name.
+1. In OpenCart admin, go to **Extensions → Extension Installer** and upload `appnuno.ocmod.zip`. The uploaded filename matches the extension code registered by the package manifest.
 2. Click **Install** beside the uploaded AppNuno package.
 3. Go to **Extensions → Extensions** and choose **Modules**.
 4. Find **AppNuno Native Navigation**, click **Install**, then **Edit** to configure the module.

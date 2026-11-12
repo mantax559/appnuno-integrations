@@ -11,7 +11,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        opencart-version: ['2.1.0.0', '2.1.0.1', '2.1.0.2']
+        include:
+          - opencart-version: '2.1.0.0'
+            php-version: '5.4'
+          - opencart-version: '2.1.0.1'
+            php-version: '5.4'
+          - opencart-version: '2.1.0.2'
+            php-version: '5.4'
     services:
       mysql:
         image: mysql:5.7
@@ -31,10 +37,10 @@ jobs:
       - name: Check out storefront SDK source
         uses: actions/checkout@v6
         with:
-          repository: mantax559/appnuno-web
+          repository: mantax559/appnuno-platform
           ref: production
-          path: appnuno-web
-          token: ${{ secrets.ACTIONS_READ_TOKEN || github.token }}
+          path: appnuno-platform
+          token: ${{ secrets.APPNUNO_PLATFORM_REPOSITORY_TOKEN }}
 
       - name: Set up PHP for the package build
         uses: shivammathur/setup-php@v2
@@ -46,7 +52,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.15'
 
       - name: Install browser test dependencies
         run: |
@@ -57,20 +63,19 @@ jobs:
         env:
           TZ: UTC
         run: |
-          php tools/opencart/build-package.php 2.1
+          php tools/opencart/build-package.php
           first_hash=$(sha256sum downloads/opencart/2.1.x/appnuno-opencart-2.1.x.ocmod.zip | cut -d ' ' -f 1)
-          php tools/opencart/build-package.php 2.1
+          php tools/opencart/build-package.php
           second_hash=$(sha256sum downloads/opencart/2.1.x/appnuno-opencart-2.1.x.ocmod.zip | cut -d ' ' -f 1)
           test "$first_hash" = "$second_hash"
           php tools/opencart/tests/package-validation.php 2.1
           php tools/opencart/tests/config-validation.php
           php tools/opencart/tests/language-validation.php
 
-      # OpenCart accepts PHP 5.3, but the store is served with php -S, which exists from PHP 5.4.
-      - name: Set up PHP 5.4 for the OpenCart store
+      - name: Set up PHP ${{ matrix.php-version }} for the OpenCart store
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '5.4'
+          php-version: ${{ matrix.php-version }}
           extensions: curl, ftp, gd, mysqli, zip, mcrypt, mbstring, xml
           coverage: none
 
@@ -82,7 +87,7 @@ jobs:
           OPENCART_DB_PASSWORD: root
           OPENCART_DB_NAME: opencart
           OPENCART_ARTIFACT_DIR: ${{ runner.temp }}/opencart-artifacts/${{ matrix.opencart-version }}
-          APPNUNO_SDK_SOURCE: ${{ github.workspace }}/appnuno-web/public/sdk/v1/appnuno.js
+          APPNUNO_SDK_SOURCE: ${{ github.workspace }}/appnuno-platform/public/sdk/v1/appnuno.js
         run: python tools/opencart/tests/integration.py
 
       - name: Upload browser test artifacts

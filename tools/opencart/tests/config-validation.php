@@ -7,6 +7,9 @@ if (strlen($model->validateConfig($default))) {
     throw new RuntimeException('Expected default OpenCart navigation configuration to be valid.');
 }
 $default_values = json_decode($default, true);
+if (count($default_values['defaultTabs'])) {
+    throw new RuntimeException('Expected a new installation to start without default tabs.');
+}
 if (!in_array($default_values['glass']['colorScheme'], array('auto'), true) || !in_array($default_values['glass']['style'], array('regular'), true) || !in_array($default_values['glass']['animate'], array(true), true) || !in_array($default_values['glass']['animationDuration'], array(0.3), true) || !in_array($default_values['glass']['isInteractive'], array(true), true) || !in_array($default_values['glass']['tintColor'], array('rgba(0, 0, 0, 0.02)'), true)) {
     throw new RuntimeException('Expected native-contract glass defaults.');
 }
@@ -16,7 +19,7 @@ if (!in_array($default_values['colors']['light']['backgroundColor'], array('#FFF
 $valid = json_encode(array(
     'cartTabId' => 'cart',
     'defaultTabs' => array(
-        array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/', 'icon' => 'home'),
+        array('id' => 'home', 'labels' => array('en-gb' => 'Home', 'lt-lt' => 'Pradžia'), 'url' => '/', 'icon' => array('id' => 'duo:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64))),
         array('id' => 'cart', 'labels' => array('en-gb' => 'Cart', 'lt-lt' => 'Krepšelis'), 'url' => '/index.php?route=checkout/cart')
     ),
     'routes' => array('checkout/cart' => array(array('id' => 'cart', 'labels' => array('en-gb' => 'Bag'), 'url' => '/index.php?route=checkout/cart'))),
@@ -25,6 +28,10 @@ $valid = json_encode(array(
 ));
 if (strlen($model->validateConfig($valid))) {
     throw new RuntimeException('Expected valid multilingual tabs, local destinations, routes and visuals.');
+}
+$no_cart_badge = json_encode(array('cartTabId' => '', 'defaultTabs' => array(), 'routes' => array()));
+if (strlen($model->validateConfig($no_cart_badge))) {
+    throw new RuntimeException('Expected a configuration with no selected cart badge tab to be valid.');
 }
 $form_config = json_encode(array(
     'defaultTabs' => array(array('id' => 'ci-added-tab', 'labels' => array('en-gb' => 'CI "Added" & Tab'), 'url' => '/index.php?route=information/contact')),
@@ -52,12 +59,16 @@ if (strlen($model->validateConfig($localized_urls, array('en-gb', 'lt-lt')))) {
 if (!strstr($model->validateConfig($localized_urls, array('en-gb', 'lt-lt', 'fr-fr')), 'defaultTabs[0].urls.fr-fr')) {
     throw new RuntimeException('Expected a custom URL to be required for every configured language code.');
 }
-$invalid_localized_url = json_encode(array(
-    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://external.example/catalog'))),
+$full_address = json_encode(array(
+    'defaultTabs' => array(array('id' => 'catalog', 'labels' => array('en-gb' => 'Catalog'), 'url' => '/catalog', 'urls' => array('en-gb' => 'https://shop.example/index.php?route=product/product&product_id=42'))),
     'routes' => array()
 ));
-if (!strstr($model->validateConfig($invalid_localized_url), 'defaultTabs[0].urls.en-gb')) {
-    throw new RuntimeException('Expected external localized URLs to be rejected with the language path.');
+if (strlen($model->validateConfig($full_address))) {
+    throw new RuntimeException('Expected a full https store URL to be accepted.');
+}
+$normalized_address = json_decode($model->normalizeConfig($full_address), true);
+if (!is_array($normalized_address) || $normalized_address['defaultTabs'][0]['urls']['en-gb'] !== '/index.php?route=product/product&product_id=42') {
+    throw new RuntimeException('Expected a full https store URL to be stored as its local path and query.');
 }
 $invalid_labels = json_encode(array(
     'defaultTabs' => array(array('id' => 'home', 'labels' => array('en-gb' => ''), 'url' => '/')),
@@ -88,6 +99,14 @@ $invalid_identity = json_encode(array('defaultTabs' => array(array('id' => 'cart
 if (!strlen($model->validateConfig($invalid_identity))) {
     throw new RuntimeException('Expected non-boolean active state to be rejected.');
 }
+$invalid_icon = json_encode(array('defaultTabs' => array(array('id' => 'home', 'label' => 'Home', 'url' => '/', 'icon' => array('id' => 'duo:home', 'uri' => 'https://icons.example/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64)))), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_icon), 'defaultTabs[0].icon')) {
+    throw new RuntimeException('Expected icon URLs outside the AppNuno catalog to be rejected.');
+}
+$invalid_icon_id = json_encode(array('defaultTabs' => array(array('id' => 'home', 'label' => 'Home', 'url' => '/', 'icon' => array('id' => 'custom:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64)))), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_icon_id), 'defaultTabs[0].icon')) {
+    throw new RuntimeException('Expected namespaced icon IDs to match their immutable asset URLs.');
+}
 $invalid_route = json_encode(array('defaultTabs' => array(), 'routes' => array('checkout/cart?redirect=home' => array())));
 if (!strstr($model->validateConfig($invalid_route), 'routes')) {
     throw new RuntimeException('Expected malformed OpenCart route names to be rejected.');
@@ -116,12 +135,50 @@ $invalid_back = json_encode(array('defaultTabs' => array(), 'routes' => array(),
 if (!strlen($model->validateConfig($invalid_back))) {
     throw new RuntimeException('Expected non-boolean back setting to be rejected.');
 }
-$visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart'))), 'routes' => array()));
+$visible_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'allPages' => false, 'pages' => array('checkout/cart'))), 'routes' => array()));
 if (strlen($model->validateConfig($visible_pages))) {
     throw new RuntimeException('Expected a tab limited to a store page to be valid.');
+}
+$empty_selected_pages = json_encode(array('defaultTabs' => array(array('id' => 'hidden-by-pages', 'label' => 'Hidden by pages', 'url' => '/', 'allPages' => false, 'pages' => array())), 'routes' => array()));
+if (strlen($model->validateConfig($empty_selected_pages))) {
+    throw new RuntimeException('Expected a tab with no selected pages to be valid when all-pages is disabled.');
+}
+$all_pages = json_encode(array('defaultTabs' => array(array('id' => 'all-pages', 'label' => 'All pages', 'url' => '/', 'allPages' => true, 'pages' => array())), 'routes' => array()));
+if (strlen($model->validateConfig($all_pages))) {
+    throw new RuntimeException('Expected a tab configured for every page to be valid.');
+}
+$invalid_all_pages = json_encode(array('defaultTabs' => array(array('id' => 'invalid-all-pages', 'label' => 'Invalid all pages', 'url' => '/', 'allPages' => 'false')), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_all_pages), 'defaultTabs[0].allPages')) {
+    throw new RuntimeException('Expected a non-boolean all-pages state to be rejected.');
+}
+$visibility_states = json_encode(array('defaultTabs' => array(array('id' => 'visible', 'label' => 'Visible', 'url' => '/', 'visible' => true), array('id' => 'hidden', 'label' => 'Hidden', 'url' => '/', 'visible' => false)), 'routes' => array()));
+if (strlen($model->validateConfig($visibility_states))) {
+    throw new RuntimeException('Expected explicitly visible and hidden tabs to be valid.');
+}
+$invalid_visibility = json_encode(array('defaultTabs' => array(array('id' => 'invalid-visibility', 'label' => 'Invalid visibility', 'url' => '/', 'visible' => 'false')), 'routes' => array()));
+if (!strstr($model->validateConfig($invalid_visibility), 'defaultTabs[0].visible')) {
+    throw new RuntimeException('Expected a non-boolean tab visibility state to be rejected.');
 }
 $invalid_pages = json_encode(array('defaultTabs' => array(array('id' => 'cart', 'label' => 'Cart', 'url' => '/', 'pages' => array('checkout/cart?redirect=home'))), 'routes' => array()));
 if (!strstr($model->validateConfig($invalid_pages), 'defaultTabs[0].pages')) {
     throw new RuntimeException('Expected an invalid store page selection to be rejected.');
+}
+class Controller {}
+require dirname(__DIR__, 3) . '/src/opencart/upload/catalog/controller/extension/module/appnuno.php';
+$controller = new ControllerExtensionModuleAppnuno();
+$visible_tabs_method = new ReflectionMethod($controller, 'visibleTabs');
+$visible_tabs_method->setAccessible(true);
+$catalog_icon = array('id' => 'duo:home', 'uri' => 'https://appnuno.com/icon-assets/duo/home/' . str_repeat('a', 64) . '.svg', 'content_hash' => str_repeat('a', 64));
+$published_tabs = $visible_tabs_method->invoke($controller, array(array('id' => 'legacy', 'icon' => 'home', 'activeIcon' => 'home'), array('id' => 'catalog', 'icon' => $catalog_icon, 'activeIcon' => 'home')));
+if (isset($published_tabs[0]['icon']) || isset($published_tabs[0]['activeIcon']) || !isset($published_tabs[1]['icon']['uri']) || isset($published_tabs[1]['activeIcon'])) {
+    throw new RuntimeException('Expected storefront output to publish catalog assets and omit legacy icon names.');
+}
+$shown_on_route = new ReflectionMethod($controller, 'tabShownOnRoute');
+$shown_on_route->setAccessible(true);
+if (!$shown_on_route->invoke($controller, array('id' => 'legacy'), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'legacy', 'pages' => array()), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'checkout/cart') || $shown_on_route->invoke($controller, array('id' => 'limited-legacy', 'pages' => array('checkout/cart')), 'common/home')) {
+    throw new RuntimeException('Expected legacy tabs to keep their previous page-visibility behavior.');
+}
+if ($shown_on_route->invoke($controller, array('id' => 'hidden', 'allPages' => false, 'pages' => array()), 'common/home') || !$shown_on_route->invoke($controller, array('id' => 'limited', 'allPages' => false, 'pages' => array('checkout/cart')), 'checkout/cart') || !$shown_on_route->invoke($controller, array('id' => 'global', 'allPages' => true, 'pages' => array()), 'common/home')) {
+    throw new RuntimeException('Expected new all-pages and selected-page visibility rules to be applied.');
 }
 echo "OpenCart navigation configuration tests passed.\n";

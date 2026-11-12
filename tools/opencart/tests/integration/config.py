@@ -5,7 +5,7 @@ from pathlib import Path
 
 ADMIN_PASSWORD: str = "opencart-ci-password"
 ADMIN_USER: str = "admin"
-BASE_URL: str = "http://127.0.0.1:8080"
+BASE_URL: str = os.environ.get("OPENCART_BASE_URL", "http://127.0.0.1:8080")
 FTP_PASSWORD: str = "opencart-ci-password"
 FTP_PORT: int = 2121
 FTP_USER: str = "opencart-ci"
@@ -53,6 +53,7 @@ class Runtime:
     db_name: str
     db_password: str
     db_user: str
+    ftp_host: str
     ftp_password: str
     ftp_port: int
     ftp_user: str
@@ -76,12 +77,11 @@ def load_runtime() -> Runtime:
     elif line == "3.0":
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/{OPENCART_30_ASSETS[version]}"
     elif version.startswith("4."):
-        # OpenCart 4 uses the uploaded filename as its extension code.
         package = REPOSITORY / "downloads" / "opencart" / "4.x" / "appnuno.ocmod.zip"
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/opencart-{version}.zip"
     else:
         archive_url = f"https://github.com/opencart/opencart/releases/download/{version}/{version}-compiled.zip"
-    sdk_path = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-web" / "public" / "sdk" / "v1" / "appnuno.js")))
+    sdk_path = Path(os.environ.get("APPNUNO_SDK_SOURCE", str(REPOSITORY.parent / "appnuno-platform" / "public" / "sdk" / "v1" / "appnuno.js")))
     return Runtime(
         admin_password=ADMIN_PASSWORD,
         admin_user=ADMIN_USER,
@@ -91,6 +91,7 @@ def load_runtime() -> Runtime:
         db_name=os.environ.get("OPENCART_DB_NAME", "opencart"),
         db_password=os.environ.get("OPENCART_DB_PASSWORD", "root"),
         db_user=os.environ.get("OPENCART_DB_USER", "root"),
+        ftp_host=os.environ.get("OPENCART_FTP_HOST", "127.0.0.1"),
         ftp_password=FTP_PASSWORD,
         ftp_port=FTP_PORT,
         ftp_user=FTP_USER,

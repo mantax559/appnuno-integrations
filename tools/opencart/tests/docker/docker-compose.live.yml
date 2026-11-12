@@ -1,0 +1,37 @@
+name: appnuno-opencart-live
+
+services:
+  mysql:
+    volumes:
+      - opencart-live-db:/var/lib/mysql
+
+  opencart-php:
+    ports:
+      - "127.0.0.1:${OPENCART_PORT:-8080}:8080"
+
+  live-init:
+    image: appnuno-opencart-tests-runner:latest
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    working_dir: /repo
+    environment:
+      OPENCART_VERSION: ${OPENCART_VERSION:-2.3.0.2}
+      OPENCART_DB_HOST: mysql
+      OPENCART_DB_USER: opencart
+      OPENCART_DB_PASSWORD: opencart
+      OPENCART_DB_NAME: opencart
+      OPENCART_WORKSPACE_ROOT: /shared/live
+      OPENCART_EXTERNAL_PHP_SERVER: "1"
+      APPNUNO_SDK_SOURCE: /sdk/appnuno.js
+    volumes:
+      - ../../../..:/repo
+      - ../../../../../appnuno-platform/public/sdk/v1/appnuno.js:/sdk/appnuno.js:ro
+      - store-workspace:/shared
+    command: ["python", "-c", "import sys; from pathlib import Path; sys.path.insert(0, 'tools/opencart/tests'); from integration.config import load_runtime; from integration.environment import prepare_store; workspace = Path('/shared/live'); workspace.mkdir(parents=True, exist_ok=True); prepare_store(load_runtime(), workspace)"]
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+volumes:
+  opencart-live-db:

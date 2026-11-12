@@ -1,0 +1,73 @@
+name: appnuno-prestashop-tests
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: prestashop
+      MYSQL_USER: prestashop
+      MYSQL_PASSWORD: prestashop
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  prestashop:
+    image: prestashop/prestashop:${PRESTASHOP_TAG:-8.2-apache}
+    environment:
+      DB_SERVER: mysql
+      DB_NAME: prestashop
+      DB_USER: prestashop
+      DB_PASSWD: prestashop
+      PS_INSTALL_AUTO: 1
+      PS_TABLE_PREFIX: ps_
+      PS_DEV_MODE: 1
+      PS_DOMAIN: prestashop
+      PS_FOLDER_ADMIN: admin-dev
+      PS_FOLDER_INSTALL: install
+      PS_COUNTRY: us
+      PS_LANGUAGE: en
+      PS_ENABLE_SSL: 0
+      ADMIN_MAIL: admin@example.test
+      ADMIN_PASSWD: appnuno-local
+      APPNUNO_PUBLIC_DOMAIN: 127.0.0.1:${PRESTASHOP_PORT:-8088}
+    ports:
+      - "127.0.0.1:${PRESTASHOP_PORT:-8088}:80"
+    volumes:
+      - store-workspace:/var/www/html
+      - ./check-install.php:/scripts/check-install.php:ro
+      - ./prepare-module.php:/scripts/prepare-module.php:ro
+      - ./set-employee-language.php:/scripts/set-employee-language.php:ro
+      - ./module-action.php:/scripts/module-action.php:ro
+      - ../../../../downloads/prestashop/9.x:/appnuno/package:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit((int) !@fsockopen('127.0.0.1', 80));"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+
+  installer-check:
+    image: prestashop/prestashop:${PRESTASHOP_TAG:-8.2-apache}
+    entrypoint: ["/bin/sh", "/scripts/run-install-check.sh"]
+    environment:
+      DB_SERVER: mysql
+      DB_NAME: prestashop
+      DB_USER: prestashop
+      DB_PASSWD: prestashop
+      PS_TABLE_PREFIX: ps_
+      PS_DEV_MODE: 1
+    volumes:
+      - store-workspace:/var/www/html:ro
+      - ./check-install.php:/scripts/check-install.php:ro
+      - ./run-install-check.sh:/scripts/run-install-check.sh:ro
+    depends_on:
+      prestashop:
+        condition: service_healthy
+
+volumes:
+  store-workspace:

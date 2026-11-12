@@ -1,0 +1,73 @@
+name: PrestaShop installation compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  installation:
+    runs-on: ubuntu-26.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - prestashop-tag: '8.2-apache'
+            install-module: false
+          - prestashop-tag: '9.0-apache'
+            install-module: true
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Prepare PHP for the PrestaShop package build
+        if: matrix.install-module
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: zip
+          coverage: none
+
+      - name: Build the PrestaShop 9.x package
+        if: matrix.install-module
+        run: php tools/prestashop/build-package.php
+
+      - name: Install PrestaShop ${{ matrix.prestashop-tag }} with MySQL and verify installation
+        if: ${{ !matrix.install-module }}
+        env:
+          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml up --abort-on-container-exit --exit-code-from installer-check installer-check
+
+      - name: Install PrestaShop 9.0 and keep the store running
+        if: matrix.install-module
+        env:
+          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml up -d --wait mysql prestashop && docker compose -f tools/prestashop/tests/docker/docker-compose.yml run --rm installer-check
+
+      - name: Install the AppNuno module
+        if: matrix.install-module
+        env:
+          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml exec -T prestashop php /scripts/prepare-module.php
+
+      - name: Check the AppNuno admin and storefront
+        if: matrix.install-module
+        env:
+          PRESTASHOP_SITE_URL: http://127.0.0.1:8088
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
+        run: |
+          python3 -m pip install -r tools/prestashop/tests/requirements-ci.txt
+          python3 -m playwright install --with-deps chromium
+          python3 tools/prestashop/tests/integration/admin.py
+
+      - name: Upload browser test artifacts
+        if: ${{ always() && matrix.install-module }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: prestashop-${{ matrix.prestashop-tag }}-browser-artifacts
+          path: ${{ runner.temp }}/prestashop-artifacts
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Remove the temporary PrestaShop environment
+        if: always()
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml down --volumes --remove-orphans
