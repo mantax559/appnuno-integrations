@@ -54,6 +54,12 @@ geolocation="/var/www/html/wp-content/plugins/woocommerce/includes/class-wc-geol
 if [ -f "$geolocation" ]; then
     sed -i 's/->get_message()/->get_error_message()/g' "$geolocation"
 fi
+if [ -n "${WP_CLI_VERSION:-}" ]; then
+    legacy_order_class="/var/www/html/wp-content/plugins/woocommerce/classes/order.class.php"
+    if [ -f "$legacy_order_class" ]; then
+        sed -i 's/ &\$this,/ $this,/g' "$legacy_order_class"
+    fi
+fi
 wp plugin activate woocommerce --allow-root --path=/var/www/html
 if [ -z "${WP_CLI_VERSION:-}" ]; then
     wp plugin is-active woocommerce --allow-root --path=/var/www/html
