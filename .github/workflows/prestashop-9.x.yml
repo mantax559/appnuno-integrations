@@ -1,4 +1,4 @@
-name: PrestaShop installation compatibility
+name: PrestaShop 9.x compatibility
 
 on:
   push:
@@ -8,14 +8,6 @@ on:
 jobs:
   installation:
     runs-on: ubuntu-26.04
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - prestashop-tag: '8.2-apache'
-            package-line: '8'
-          - prestashop-tag: '9.0-apache'
-            package-line: '9'
     steps:
       - uses: actions/checkout@v6
 
@@ -26,30 +18,30 @@ jobs:
           extensions: zip
           coverage: none
 
-      - name: Build the PrestaShop ${{ matrix.package-line }}.x package
-        run: php tools/prestashop/build-package.php ${{ matrix.package-line }}
+      - name: Build the PrestaShop 9.x package
+        run: php tools/prestashop/build-package.php 9
 
-      - name: Start PrestaShop ${{ matrix.prestashop-tag }} with MySQL
+      - name: Start PrestaShop 9.0-apache with MySQL
         env:
-          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
-          APPNUNO_PRESTASHOP_LINE: ${{ matrix.package-line }}.x
+          PRESTASHOP_TAG: '9.0-apache'
+          APPNUNO_PRESTASHOP_LINE: 9.x
         run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml up -d --wait mysql prestashop
 
       - name: Verify the PrestaShop MySQL installation
         env:
-          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
-          APPNUNO_PRESTASHOP_LINE: ${{ matrix.package-line }}.x
+          PRESTASHOP_TAG: '9.0-apache'
+          APPNUNO_PRESTASHOP_LINE: 9.x
         run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml run --rm installer-check
 
       - name: Install the AppNuno module
         env:
-          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
-          APPNUNO_PRESTASHOP_LINE: ${{ matrix.package-line }}.x
+          PRESTASHOP_TAG: '9.0-apache'
+          APPNUNO_PRESTASHOP_LINE: 9.x
         run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml exec -T prestashop php /scripts/prepare-module.php
 
       - name: Check the AppNuno admin and storefront
         env:
-          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
+          PRESTASHOP_TAG: '9.0-apache'
           PRESTASHOP_SITE_URL: http://127.0.0.1:8088
           APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
         run: |
@@ -61,7 +53,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: prestashop-${{ matrix.prestashop-tag }}-browser-artifacts
+          name: prestashop-9.0-apache-browser-artifacts
           path: ${{ runner.temp }}/prestashop-artifacts
           if-no-files-found: warn
           retention-days: 7

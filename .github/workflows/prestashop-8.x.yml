@@ -1,0 +1,63 @@
+name: PrestaShop 8.x compatibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  installation:
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Prepare PHP for the PrestaShop package build
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: zip
+          coverage: none
+
+      - name: Build the PrestaShop 8.x package
+        run: php tools/prestashop/build-package.php 8
+
+      - name: Start PrestaShop 8.2-apache with MySQL
+        env:
+          PRESTASHOP_TAG: '8.2-apache'
+          APPNUNO_PRESTASHOP_LINE: 8.x
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml up -d --wait mysql prestashop
+
+      - name: Verify the PrestaShop MySQL installation
+        env:
+          PRESTASHOP_TAG: '8.2-apache'
+          APPNUNO_PRESTASHOP_LINE: 8.x
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml run --rm installer-check
+
+      - name: Install the AppNuno module
+        env:
+          PRESTASHOP_TAG: '8.2-apache'
+          APPNUNO_PRESTASHOP_LINE: 8.x
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml exec -T prestashop php /scripts/prepare-module.php
+
+      - name: Check the AppNuno admin and storefront
+        env:
+          PRESTASHOP_TAG: '8.2-apache'
+          PRESTASHOP_SITE_URL: http://127.0.0.1:8088
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
+        run: |
+          python3 -m pip install -r tools/prestashop/tests/requirements-ci.txt
+          python3 -m playwright install --with-deps chromium
+          python3 tools/prestashop/tests/integration/admin.py
+
+      - name: Upload browser test artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: prestashop-8.2-apache-browser-artifacts
+          path: ${{ runner.temp }}/prestashop-artifacts
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Remove the temporary PrestaShop environment
+        if: always()
+        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml down --volumes --remove-orphans
