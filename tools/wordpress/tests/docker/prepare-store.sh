@@ -82,6 +82,8 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     wp option delete module_appnuno_status --allow-root --path=/var/www/html || true
     wp option delete module_appnuno_config --allow-root --path=/var/www/html || true
     wp rewrite flush --hard --allow-root --path=/var/www/html
+    wp transient delete _wc_activation_redirect --allow-root --path=/var/www/html || true
+    wp eval 'if ( class_exists( "WC_Admin_Notices" ) ) { WC_Admin_Notices::remove_notice( "install" ); }' --allow-root --path=/var/www/html || true
     if [ ! -f /var/www/html/.htaccess ]; then
         cat > /var/www/html/.htaccess <<'EOF'
 # BEGIN WordPress
