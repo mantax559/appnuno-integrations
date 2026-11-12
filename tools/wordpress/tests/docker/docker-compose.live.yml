@@ -16,6 +16,7 @@ services:
       dockerfile: docker/Dockerfile.cli
       args:
         PHP_VERSION: ${PHP_VERSION:-8.3}
+        WP_CLI_VERSION: ${WP_CLI_VERSION:-}
     user: "0:0"
     entrypoint: ["/bin/sh", "/scripts/prepare-store.sh"]
     environment:
@@ -29,6 +30,7 @@ services:
       WORDPRESS_ADMIN_USER: admin
       WORDPRESS_ADMIN_PASSWORD: appnuno-local
       WORDPRESS_ADMIN_EMAIL: admin@example.test
+      WP_CLI_VERSION: ${WP_CLI_VERSION:-}
       APPNUNO_INSTALL_PLUGIN: ${APPNUNO_INSTALL_PLUGIN:-}
       APPNUNO_WOOCOMMERCE_LINE: ${APPNUNO_WOOCOMMERCE_LINE:-11.x}
     volumes:

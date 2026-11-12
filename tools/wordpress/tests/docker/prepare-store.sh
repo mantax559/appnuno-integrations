@@ -23,7 +23,9 @@ if ! wp core is-installed --allow-root --path=/var/www/html >/dev/null 2>&1; the
         --skip-email
 fi
 
-wp config set FS_METHOD direct --type=constant --allow-root --path=/var/www/html
+if [ -z "${WP_CLI_VERSION:-}" ]; then
+    wp config set FS_METHOD direct --type=constant --allow-root --path=/var/www/html
+fi
 wp core is-installed --allow-root --path=/var/www/html
 wp core version --allow-root --path=/var/www/html | grep -Fx "$WORDPRESS_VERSION"
 if ! wp plugin is-installed woocommerce --allow-root --path=/var/www/html >/dev/null 2>&1; then
@@ -53,14 +55,20 @@ if [ -f "$geolocation" ]; then
     sed -i 's/->get_message()/->get_error_message()/g' "$geolocation"
 fi
 wp plugin activate woocommerce --allow-root --path=/var/www/html
-wp plugin is-active woocommerce --allow-root --path=/var/www/html
-wp plugin get woocommerce --field=version --allow-root --path=/var/www/html | grep -Fx "$WOOCOMMERCE_VERSION"
+if [ -z "${WP_CLI_VERSION:-}" ]; then
+    wp plugin is-active woocommerce --allow-root --path=/var/www/html
+    wp plugin get woocommerce --field=version --allow-root --path=/var/www/html | grep -Fx "$WOOCOMMERCE_VERSION"
+fi
 
 if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     package_line="${APPNUNO_WOOCOMMERCE_LINE:-11.x}"
     if [ ! -f "/appnuno/package/appnuno-woocommerce-${package_line}.zip" ]; then
         echo "AppNuno WooCommerce package is missing." >&2
         exit 1
+    fi
+    if [ "$package_line" = "1.x" ]; then
+        wp plugin install "/appnuno/package/appnuno-woocommerce-${package_line}.zip" --activate --allow-root --path=/var/www/html
+        exit 0
     fi
     wp rewrite structure '/%postname%/' --hard --allow-root --path=/var/www/html
     if ! wp wc tool run install_pages --user=admin --allow-root --path=/var/www/html; then

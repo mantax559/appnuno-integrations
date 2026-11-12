@@ -1,5 +1,6 @@
 <?php
 $package_lines = array(
+    '1' => array('directory' => '1.x', 'requires_at_least' => '3.4', 'requires_php' => '5.6', 'strip_scalar_types' => true),
     '2' => array('directory' => '2.x', 'requires_at_least' => '3.7', 'requires_php' => '5.6', 'strip_scalar_types' => true),
     '3' => array('directory' => '3.x', 'requires_at_least' => '4.4', 'requires_php' => '7.0', 'strip_void' => true),
     '4' => array('directory' => '4.x', 'requires_at_least' => '5.0', 'requires_php' => '7.0', 'strip_void' => true),
@@ -14,7 +15,7 @@ $package_lines = array(
 $package_line = '11';
 if (isset($argv[1])) {
     if (!is_string($argv[1]) || !isset($package_lines[$argv[1]])) {
-        throw new RuntimeException('The WooCommerce package line must be 2, 3, 4, 5, 6, 7, 8, 9, 10, or 11.');
+        throw new RuntimeException('The WooCommerce package line must be 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, or 11.');
     }
     $package_line = $argv[1];
 }

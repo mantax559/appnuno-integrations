@@ -203,7 +203,7 @@ $fetchMetadata = {
                 $requiresPhp = $pluginPhp
             }
         }
-        if ([int]$version.Split('.')[0] -eq 2) {
+        if ([int]$version.Split('.')[0] -in @(1, 2)) {
             if (-not $phpMatch.Success -and -not $pluginPhp) {
                 $requiresPhp = '5.6'
             }
@@ -294,11 +294,13 @@ foreach ($release in $woocommerceMetadata) {
 
     foreach ($target in $targets) {
         $wordpressVersion = $target.Version
-        if ([version](($wordpressVersion.Split('.') + @('0'))[0..2] -join '.') -lt [version]'3.7.0') {
-            if (-not $latestWordPressByBranch.ContainsKey('3.7')) {
-                throw "WordPress 3.7 from the official release archive is required because WP-CLI cannot install an older release."
+        $minimumWordPress = if ([int]$woocommerceMajor -eq 1) { '3.4.0' } elseif ([int]$woocommerceMajor -ge 2) { '3.7.0' } else { '0.0.0' }
+        $minimumWordPressBranch = if ([int]$woocommerceMajor -eq 1) { '3.4' } elseif ([int]$woocommerceMajor -ge 2) { '3.7' } else { $null }
+        if ($minimumWordPressBranch -and [version](($wordpressVersion.Split('.') + @('0'))[0..2] -join '.') -lt [version]$minimumWordPress) {
+            if (-not $latestWordPressByBranch.ContainsKey($minimumWordPressBranch)) {
+                throw "WordPress $minimumWordPressBranch from the official release archive is required because the selected WP-CLI needs that version or newer."
             }
-            $wordpressVersion = $latestWordPressByBranch['3.7']
+            $wordpressVersion = $latestWordPressByBranch[$minimumWordPressBranch]
         }
         $workflowEntriesByWooCommerceMajor[$woocommerceMajor].Add([pscustomobject]@{
             WordPressVersion = $wordpressVersion
@@ -343,8 +345,11 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      WORDPRESS_VERSION: ${{ matrix.wordpress_version }}')
     $lines.Add('      WOOCOMMERCE_VERSION: ${{ matrix.woocommerce_version }}')
     $lines.Add('      PHP_VERSION: ${{ matrix.php_version }}')
-    if (@(2, 3, 4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
+    if (@(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
         $lines.Add("      APPNUNO_WOOCOMMERCE_LINE: `"$woocommerceMajor.x`"")
+    }
+    if ([int]$woocommerceMajor -eq 1) {
+        $lines.Add('      WP_CLI_VERSION: "0.12.1"')
     }
     $lines.Add('')
     $lines.Add('    steps:')
