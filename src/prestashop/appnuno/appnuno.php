@@ -19,8 +19,8 @@ class Appnuno extends Module
         $this->need_instance = 0;
         $this->bootstrap = true;
         $this->ps_versions_compliancy = array(
-            'min' => '9.0.0',
-            'max' => '9.99.99',
+            'min' => '__PRESTASHOP_MIN_VERSION__',
+            'max' => '__PRESTASHOP_MAX_VERSION__',
         );
         parent::__construct();
         $this->displayName = 'AppNuno';
@@ -73,7 +73,9 @@ class Appnuno extends Module
             $tab->active = 1;
             $tab->class_name = 'AdminAppnuno';
             $tab->module = $this->name;
-            $tab->id_parent = 0;
+            $tab->id_parent = version_compare(_PS_VERSION_, '9.0.0', '<')
+                ? (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminParentModulesSf"')
+                : 0;
             $tab->icon = 'explore';
             $tab->enabled = 1;
             $languages = Language::getLanguages(false);

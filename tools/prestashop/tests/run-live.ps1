@@ -7,11 +7,11 @@ param(
 $ErrorActionPreference = "Stop"
 $env:PRESTASHOP_TAG = $PrestaShopTag
 $env:PRESTASHOP_PORT = "$PrestaShopPort"
-if ($PrestaShopTag -eq "9.0-apache") {
-    php (Join-Path $PSScriptRoot "..\build-package.php")
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+$packageLine = if ($PrestaShopTag -eq "8.2-apache") { "8" } else { "9" }
+$env:APPNUNO_PRESTASHOP_LINE = "$packageLine.x"
+php (Join-Path $PSScriptRoot "..\build-package.php") $packageLine
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }
 $composeFile = Join-Path $PSScriptRoot "docker\docker-compose.yml"
 $liveComposeFile = Join-Path $PSScriptRoot "docker\docker-compose.live.yml"
@@ -27,16 +27,12 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-if ($PrestaShopTag -eq "9.0-apache") {
-    docker compose @composeArgs exec -T prestashop php /scripts/prepare-module.php
-    if ($LASTEXITCODE -ne 0) {
-        exit $LASTEXITCODE
-    }
+docker compose @composeArgs exec -T prestashop php /scripts/prepare-module.php
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }
 
 Write-Host "PrestaShop is available at http://127.0.0.1:$PrestaShopPort"
-if ($PrestaShopTag -eq "9.0-apache") {
-    Write-Host "Admin: admin@example.test / appnuno-local"
-    Write-Host "Customer: customer@example.test / appnuno-local"
-}
+Write-Host "Admin: admin@example.test / appnuno-local"
+Write-Host "Customer: customer@example.test / appnuno-local"
 Write-Host "PrestaShop is installed; the live containers and data remain running."

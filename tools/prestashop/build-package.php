@@ -1,11 +1,19 @@
 <?php
-prestashop_build_package();
+$package_lines = array(
+    '8' => array('directory' => '8.x', 'minimum' => '8.0.0', 'maximum' => '8.99.99', 'requires_php' => '7.2.5'),
+    '9' => array('directory' => '9.x', 'minimum' => '9.0.0', 'maximum' => '9.99.99', 'requires_php' => '8.1'),
+);
+$package_line = isset($argv[1]) ? $argv[1] : '9';
+if (!isset($package_lines[$package_line])) {
+    throw new RuntimeException('The PrestaShop package line must be 8 or 9.');
+}
+prestashop_build_package($package_lines[$package_line]);
 
-function prestashop_build_package() {
+function prestashop_build_package(array $package_line): void {
     $repository = dirname(__DIR__, 2);
     $source = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'prestashop' . DIRECTORY_SEPARATOR . 'appnuno';
     $shared_admin = $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'admin';
-    $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'prestashop' . DIRECTORY_SEPARATOR . '9.x';
+    $release = $repository . DIRECTORY_SEPARATOR . 'downloads' . DIRECTORY_SEPARATOR . 'prestashop' . DIRECTORY_SEPARATOR . $package_line['directory'];
     $platform_versions = json_decode(file_get_contents($repository . DIRECTORY_SEPARATOR . 'platform-versions.json'), true);
     if (!is_array($platform_versions) || empty($platform_versions['prestashop'])) {
         throw new RuntimeException('The PrestaShop integration version is missing from platform-versions.json.');
@@ -14,7 +22,7 @@ function prestashop_build_package() {
     if (!is_dir($release) && !mkdir($release, 0775, true) && !is_dir($release)) {
         throw new RuntimeException('Unable to create the PrestaShop release directory.');
     }
-    $package = $release . DIRECTORY_SEPARATOR . 'appnuno-prestashop-9.x.zip';
+    $package = $release . DIRECTORY_SEPARATOR . 'appnuno-prestashop-' . $package_line['directory'] . '.zip';
     $entries = array(
         'appnuno/includes/appnuno-config.php' => $repository . DIRECTORY_SEPARATOR . 'src' . DIRECTORY_SEPARATOR . 'shared' . DIRECTORY_SEPARATOR . 'php' . DIRECTORY_SEPARATOR . 'appnuno-config.php',
         'appnuno/assets/settings.css' => $shared_admin . DIRECTORY_SEPARATOR . 'settings.css',
@@ -41,10 +49,17 @@ function prestashop_build_package() {
         if (!is_string($body)) {
             throw new RuntimeException('Unable to read a PrestaShop package file.');
         }
-        $body = str_replace('__APPNUNO_VERSION__', $version, $body);
+        $body = str_replace(
+            array('__APPNUNO_VERSION__', '__PRESTASHOP_MIN_VERSION__', '__PRESTASHOP_MAX_VERSION__'),
+            array($version, $package_line['minimum'], $package_line['maximum']),
+            $body
+        );
         $prepared[$name] = $body;
     }
-    if (!isset($prepared['appnuno/appnuno.php']) || strpos($prepared['appnuno/appnuno.php'], $version) === false) {
+    if (!isset($prepared['appnuno/appnuno.php'])
+        || !strpos($prepared['appnuno/appnuno.php'], $version)
+        || !strpos($prepared['appnuno/appnuno.php'], "'min' => '" . $package_line['minimum'] . "'")
+        || !strpos($prepared['appnuno/appnuno.php'], "'max' => '" . $package_line['maximum'] . "'")) {
         throw new RuntimeException('The PrestaShop module version was not written.');
     }
     ksort($prepared, SORT_STRING);

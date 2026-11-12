@@ -1,12 +1,20 @@
 <?php
 require '/var/www/html/config/config.inc.php';
 
-if (version_compare(_PS_VERSION_, '9.0.0', '<')) {
-    fwrite(STDOUT, "AppNuno PrestaShop module is only installed on PrestaShop 9.\n");
-    exit(0);
+$package_lines = array(
+    '8.x' => array('minimum' => '8.0.0', 'maximum' => '8.99.99'),
+    '9.x' => array('minimum' => '9.0.0', 'maximum' => '9.99.99'),
+);
+$package_line = getenv('APPNUNO_PRESTASHOP_LINE');
+if (!is_string($package_line)
+    || !isset($package_lines[$package_line])
+    || !version_compare(_PS_VERSION_, $package_lines[$package_line]['minimum'], '>=')
+    || !version_compare(_PS_VERSION_, $package_lines[$package_line]['maximum'], '<=')) {
+    fwrite(STDERR, "The AppNuno package line does not match the installed PrestaShop version.\n");
+    exit(1);
 }
 
-$zip = '/appnuno/package/appnuno-prestashop-9.x.zip';
+$zip = '/appnuno/package/appnuno-prestashop-' . $package_line . '.zip';
 if (!is_file($zip)) {
     fwrite(STDERR, "AppNuno PrestaShop package is missing.\n");
     exit(1);

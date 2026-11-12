@@ -44,7 +44,10 @@ class PrestaShopAdapter(StoreAdapter):
 
     def open_settings(self, page: Page) -> None:
         page.goto(self.base_url + "/admin-dev/", wait_until="domcontentloaded", timeout=90000)
-        page.locator('a[href*="AdminAppnuno"]').first.click()
+        link = page.locator('a[href*="AdminAppnuno"]').first
+        if not link.count() or not link.is_visible():
+            page.get_by_text("Modules", exact=True).first.click()
+        link.click()
         page.locator(".appnuno-settings").wait_for()
 
     def switch_admin_language(self, page: Page, code: str) -> None:
@@ -68,11 +71,18 @@ class PrestaShopAdapter(StoreAdapter):
             raise AssertionError("PrestaShop did not change the employee language: " + completed.stderr)
 
     def storefront_url(self, code: str, path: str) -> str:
-        if code != self.lithuanian_code:
-            return self.absolute(path)
-        if path in ("", "/"):
-            return self.base_url + "/lt/"
-        return self.base_url + "/lt" + (path if path.startswith("/") else "/" + path)
+        locale = "lt" if code == self.lithuanian_code else "en"
+        localized_path = path if path.startswith("/") else "/" + path
+        for prefix in ("en", "lt"):
+            if localized_path == "/" + prefix:
+                localized_path = "/"
+                break
+            if localized_path.startswith("/" + prefix + "/"):
+                localized_path = localized_path[len(prefix) + 1:]
+                break
+        if localized_path == "/":
+            return self.base_url + "/" + locale + "/"
+        return self.base_url + "/" + locale + localized_path
 
     def switch_storefront_language(self, page: Page, code: str) -> None:
         return None
@@ -100,7 +110,7 @@ class PrestaShopAdapter(StoreAdapter):
             raise AssertionError(f"The sample product was not added twice: {result}.")
 
     def register_customer(self, page: Page) -> None:
-        page.goto(self.base_url + "/registration")
+        page.goto(self.storefront_url(self.english_code, "/registration"))
         gender = page.locator("input[name='id_gender']")
         if gender.count():
             gender.first.check()
@@ -138,6 +148,8 @@ class PrestaShopAdapter(StoreAdapter):
             limited.goto(self.base_url + "/admin-dev/")
             link = limited.locator('a[href*="AdminAppnuno"]')
             if link.count():
+                if not link.first.is_visible():
+                    limited.get_by_text("Modules", exact=True).first.click()
                 link.first.click()
                 limited.locator("body").wait_for()
             if limited.locator("#form-appnuno").count():

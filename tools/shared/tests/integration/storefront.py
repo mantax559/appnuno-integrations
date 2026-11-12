@@ -184,7 +184,7 @@ def check_storefront(page: Page, adapter: StoreAdapter, directory) -> None:
     assert_english_bootstrap(read_integration(page, adapter, responses, "common/home"), adapter, True, "home")
     capture_screenshot(page, directory, "05-storefront-mobile.png")
     page.set_viewport_size({"width": 1440, "height": 1000})
-    page.goto(adapter.absolute(adapter.special_path))
+    page.goto(adapter.storefront_url(adapter.english_code, adapter.special_path))
     assert_english_bootstrap(read_integration(page, adapter, responses, "product/special"), adapter, False, None)
     page.goto(adapter.absolute(adapter.cart_path))
     cart_payload = read_integration(page, adapter, responses, "checkout/cart")

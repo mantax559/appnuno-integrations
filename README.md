@@ -13,8 +13,8 @@
 | WooCommerce | 3.x | [Instruction](downloads/woocommerce/3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/3.x/appnuno-woocommerce-3.x.zip) |
 | WooCommerce | 2.x | [Instruction](downloads/woocommerce/2.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/2.x/appnuno-woocommerce-2.x.zip) |
 | WooCommerce | 1.x | [Instruction](downloads/woocommerce/1.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/woocommerce/1.x/appnuno-woocommerce-1.x.zip) |
+| PrestaShop | 8.x | [Instruction](downloads/prestashop/8.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/8.x/appnuno-prestashop-8.x.zip) |
 | PrestaShop | 9.x | [Instruction](downloads/prestashop/9.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/9.x/appnuno-prestashop-9.x.zip) |
-| PrestaShop | 8.x | Instruction in preparation | — |
 | PrestaShop | 1.7.x | Instruction in preparation | — |
 | PrestaShop | 1.6.x | Instruction in preparation | — |
 | PrestaShop | 1.5.x | Instruction in preparation | — |
@@ -39,20 +39,21 @@ Run this command from the repository root. PHP must have the `zip` extension ena
 php tools/opencart/build-package.php
 ```
 
-## Generate the PrestaShop 9.x package
+## Generate the PrestaShop packages
 
-Run this command from the repository root. PHP must have the `zip` extension enabled. It builds `downloads/prestashop/9.x/appnuno-prestashop-9.x.zip`.
+Run these commands from the repository root. PHP must have the `zip` extension enabled. They build the PrestaShop 8.x and 9.x packages.
 
 ```powershell
-php tools/prestashop/build-package.php
+php tools/prestashop/build-package.php 8
+php tools/prestashop/build-package.php 9
 ```
 
 ## Run PrestaShop installation tests
 
-PrestaShop 8.2 verifies that the official container installs successfully against MySQL and serves the storefront. PrestaShop 9.0 also installs the AppNuno module. Docker must be installed.
+PrestaShop 8.2 and 9.0 are installed against MySQL and tested with the AppNuno module, including browser checks. Docker must be installed.
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-docker.ps1 -PrestaShopTag 8.2-apache
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 8.2-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.0-apache
 ```
 
