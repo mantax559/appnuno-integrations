@@ -318,7 +318,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      WORDPRESS_VERSION: ${{ matrix.wordpress_version }}')
     $lines.Add('      WOOCOMMERCE_VERSION: ${{ matrix.woocommerce_version }}')
     $lines.Add('      PHP_VERSION: ${{ matrix.php_version }}')
-    if (@(6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
+    if (@(5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
         $lines.Add("      APPNUNO_WOOCOMMERCE_LINE: `"$woocommerceMajor.x`"")
     }
     $lines.Add('')
@@ -326,6 +326,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      - uses: actions/checkout@v6')
     $lines.Add('')
     $browserTargets = @{
+        5 = @{ WordPress = '5.8.19'; WooCommerce = '5.9.2'; BuildArgument = ' 5' }
         6 = @{ WordPress = '6.0.18'; WooCommerce = '6.9.5'; BuildArgument = ' 6' }
         7 = @{ WordPress = '6.2.15'; WooCommerce = '7.9.2'; BuildArgument = ' 7' }
         8 = @{ WordPress = '6.5.14'; WooCommerce = '8.9.5'; BuildArgument = ' 8' }
