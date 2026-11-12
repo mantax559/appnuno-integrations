@@ -2,14 +2,16 @@
 set -eu
 
 if ! wp core is-installed --allow-root --path=/var/www/html >/dev/null 2>&1; then
-    wp config create \
-        --allow-root \
-        --path=/var/www/html \
-        --dbname="$WORDPRESS_DB_NAME" \
-        --dbuser="$WORDPRESS_DB_USER" \
-        --dbpass="$WORDPRESS_DB_PASSWORD" \
-        --dbhost="$WORDPRESS_DB_HOST" \
-        --skip-check
+    if [ ! -f /var/www/html/wp-config.php ]; then
+        wp config create \
+            --allow-root \
+            --path=/var/www/html \
+            --dbname="$WORDPRESS_DB_NAME" \
+            --dbuser="$WORDPRESS_DB_USER" \
+            --dbpass="$WORDPRESS_DB_PASSWORD" \
+            --dbhost="$WORDPRESS_DB_HOST" \
+            --skip-check
+    fi
     wp core install \
         --allow-root \
         --path=/var/www/html \
