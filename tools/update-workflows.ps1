@@ -203,6 +203,15 @@ $fetchMetadata = {
                 $requiresPhp = $pluginPhp
             }
         }
+        if ([int]$version.Split('.')[0] -eq 2) {
+            if (-not $phpMatch.Success -and -not $pluginPhp) {
+                $requiresPhp = '5.6'
+            }
+            $resolvedPhp = [version](($requiresPhp.Split('.') + @('0', '0'))[0..2] -join '.')
+            if ($resolvedPhp -lt [version]'5.6.0') {
+                $requiresPhp = '5.6'
+            }
+        }
         if ([int]$version.Split('.')[0] -ge 3) {
             if (-not $phpMatch.Success -and -not $pluginPhp) {
                 $requiresPhp = '7.0'
@@ -284,8 +293,15 @@ foreach ($release in $woocommerceMetadata) {
     }
 
     foreach ($target in $targets) {
+        $wordpressVersion = $target.Version
+        if ([version](($wordpressVersion.Split('.') + @('0'))[0..2] -join '.') -lt [version]'3.7.0') {
+            if (-not $latestWordPressByBranch.ContainsKey('3.7')) {
+                throw "WordPress 3.7 from the official release archive is required because WP-CLI cannot install an older release."
+            }
+            $wordpressVersion = $latestWordPressByBranch['3.7']
+        }
         $workflowEntriesByWooCommerceMajor[$woocommerceMajor].Add([pscustomobject]@{
-            WordPressVersion = $target.Version
+            WordPressVersion = $wordpressVersion
             WooCommerceVersion = $release.Version
             PhpVersion = $release.RequiresPhp
             CompatibilityTarget = $target.Target
@@ -327,7 +343,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      WORDPRESS_VERSION: ${{ matrix.wordpress_version }}')
     $lines.Add('      WOOCOMMERCE_VERSION: ${{ matrix.woocommerce_version }}')
     $lines.Add('      PHP_VERSION: ${{ matrix.php_version }}')
-    if (@(3, 4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
+    if (@(2, 3, 4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
         $lines.Add("      APPNUNO_WOOCOMMERCE_LINE: `"$woocommerceMajor.x`"")
     }
     $lines.Add('')
@@ -335,6 +351,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      - uses: actions/checkout@v6')
     $lines.Add('')
     $browserTargets = @{
+        2 = @{ WordPress = '4.7.39'; WooCommerce = '2.6.14'; BuildArgument = ' 2' }
         3 = @{ WordPress = '5.3.27'; WooCommerce = '3.9.5'; BuildArgument = ' 3' }
         4 = @{ WordPress = '5.6.23'; WooCommerce = '4.9.5'; BuildArgument = ' 4' }
         5 = @{ WordPress = '5.8.19'; WooCommerce = '5.9.2'; BuildArgument = ' 5' }

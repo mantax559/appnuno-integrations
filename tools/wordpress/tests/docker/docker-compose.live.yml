@@ -10,7 +10,12 @@ services:
       - "127.0.0.1:${WORDPRESS_PORT:-8080}:80"
 
   live-init:
-    image: wordpress:cli-php${PHP_VERSION:-8.3}
+    image: appnuno-wordpress-cli:${PHP_VERSION:-8.3}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cli
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
     user: "0:0"
     entrypoint: ["/bin/sh", "/scripts/prepare-store.sh"]
     environment:

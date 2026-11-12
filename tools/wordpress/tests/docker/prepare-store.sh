@@ -27,11 +27,28 @@ wp config set FS_METHOD direct --type=constant --allow-root --path=/var/www/html
 wp core is-installed --allow-root --path=/var/www/html
 wp core version --allow-root --path=/var/www/html | grep -Fx "$WORDPRESS_VERSION"
 if ! wp plugin is-installed woocommerce --allow-root --path=/var/www/html >/dev/null 2>&1; then
-    wp plugin install woocommerce \
+    if ! wp plugin install woocommerce \
         --version="$WOOCOMMERCE_VERSION" \
         --activate \
         --allow-root \
-        --path=/var/www/html
+        --path=/var/www/html; then
+        curl -fsSL -o /tmp/woocommerce.zip "https://github.com/woocommerce/woocommerce/archive/refs/tags/${WOOCOMMERCE_VERSION}.zip"
+        rm -rf /tmp/woocommerce-src /var/www/html/wp-content/plugins/woocommerce
+        mkdir -p /tmp/woocommerce-src
+        cat > /tmp/extract-woocommerce.php <<'EOF'
+<?php
+$zip = new ZipArchive();
+if ($zip->open('/tmp/woocommerce.zip') !== true) {
+    fwrite(STDERR, "Unable to open the WooCommerce archive.\n");
+    exit(1);
+}
+$zip->extractTo('/tmp/woocommerce-src');
+$zip->close();
+EOF
+        php /tmp/extract-woocommerce.php
+        mv "/tmp/woocommerce-src/woocommerce-${WOOCOMMERCE_VERSION}" /var/www/html/wp-content/plugins/woocommerce
+        wp plugin activate woocommerce --allow-root --path=/var/www/html
+    fi
 else
     wp plugin activate woocommerce --allow-root --path=/var/www/html
 fi
@@ -46,7 +63,7 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     fi
     wp rewrite structure '/%postname%/' --hard --allow-root --path=/var/www/html
     if ! wp wc tool run install_pages --user=admin --allow-root --path=/var/www/html; then
-        wp eval 'WC_Install::create_pages();' --user=admin --allow-root --path=/var/www/html
+        wp eval 'if (class_exists("WC_Install")) { WC_Install::create_pages(); } else { global $woocommerce; if (is_object($woocommerce) && method_exists($woocommerce, "install")) { $woocommerce->install(); } }' --user=admin --allow-root --path=/var/www/html
     fi
     wp option update woocommerce_coming_soon no --allow-root --path=/var/www/html
     wp option update woocommerce_store_pages_only no --allow-root --path=/var/www/html
@@ -73,7 +90,9 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     wp user set-role limited contributor --allow-root --path=/var/www/html >/dev/null
     wp option update woocommerce_enable_myaccount_registration yes --allow-root --path=/var/www/html
     wp option update woocommerce_registration_generate_password no --allow-root --path=/var/www/html
-    wp language core install lt_LT --allow-root --path=/var/www/html
+    if ! wp language core install lt_LT --allow-root --path=/var/www/html; then
+        echo "Lithuanian language pack was not installed."
+    fi
     mkdir -p /var/www/html/wp-content/mu-plugins /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade
     cp /scripts/appnuno-languages.php /var/www/html/wp-content/mu-plugins/appnuno-languages.php
     wp plugin install "/appnuno/package/appnuno-woocommerce-${package_line}.zip" --activate --force --allow-root --path=/var/www/html

@@ -66,7 +66,7 @@ class WordPressAdapter(StoreAdapter):
 
     def add_two_products(self, page: Page) -> None:
         page.goto(self.base_url + "/product/appnuno-sample/")
-        product_id = page.locator("button[name='add-to-cart']").get_attribute("value")
+        product_id = page.locator("button[name='add-to-cart'], input[name='add-to-cart']").first.get_attribute("value")
         if not product_id:
             raise AssertionError("The sample product could not be added to the cart.")
         added = page.evaluate(
@@ -86,7 +86,7 @@ class WordPressAdapter(StoreAdapter):
         if password.count():
             password.click()
             password.press_sequentially("R7!vQ3#nL9@xT5$wP2", delay=5)
-        page.locator("button[name='register']").click()
+        page.locator("button[name='register'], input[name='register']").first.click()
         page.locator(".woocommerce-error, a[href*='customer-logout'], .woocommerce-MyAccount-navigation").first.wait_for()
         if page.locator(".woocommerce-error").count() or "stronger password" in (page.locator("body").inner_text() or ""):
             raise AssertionError("WooCommerce did not accept the customer registration: " + page.locator("body").inner_text()[:500])
@@ -102,7 +102,7 @@ class WordPressAdapter(StoreAdapter):
     def cart_page_count(self, page: Page) -> int:
         page.goto(self.absolute(self.cart_path))
         page.locator("body").wait_for()
-        values = page.locator("form.woocommerce-cart-form input.qty").evaluate_all("inputs => inputs.map(input => Number(input.value) || 0)")
+        values = page.locator("input.qty").evaluate_all("inputs => inputs.map(input => Number(input.value) || 0)")
         return sum(values)
 
     def deny_limited_save(self, page: Page) -> None:

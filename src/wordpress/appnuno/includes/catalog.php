@@ -25,8 +25,7 @@ final class Appnuno_Catalog {
     }
 
     public static function chromeLocale(): string {
-        $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
-        $code = self::normalizeLocale(is_string($locale) ? $locale : 'en-gb');
+        $code = self::normalizeLocale(self::wordpressLocale());
         foreach (self::catalogCandidates($code) as $candidate) {
             if (is_file(self::catalogPath($candidate))) {
                 return $candidate;
@@ -53,7 +52,7 @@ final class Appnuno_Catalog {
                 }
             }
         }
-        $locale = function_exists('determine_locale') ? determine_locale() : get_locale();
+        $locale = self::wordpressLocale();
 
         return self::normalizeLocale(is_string($locale) ? $locale : 'en-gb');
     }
@@ -307,6 +306,18 @@ final class Appnuno_Catalog {
         }
 
         return true;
+    }
+
+    private static function wordpressLocale(): string {
+        if (function_exists('determine_locale')) {
+            $locale = determine_locale();
+        } elseif (is_admin() && function_exists('get_user_locale')) {
+            $locale = get_user_locale();
+        } else {
+            $locale = get_locale();
+        }
+
+        return is_string($locale) ? $locale : 'en_US';
     }
 
     private static function knownLanguageName(string $code): string {

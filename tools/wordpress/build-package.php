@@ -1,5 +1,6 @@
 <?php
 $package_lines = array(
+    '2' => array('directory' => '2.x', 'requires_at_least' => '3.7', 'requires_php' => '5.6', 'strip_scalar_types' => true),
     '3' => array('directory' => '3.x', 'requires_at_least' => '4.4', 'requires_php' => '7.0', 'strip_void' => true),
     '4' => array('directory' => '4.x', 'requires_at_least' => '5.0', 'requires_php' => '7.0', 'strip_void' => true),
     '5' => array('directory' => '5.x', 'requires_at_least' => '5.4', 'requires_php' => '7.0', 'strip_void' => true),
@@ -13,7 +14,7 @@ $package_lines = array(
 $package_line = '11';
 if (isset($argv[1])) {
     if (!is_string($argv[1]) || !isset($package_lines[$argv[1]])) {
-        throw new RuntimeException('The WooCommerce package line must be 3, 4, 5, 6, 7, 8, 9, 10, or 11.');
+        throw new RuntimeException('The WooCommerce package line must be 2, 3, 4, 5, 6, 7, 8, 9, 10, or 11.');
     }
     $package_line = $argv[1];
 }
@@ -60,7 +61,14 @@ function wordpress_build_package(array $package_line): void {
             throw new RuntimeException('Unable to read a WooCommerce package file.');
         }
         $body = str_replace('__APPNUNO_VERSION__', $version, $body);
-        if (isset($package_line['strip_void']) && substr($name, -4) === '.php') {
+        if (isset($package_line['strip_scalar_types']) && substr($name, -4) === '.php') {
+            $body = str_replace(array('): void', '): string', '): array', '): int', '): bool', '): float'), ')', $body);
+            $stripped = preg_replace('/\b(string|int|bool|float)\s+(\$)/', '$2', $body);
+            if (!is_string($stripped) || strpos($stripped, '): void') !== false || strpos($stripped, '): string') !== false || strpos($stripped, '): array') !== false || strpos($stripped, '): int') !== false || strpos($stripped, '): bool') !== false || preg_match('/\b(string|int|bool|float)\s+\$/', $stripped)) {
+                throw new RuntimeException('The WooCommerce package still contains PHP 7 scalar types.');
+            }
+            $body = $stripped;
+        } elseif (isset($package_line['strip_void']) && substr($name, -4) === '.php') {
             $body = str_replace('): void', ')', $body);
         }
         $prepared[$name] = $body;

@@ -3,7 +3,7 @@ name: appnuno-wordpress-tests
 services:
   mysql:
     image: mysql:8.4
-    command: --mysql-native-password=ON --authentication_policy=mysql_native_password
+    command: --mysql-native-password=ON --authentication_policy=mysql_native_password --character-set-server=utf8mb3 --collation-server=utf8mb3_general_ci --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wordpress
@@ -43,7 +43,12 @@ services:
       retries: 20
 
   installer:
-    image: wordpress:cli-php${PHP_VERSION:-8.3}
+    image: appnuno-wordpress-cli:${PHP_VERSION:-8.3}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.cli
+      args:
+        PHP_VERSION: ${PHP_VERSION:-8.3}
     user: "0:0"
     entrypoint: ["/bin/sh", "/scripts/prepare-store.sh"]
     environment:
