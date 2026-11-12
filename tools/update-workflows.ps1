@@ -203,6 +203,15 @@ $fetchMetadata = {
                 $requiresPhp = $pluginPhp
             }
         }
+        if ([int]$version.Split('.')[0] -ge 3) {
+            if (-not $phpMatch.Success -and -not $pluginPhp) {
+                $requiresPhp = '7.0'
+            }
+            $resolvedPhp = [version](($requiresPhp.Split('.') + @('0', '0'))[0..2] -join '.')
+            if ($resolvedPhp -lt [version]'7.0.0') {
+                $requiresPhp = '7.0'
+            }
+        }
 
         [pscustomobject]@{
             Version = $version
@@ -318,7 +327,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      WORDPRESS_VERSION: ${{ matrix.wordpress_version }}')
     $lines.Add('      WOOCOMMERCE_VERSION: ${{ matrix.woocommerce_version }}')
     $lines.Add('      PHP_VERSION: ${{ matrix.php_version }}')
-    if (@(4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
+    if (@(3, 4, 5, 6, 7, 8, 9, 10, 11) -contains [int]$woocommerceMajor) {
         $lines.Add("      APPNUNO_WOOCOMMERCE_LINE: `"$woocommerceMajor.x`"")
     }
     $lines.Add('')
@@ -326,6 +335,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
     $lines.Add('      - uses: actions/checkout@v6')
     $lines.Add('')
     $browserTargets = @{
+        3 = @{ WordPress = '5.3.27'; WooCommerce = '3.9.5'; BuildArgument = ' 3' }
         4 = @{ WordPress = '5.6.23'; WooCommerce = '4.9.5'; BuildArgument = ' 4' }
         5 = @{ WordPress = '5.8.19'; WooCommerce = '5.9.2'; BuildArgument = ' 5' }
         6 = @{ WordPress = '6.0.18'; WooCommerce = '6.9.5'; BuildArgument = ' 6' }

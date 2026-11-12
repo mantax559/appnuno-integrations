@@ -45,7 +45,9 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
         exit 1
     fi
     wp rewrite structure '/%postname%/' --hard --allow-root --path=/var/www/html
-    wp wc tool run install_pages --user=admin --allow-root --path=/var/www/html
+    if ! wp wc tool run install_pages --user=admin --allow-root --path=/var/www/html; then
+        wp eval 'WC_Install::create_pages();' --user=admin --allow-root --path=/var/www/html
+    fi
     wp option update woocommerce_coming_soon no --allow-root --path=/var/www/html
     wp option update woocommerce_store_pages_only no --allow-root --path=/var/www/html
     wp option update woocommerce_onboarding_profile '{"completed":true,"skipped":true}' --format=json --allow-root --path=/var/www/html
