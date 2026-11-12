@@ -29,7 +29,6 @@ wp core version --allow-root --path=/var/www/html | grep -Fx "$WORDPRESS_VERSION
 if ! wp plugin is-installed woocommerce --allow-root --path=/var/www/html >/dev/null 2>&1; then
     if ! wp plugin install woocommerce \
         --version="$WOOCOMMERCE_VERSION" \
-        --activate \
         --allow-root \
         --path=/var/www/html; then
         curl -fsSL -o /tmp/woocommerce.zip "https://github.com/woocommerce/woocommerce/archive/refs/tags/${WOOCOMMERCE_VERSION}.zip"
@@ -47,11 +46,13 @@ $zip->close();
 EOF
         php /tmp/extract-woocommerce.php
         mv "/tmp/woocommerce-src/woocommerce-${WOOCOMMERCE_VERSION}" /var/www/html/wp-content/plugins/woocommerce
-        wp plugin activate woocommerce --allow-root --path=/var/www/html
     fi
-else
-    wp plugin activate woocommerce --allow-root --path=/var/www/html
 fi
+geolocation="/var/www/html/wp-content/plugins/woocommerce/includes/class-wc-geolocation.php"
+if [ -f "$geolocation" ]; then
+    sed -i 's/->get_message()/->get_error_message()/g' "$geolocation"
+fi
+wp plugin activate woocommerce --allow-root --path=/var/www/html
 wp plugin is-active woocommerce --allow-root --path=/var/www/html
 wp plugin get woocommerce --field=version --allow-root --path=/var/www/html | grep -Fx "$WOOCOMMERCE_VERSION"
 
