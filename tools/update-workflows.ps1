@@ -179,16 +179,36 @@ $fetchMetadata = {
         $requiresMatch = [regex]::Match($readme, '(?im)^Requires at least:\s*(\d+(?:\.\d+){1,3})')
         $testedMatch = [regex]::Match($readme, '(?im)^Tested up to:\s*(\d+(?:\.\d+){1,3})')
         $phpMatch = [regex]::Match($readme, '(?im)^Requires PHP:\s*(\d+(?:\.\d+){1,3})')
+        $pluginPhp = $null
+        try {
+            $plugin = (Invoke-WebRequest -UseBasicParsing -Uri ("https://plugins.svn.wordpress.org/woocommerce/tags/{0}/woocommerce.php" -f $version) -TimeoutSec 30).Content
+            $pluginPhpMatch = [regex]::Match($plugin, '(?im)^[\s\*]*Requires PHP:\s*(\d+(?:\.\d+){1,3})')
+            if ($pluginPhpMatch.Success) {
+                $pluginPhp = $pluginPhpMatch.Groups[1].Value
+            }
+        }
+        catch {
+            $pluginPhp = $null
+        }
 
         if (-not $requiresMatch.Success -or -not $testedMatch.Success) {
             throw "WooCommerce $version readme is missing compatibility metadata."
+        }
+
+        $requiresPhp = if ($phpMatch.Success) { $phpMatch.Groups[1].Value } else { "8.3" }
+        if ($pluginPhp) {
+            $readmeVersion = [version](($requiresPhp.Split('.') + @('0', '0'))[0..2] -join '.')
+            $pluginVersion = [version](($pluginPhp.Split('.') + @('0', '0'))[0..2] -join '.')
+            if ($pluginVersion -gt $readmeVersion) {
+                $requiresPhp = $pluginPhp
+            }
         }
 
         [pscustomobject]@{
             Version = $version
             RequiresAtLeast = $requiresMatch.Groups[1].Value
             TestedUpTo = $testedMatch.Groups[1].Value
-            RequiresPhp = if ($phpMatch.Success) { $phpMatch.Groups[1].Value } else { "8.3" }
+            RequiresPhp = $requiresPhp
         }
     }
 }
