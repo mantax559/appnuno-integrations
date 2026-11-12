@@ -49,6 +49,7 @@ jobs:
 
       - name: Check the AppNuno admin and storefront
         env:
+          PRESTASHOP_TAG: ${{ matrix.prestashop-tag }}
           PRESTASHOP_SITE_URL: http://127.0.0.1:8088
           APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
         run: |

@@ -13,6 +13,7 @@ from integration.settings import choose_switch
 class PrestaShopAdapter(StoreAdapter):
     name = "PrestaShop"
     base_url = os.environ.get("PRESTASHOP_SITE_URL", "http://127.0.0.1:8088").rstrip("/")
+    prestashop_tag = os.environ.get("PRESTASHOP_TAG", "8.2-apache")
     documentation_url = "https://appnuno.com/prestashop"
     version_key = "prestashop"
     sidebar_selector = ".nav-bar"
@@ -71,6 +72,8 @@ class PrestaShopAdapter(StoreAdapter):
             raise AssertionError("PrestaShop did not change the employee language: " + completed.stderr)
 
     def storefront_url(self, code: str, path: str) -> str:
+        if code != self.lithuanian_code and self.prestashop_tag == "9.0-apache":
+            return self.absolute(path)
         locale = "lt" if code == self.lithuanian_code else "en"
         localized_path = path if path.startswith("/") else "/" + path
         for prefix in ("en", "lt"):
