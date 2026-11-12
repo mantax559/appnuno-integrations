@@ -63,7 +63,7 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     fi
     wp rewrite structure '/%postname%/' --hard --allow-root --path=/var/www/html
     if ! wp wc tool run install_pages --user=admin --allow-root --path=/var/www/html; then
-        wp eval 'if (class_exists("WC_Install")) { WC_Install::create_pages(); } else { global $woocommerce; if (is_object($woocommerce) && method_exists($woocommerce, "install")) { $woocommerce->install(); } }' --user=admin --allow-root --path=/var/www/html
+        wp eval 'if (!function_exists("wc_create_page")) { foreach (array("wc-admin-functions.php", "woocommerce-admin-functions.php") as $file) { $path = WP_PLUGIN_DIR . "/woocommerce/includes/admin/" . $file; if (file_exists($path)) { include_once $path; break; } } } if (class_exists("WC_Install") && function_exists("wc_create_page")) { WC_Install::create_pages(); } else { global $woocommerce; if (is_object($woocommerce) && method_exists($woocommerce, "install")) { $woocommerce->install(); } }' --user=admin --allow-root --path=/var/www/html
     fi
     wp option update woocommerce_coming_soon no --allow-root --path=/var/www/html
     wp option update woocommerce_store_pages_only no --allow-root --path=/var/www/html
@@ -102,7 +102,7 @@ if [ "${APPNUNO_INSTALL_PLUGIN:-}" = "1" ]; then
     wp option delete module_appnuno_config --allow-root --path=/var/www/html || true
     wp rewrite flush --hard --allow-root --path=/var/www/html
     wp transient delete _wc_activation_redirect --allow-root --path=/var/www/html || true
-    wp eval 'if ( class_exists( "WC_Admin_Notices" ) ) { WC_Admin_Notices::remove_notice( "install" ); }' --allow-root --path=/var/www/html || true
+    wp eval 'if ( class_exists( "WC_Admin_Notices" ) && method_exists( "WC_Admin_Notices", "remove_notice" ) ) { WC_Admin_Notices::remove_notice( "install" ); }' --allow-root --path=/var/www/html || true
     if [ ! -f /var/www/html/.htaccess ]; then
         cat > /var/www/html/.htaccess <<'EOF'
 # BEGIN WordPress
