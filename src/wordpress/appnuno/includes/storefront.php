@@ -26,14 +26,20 @@ final class Appnuno_Storefront {
         }
         $path = defined('COOKIEPATH') && is_string(COOKIEPATH) && COOKIEPATH !== '' ? COOKIEPATH : '/';
         $domain = defined('COOKIE_DOMAIN') && is_string(COOKIE_DOMAIN) ? COOKIE_DOMAIN : '';
-        setcookie('appnuno_customer_id', $identifier, array(
-            'expires' => time() + (30 * DAY_IN_SECONDS),
-            'path' => $path,
-            'domain' => $domain,
-            'secure' => is_ssl(),
-            'httponly' => true,
-            'samesite' => 'Lax'
-        ));
+        $expires = time() + (30 * DAY_IN_SECONDS);
+        $secure = is_ssl();
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie('appnuno_customer_id', $identifier, array(
+                'expires' => $expires,
+                'path' => $path,
+                'domain' => $domain,
+                'secure' => $secure,
+                'httponly' => true,
+                'samesite' => 'Lax'
+            ));
+        } else {
+            setcookie('appnuno_customer_id', $identifier, $expires, $path, $domain, $secure, true);
+        }
         $_COOKIE['appnuno_customer_id'] = $identifier;
     }
 

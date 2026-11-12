@@ -3,7 +3,7 @@ name: appnuno-wordpress-tests
 services:
   mysql:
     image: mysql:8.4
-    command: --mysql-native-password=ON
+    command: --mysql-native-password=ON --authentication_policy=mysql_native_password
     environment:
       MYSQL_ROOT_PASSWORD: root
       MYSQL_DATABASE: wordpress
@@ -12,10 +12,11 @@ services:
     volumes:
       - ./mysql/native-password.sql:/docker-entrypoint-initdb.d/native-password.sql:ro
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
-      interval: 10s
+      test: ["CMD-SHELL", "mysql --protocol=tcp -h127.0.0.1 -uwordpress -pwordpress -e 'SELECT 1' >/dev/null && mysql -uroot -proot -N -e \"SELECT COUNT(*) FROM mysql.user WHERE user='wordpress' AND plugin='mysql_native_password'\" | grep -qx 1"]
+      interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 30
+      start_period: 15s
 
   wordpress:
     image: appnuno-wordpress:${WORDPRESS_VERSION:-7.1.4}
