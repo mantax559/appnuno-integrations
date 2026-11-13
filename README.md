@@ -17,12 +17,7 @@
 | PrestaShop | 9.x | [Instruction](downloads/prestashop/9.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/9.x/appnuno-prestashop-9.x.zip) |
 | PrestaShop | 1.7.x | Instruction in preparation | — |
 | PrestaShop | 1.6.x | Instruction in preparation | — |
-| PrestaShop | 1.5.x | Instruction in preparation | — |
-| PrestaShop | 1.4.x | Instruction in preparation | — |
-| PrestaShop | 1.3.x | Instruction in preparation | — |
-| PrestaShop | 1.2.x | Instruction in preparation | — |
-| PrestaShop | 1.1.x | Instruction in preparation | — |
-| PrestaShop | 1.0.x | Instruction in preparation | — |
+| PrestaShop | 1.5.x and older | Not supported | — |
 | OpenCart | 4.x | [Instruction](downloads/opencart/4.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/4.x/appnuno.ocmod.zip) |
 | OpenCart | 3.x | [Instruction](downloads/opencart/3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/3.x/appnuno-opencart-3.x.ocmod.zip) |
 | OpenCart | 2.3.x | [Instruction](downloads/opencart/2.3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.3.x/appnuno-opencart-2.3.x.ocmod.zip) |
