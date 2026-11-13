@@ -151,6 +151,8 @@ def assert_visual_configuration(payload: dict[str, Any], configuration: dict[str
 
 
 def check_default_bootstrap(payload: dict[str, Any]) -> None:
+    if payload.get("locale") != "en-gb":
+        raise AssertionError(f"Expected bootstrap locale en-gb, got {payload.get('locale')}.")
     configuration = payload["config"]
     assert_configured_tabs(configuration)
     assert_resolved_default_tabs(payload)
@@ -163,6 +165,8 @@ def check_default_bootstrap(payload: dict[str, Any]) -> None:
 def check_route_bootstrap(payload: dict[str, Any]) -> None:
     if payload["route"] != "checkout/cart":
         raise AssertionError(f"Expected the checkout/cart bootstrap route, got {payload['route']}.")
+    if payload.get("locale") != "en-gb":
+        raise AssertionError(f"Expected bootstrap locale en-gb, got {payload.get('locale')}.")
     configured_tab = next(tab for tab in payload["config"]["defaultTabs"] if tab["id"] == "ci-cart-route-tab")
     if configured_tab.get("labels") != {"en-gb": "Cart route tab", "lt-lt": "Krepšelio skirtukas"}:
         raise AssertionError(f"The saved cart page tab translations are incorrect: {configured_tab}.")
@@ -303,9 +307,11 @@ def set_storefront_language(runtime: Runtime, page: Page, code: str) -> None:
     set_posted_storefront_language(page, code)
 
 
-def expect_resolved_storefront_language(runtime: Runtime, page: Page, responses: list[Response], home_label: str, cart_label: str, added_label: str, added_url: str) -> None:
+def expect_resolved_storefront_language(runtime: Runtime, page: Page, responses: list[Response], expected_locale: str, home_label: str, cart_label: str, added_label: str, added_url: str) -> None:
     page.goto(runtime.base_url + "/")
     payload = get_bootstrap_payload(runtime, page, responses, "common/home")
+    if payload.get("locale") != expected_locale:
+        raise AssertionError(f"Expected bootstrap locale {expected_locale}, got {payload.get('locale')}.")
     labels = {tab["id"]: (tab.get("label"), tab.get("url")) for tab in payload["navigation"]["tabs"]}
     expected = {
         "home": (home_label, "/"),
@@ -318,7 +324,7 @@ def expect_resolved_storefront_language(runtime: Runtime, page: Page, responses:
 
 def check_storefront_label_languages(runtime: Runtime, page: Page, responses: list[Response]) -> None:
     set_storefront_language(runtime, page, "lt-lt")
-    expect_resolved_storefront_language(runtime, page, responses, "Pradžia", "Krepšelis", "CI pridėtas skirtukas", "/lt/kontaktai")
+    expect_resolved_storefront_language(runtime, page, responses, "lt-lt", "Pradžia", "Krepšelis", "CI pridėtas skirtukas", "/lt/kontaktai")
     page.goto(runtime.base_url + "/index.php?route=checkout/cart")
     published = {tab["id"]: tab for tab in get_bootstrap_payload(runtime, page, responses, "checkout/cart")["navigation"]["tabs"]}
     route_tab = published.get("ci-cart-route-tab")
@@ -327,7 +333,7 @@ def check_storefront_label_languages(runtime: Runtime, page: Page, responses: li
     if published.get("home", {}).get("label") != "Pradžia":
         raise AssertionError(f"The shared home tab was not published in Lithuanian on the cart page: {published.get('home')}.")
     set_storefront_language(runtime, page, "en-gb")
-    expect_resolved_storefront_language(runtime, page, responses, "Home", "Cart", "CI Added Tab", "/en/contact")
+    expect_resolved_storefront_language(runtime, page, responses, "en-gb", "Home", "Cart", "CI Added Tab", "/en/contact")
 
 
 def check_storefront(runtime: Runtime, page: Page, artifact_dir: Path) -> None:

@@ -432,6 +432,8 @@ class AppnunoConfig {
 			return null;
 		}
 
+		$locale = self::normalizeLocale(is_string($language_code) ? $language_code : '');
+
 		if (!is_array($query)) {
 			$query = array();
 		}
@@ -446,7 +448,7 @@ class AppnunoConfig {
 		}
 
 		foreach ($tabs as $index => $tab) {
-			self::applyStorefrontTab($tabs[$index], $cart_tab_id, $state, $language_code);
+			self::applyStorefrontTab($tabs[$index], $cart_tab_id, $state, $locale);
 		}
 
 		$navigation = array('tabs' => self::markActiveTab($tabs, $route, $page, $query));
@@ -460,9 +462,16 @@ class AppnunoConfig {
 		return array(
 			'config' => $public_config,
 			'route' => $route,
+			'locale' => $locale,
 			'state' => $state,
 			'navigation' => $navigation
 		);
+	}
+
+	public static function normalizeLocale(string $locale): string {
+		$code = strtolower(str_replace('_', '-', $locale));
+
+		return preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) ? $code : 'en-gb';
 	}
 
 	public static function visibleTabs($tabs) {

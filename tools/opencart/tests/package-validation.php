@@ -232,7 +232,7 @@ function opencart_40_package($repository) {
     if (!is_string($manifest) || !strstr($manifest, '"name": "AppNuno OpenCart 4.x"') || !strstr($manifest, '"code": "appnuno"') || !strstr($manifest, '"version": "' . $platform_versions['opencart'] . '"') || !is_string($version_file) || !strstr(trim($version_file), $platform_versions['opencart'])) {
         throw new RuntimeException('OpenCart 4 archive is missing install.json.');
     }
-    if (!is_string($readme) || !strstr($readme, 'appnuno.ocmod.zip') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
+    if (!is_string($readme) || !strstr($readme, 'appnuno.ocmod.zip') || !strstr($readme, 'extension/{filename}') || !strstr($readme, 'Extension Installer') || !strstr($readme, 'Do not uninstall') || !strstr($readme, 'extension/appnuno/module/appnuno')) {
         throw new RuntimeException('OpenCart 4 archive is missing its installation instructions.');
     }
     $missing = array_diff($required, $entries);

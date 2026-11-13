@@ -157,14 +157,18 @@ def assert_active(payload: dict[str, Any], expected_id: str | None) -> None:
 
 
 def assert_english_bootstrap(payload: dict[str, Any], adapter: StoreAdapter, include_page_tab: bool, active_id: str | None) -> None:
+    if payload.get("locale") != adapter.english_code:
+        raise AssertionError(f"Expected bootstrap locale {adapter.english_code}, got {payload.get('locale')}.")
     assert_configured_tabs(payload["config"], adapter)
     assert_resolved_tabs(payload, adapter, include_page_tab)
     assert_visual_configuration(payload)
     assert_active(payload, active_id)
 
 
-def expect_language(page: Page, adapter: StoreAdapter, responses: list[Response], labels: dict[str, tuple[str, str]]) -> None:
+def expect_language(page: Page, adapter: StoreAdapter, responses: list[Response], expected_locale: str, labels: dict[str, tuple[str, str]]) -> None:
     payload = read_integration(page, adapter, responses, "common/home")
+    if payload.get("locale") != expected_locale:
+        raise AssertionError(f"Expected bootstrap locale {expected_locale}, got {payload.get('locale')}.")
     published = {tab["id"]: (tab.get("label"), tab.get("url")) for tab in payload["navigation"]["tabs"]}
     comparable = {tab_id: published.get(tab_id) for tab_id in labels}
     if comparable != labels:
@@ -192,7 +196,7 @@ def check_storefront(page: Page, adapter: StoreAdapter, directory) -> None:
     capture_screenshot(page, directory, "06-storefront-cart-route.png")
     adapter.switch_storefront_language(page, adapter.lithuanian_code)
     page.goto(adapter.storefront_url(adapter.lithuanian_code, adapter.home_path))
-    expect_language(page, adapter, responses, {
+    expect_language(page, adapter, responses, adapter.lithuanian_code, {
         "home": ("Pradžia", adapter.home_path),
         "cart": ("Krepšelis", adapter.cart_path),
         "ci-added-tab": ("CI pridėtas skirtukas", "/lt/kontaktai"),
@@ -208,7 +212,7 @@ def check_storefront(page: Page, adapter: StoreAdapter, directory) -> None:
         raise AssertionError(f"The shared home tab was not published in Lithuanian on the cart page: {home}.")
     adapter.switch_storefront_language(page, adapter.english_code)
     page.goto(adapter.storefront_url(adapter.english_code, adapter.home_path))
-    expect_language(page, adapter, responses, {
+    expect_language(page, adapter, responses, adapter.english_code, {
         "home": ("Home", adapter.home_path),
         "cart": ("Cart", adapter.cart_path),
         "ci-added-tab": ("CI Added Tab", "/en/contact"),

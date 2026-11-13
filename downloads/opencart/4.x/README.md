@@ -1,8 +1,12 @@
 # AppNuno for OpenCart 4.x
 
+## Package name
+
+OpenCart 4 derives the extension code from the uploaded archive filename: `appnuno.ocmod.zip` installs into `extension/appnuno/`. That matches the AppNuno namespaces and routes. Older OpenCart lines keep versioned names such as `appnuno-opencart-3.x.ocmod.zip` because their OCMOD installer does not use the ZIP basename as the extension directory.
+
 ## Installation
 
-1. In OpenCart admin, go to **Extensions → Extension Installer** and upload `appnuno.ocmod.zip`. The uploaded filename matches the extension code registered by the package manifest.
+1. In OpenCart admin, go to **Extensions → Extension Installer** and upload `appnuno.ocmod.zip`. Do not rename the file before upload; OpenCart 4 maps `extension/{filename}` from the ZIP basename.
 2. Click **Install** beside the uploaded AppNuno package.
 3. Go to **Extensions → Extensions** and choose **Modules**.
 4. Find **AppNuno Native Navigation**, click **Install**, then **Edit** to configure the module.
