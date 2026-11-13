@@ -8,6 +8,7 @@ class AppnunoConfig {
 	public static function defaultConfig() {
 		return json_encode(array(
 			'cartTabId' => 'cart',
+			'badgeSources' => (object)array(),
 			'defaultTabs' => array(),
 			'routes' => (object)array(),
 			'back' => array(
@@ -66,6 +67,20 @@ class AppnunoConfig {
 
 			if (strlen($error)) {
 				return $error;
+			}
+		}
+
+		if (array_key_exists('badgeSources', $config) && !is_array($config['badgeSources'])) {
+			return self::reject('badgeSources', 'Choose a supported badge source for an existing tab.');
+		}
+
+		if (array_key_exists('badgeSources', $config)) {
+			foreach ($config['badgeSources'] as $tab_id => $source) {
+				$tab_id = (string)$tab_id;
+
+				if (!self::validTabId($tab_id) || !in_array($source, array('cart'), true) || !self::configHasTabId($config, $tab_id)) {
+					return self::reject('badgeSources', 'Choose a supported badge source for an existing tab.');
+				}
 			}
 		}
 
@@ -280,6 +295,10 @@ class AppnunoConfig {
 			}
 		}
 
+		if (!array_key_exists('badgeSources', $config)) {
+			$config['badgeSources'] = self::legacyBadgeSources($config);
+		}
+
 		$encoded = json_encode($config);
 
 		return is_string($encoded) ? $encoded : $json;
@@ -439,8 +458,9 @@ class AppnunoConfig {
 		}
 
 		$tabs = self::tabsForRoute($config, $route);
-		$cart_tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
 		$public_config = $config;
+		$badge_sources = self::resolvedBadgeSources($config);
+		$public_config['badgeSources'] = $badge_sources;
 		$public_config['defaultTabs'] = self::visibleTabs($config['defaultTabs']);
 
 		foreach ($config['routes'] as $route_key => $route_tabs) {
@@ -448,7 +468,7 @@ class AppnunoConfig {
 		}
 
 		foreach ($tabs as $index => $tab) {
-			self::applyStorefrontTab($tabs[$index], $cart_tab_id, $state, $locale);
+			self::applyStorefrontTab($tabs[$index], $badge_sources, $state, $locale);
 		}
 
 		$navigation = array('tabs' => self::markActiveTab($tabs, $route, $page, $query));
@@ -659,14 +679,59 @@ class AppnunoConfig {
 		return true;
 	}
 
-	private static function applyStorefrontTab(&$tab, $cart_tab_id, $state, $language_code) {
+	private static function applyStorefrontTab(&$tab, $badge_sources, $state, $language_code) {
 		self::applyLocalizedUrl($tab, $language_code);
 		unset($tab['allPages'], $tab['pages']);
 		self::applyLocalizedLabel($tab, $language_code);
 
-		if (isset($tab['id']) && in_array($tab['id'], array($cart_tab_id), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
+		if (!isset($tab['id']) || !isset($badge_sources[$tab['id']])) {
+			return;
+		}
+
+		$source = $badge_sources[$tab['id']];
+		if (!in_array($source, array('cart'), true)) {
+			return;
+		}
+
+		$counts = isset($state['badgeCounts']) && is_array($state['badgeCounts']) ? $state['badgeCounts'] : array();
+
+		if (isset($counts[$source]) && is_numeric($counts[$source])) {
+			$tab['badge'] = (int)$counts[$source];
+		} elseif (in_array($source, array('cart'), true) && isset($state['cartCount']) && is_numeric($state['cartCount'])) {
 			$tab['badge'] = (int)$state['cartCount'];
 		}
+	}
+
+	private static function resolvedBadgeSources($config) {
+		if (array_key_exists('badgeSources', $config) && is_array($config['badgeSources'])) {
+			return $config['badgeSources'];
+		}
+
+		return self::legacyBadgeSources($config);
+	}
+
+	private static function legacyBadgeSources($config) {
+		$tab_id = isset($config['cartTabId']) ? $config['cartTabId'] : 'cart';
+
+		return is_string($tab_id) && strlen($tab_id) ? array($tab_id => 'cart') : array();
+	}
+
+	private static function configHasTabId($config, $tab_id) {
+		foreach ($config['defaultTabs'] as $tab) {
+			if (isset($tab['id']) && in_array($tab['id'], array($tab_id), true)) {
+				return true;
+			}
+		}
+
+		foreach ($config['routes'] as $tabs) {
+			foreach ($tabs as $tab) {
+				if (isset($tab['id']) && in_array($tab['id'], array($tab_id), true)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private static function applyLocalizedUrl(&$tab, $language_code) {

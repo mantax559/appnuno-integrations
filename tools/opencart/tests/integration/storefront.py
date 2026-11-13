@@ -37,7 +37,7 @@ def get_bootstrap_payload(runtime: Runtime, page: Page, responses: list[Response
         raise AssertionError(f"Expected bootstrap route {expected_route}, got {payload['route']}.")
     if parse_qs(urlparse(payload["stateUrl"]).query).get("route", []) != [catalog_method_route(runtime, "state")]:
         raise AssertionError("The bootstrap state URL does not target the AppNuno state endpoint.")
-    if payload["state"] != {"cartCount": 0, "identity": None}:
+    if payload["state"] != {"cartCount": 0, "badgeCounts": {"cart": 0}, "identity": None}:
         raise AssertionError(f"Unexpected unauthenticated storefront state: {payload['state']}.")
     state_response = page.evaluate(
         "async stateUrl => { const response = await fetch(stateUrl); if (!response.ok) throw new Error(`State request failed: ${response.status}`); return await response.json(); }",
@@ -74,6 +74,8 @@ def assert_cart_only_tab(payload: dict[str, Any], configuration: dict[str, Any])
 def assert_configured_tabs(configuration: dict[str, Any]) -> None:
     if configuration["cartTabId"] != "ci-added-tab":
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
+    if configuration.get("badgeSources") != {"cart": "cart", "ci-added-tab": "cart"}:
+        raise AssertionError("The per-tab badge source assignments were not published by tab ID.")
     if len(configuration["defaultTabs"]) != 4:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {configuration['defaultTabs']}.")
     if any(tab["id"] == "ci-hidden-tab" for tab in configuration["defaultTabs"]):
@@ -204,7 +206,7 @@ def assert_cart_quantity(runtime: Runtime, page: Page, product_id: int) -> None:
     page.locator("#button-cart").click()
     page.wait_for_timeout(500)
     cart_state = fetch_store_state(page, catalog_method_url(runtime, "state"))
-    if cart_state.get("cartCount") != 2 or cart_state.get("identity") is not None:
+    if cart_state.get("cartCount") != 2 or cart_state.get("badgeCounts") != {"cart": 2} or cart_state.get("identity") is not None:
         raise AssertionError(f"The storefront state did not report the real cart quantity: {cart_state}.")
 
 
@@ -247,7 +249,7 @@ def register_store_customer(runtime: Runtime, page: Page) -> dict[str, Any]:
         raise AssertionError(f"OpenCart did not accept the customer registration at {page.url}: {errors}.")
     customer_state = fetch_store_state(page, catalog_method_url(runtime, "state"))
     identity = customer_state.get("identity")
-    if customer_state.get("cartCount") != 2 or not isinstance(identity, dict) or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not identity.get("identifier"):
+    if customer_state.get("cartCount") != 2 or customer_state.get("badgeCounts") != {"cart": 2} or not isinstance(identity, dict) or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not identity.get("identifier"):
         raise AssertionError(f"The customer registration did not publish the authenticated storefront identity: {customer_state}.")
     return identity
 
@@ -257,7 +259,7 @@ def assert_logged_out_customer(runtime: Runtime, page: Page, identity: dict[str,
     logged_out = fetch_store_state(page, catalog_method_url(runtime, "state"))
     if logged_out.get("identity") != {"identifier": identity["identifier"], "guard": "customer", "is_logged_in": False}:
         raise AssertionError(f"The storefront did not preserve an explicit customer logout identity: {logged_out}.")
-    if logged_out.get("cartCount") != 0:
+    if logged_out.get("cartCount") != 0 or logged_out.get("badgeCounts") != {"cart": 0}:
         raise AssertionError(f"Customer logout left the guest cart with the account items: {logged_out}.")
 
 

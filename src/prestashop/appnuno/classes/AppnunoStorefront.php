@@ -113,8 +113,11 @@ final class AppnunoStorefront
 
     private static function statePayload()
     {
+        $cart_count = self::cartCount();
+
         return array(
-            'cartCount' => self::cartCount(),
+            'cartCount' => $cart_count,
+            'badgeCounts' => array('cart' => $cart_count),
             'identity' => self::identity(),
         );
     }

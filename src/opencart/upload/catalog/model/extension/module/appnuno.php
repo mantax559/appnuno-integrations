@@ -30,6 +30,7 @@ class ModelExtensionModuleAppnuno extends Model {
 
 		return array(
 			'cartCount' => $count,
+			'badgeCounts' => array('cart' => $count),
 			'identity' => $identity
 		);
 	}

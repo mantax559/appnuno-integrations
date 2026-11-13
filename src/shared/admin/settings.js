@@ -10,7 +10,18 @@
 	var routeOptions = readSettingsData('appnuno-route-options', []) || [];
 	var validationPath = readSettingsData('appnuno-validation-path', null);
 	var defaultLanguageCode = readSettingsData('appnuno-default-language', '');
-	var cartTabId = typeof configuration.cartTabId === 'string' ? configuration.cartTabId : 'cart';
+	var badgeSources = Object.create(null);
+	if (configuration.badgeSources && typeof configuration.badgeSources === 'object' && !Array.isArray(configuration.badgeSources)) {
+		Object.keys(configuration.badgeSources).forEach(function (tabId) {
+			badgeSources[tabId] = configuration.badgeSources[tabId];
+		});
+	}
+	if (!Object.prototype.hasOwnProperty.call(configuration, 'badgeSources') || (!Object.keys(badgeSources).length && configuration.cartTabId)) {
+		var legacyCartTabId = typeof configuration.cartTabId === 'string' ? configuration.cartTabId : 'cart';
+		if (legacyCartTabId) {
+			badgeSources[legacyCartTabId] = 'cart';
+		}
+	}
 	var iconCatalogUrl = 'https://appnuno.com/api/icons';
 	var defaultContainer = document.getElementById('default-tabs');
 	function appnunoIcon(name) {
@@ -1046,61 +1057,23 @@
 		return group;
 	}
 
-	function createCartBadgeField(path) {
+	function createBadgeSourceField(tab, path) {
 		var group = createGroup();
-		group.className += ' appnuno-cart-field';
-		group.setAttribute('data-validation-path', path + '.cartBadge');
-		var title = createGroupLabel(text.entry_cart_tab);
+		group.className += ' appnuno-badge-field';
+		group.setAttribute('data-validation-path', path + '.badgeSource');
+		var title = createGroupLabel(text.entry_badge_source || text.entry_cart_tab);
 		var column = createGroupColumn();
-		var control = createChoiceSwitch('appnuno-switch appnuno-cart-switch', text.entry_cart_tab, [['1', text.text_enabled], ['0', text.text_disabled]], '', 'data-cart-value');
-		control.setAttribute('data-cart-switch', 'true');
-		control.addEventListener('click', function (event) {
-			var button = event.target.closest('button[data-cart-value]');
-			if (!button || !control.contains(button)) {
-				return;
-			}
-			var card = control.closest('.appnuno-tab');
-			var idField = card && card.querySelector('[data-field="id"]');
-			var tabId = idField ? idField.value.trim() : '';
-			var enable = button.getAttribute('data-cart-value') === '1';
-			if (enable) {
-				cartTabId = tabId;
-				Array.prototype.forEach.call(tabPanels.querySelectorAll('[data-cart-switch]'), function (other) {
-					if (other !== control) {
-						other.setAttribute('data-cart-on', '0');
-					}
-				});
-			} else if (cartTabId === tabId) {
-				cartTabId = '';
-			}
-			control.setAttribute('data-cart-on', enable ? '1' : '0');
-			refreshCartSwitches();
-		});
+		var control = document.createElement('select');
+		control.className = 'appnuno-input';
+		control.setAttribute('data-badge-source', 'true');
+		control.setAttribute('aria-label', text.entry_badge_source || text.entry_cart_tab);
+		control.appendChild(new Option(text.text_disabled, ''));
+		control.appendChild(new Option(text.text_destination_cart, 'cart'));
+		control.value = badgeSources[tab.id] || '';
 		column.appendChild(control);
-		group.appendChild(appendFieldHelp(title, 'cart_tab'));
+		group.appendChild(appendInlineHelp(title));
 		group.appendChild(column);
 		return group;
-	}
-
-	function refreshCartSwitches() {
-		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
-			var switchControl = card.querySelector('[data-cart-switch]');
-			var idField = card.querySelector('[data-field="id"]');
-			if (!switchControl || !idField) {
-				return;
-			}
-			var tabId = idField.value.trim();
-			var marked = switchControl.getAttribute('data-cart-on');
-			var enabled = marked === '1' || (marked !== '0' && tabId !== '' && tabId === cartTabId);
-			if (marked === '1' && tabId) {
-				cartTabId = tabId;
-			}
-			Array.prototype.forEach.call(switchControl.querySelectorAll('button[data-cart-value]'), function (button) {
-				button.setAttribute('aria-pressed', button.getAttribute('data-cart-value') === (enabled ? '1' : '0') ? 'true' : 'false');
-			});
-			placeSwitchIndicator(switchControl);
-			revealSwitchMotion(switchControl);
-		});
 	}
 
 	function createTab(tab, path) {
@@ -1112,14 +1085,9 @@
 		card.appendChild(createIconField(tab, path));
 		card.appendChild(createLabelFields(tab, path));
 		card.appendChild(createUrlField(tab, path));
-		card.appendChild(createCartBadgeField(path));
+		card.appendChild(createBadgeSourceField(tab, path));
 		card.appendChild(createPagesField(tab, path));
-		card.addEventListener('input', function (event) {
-			var switchControl = card.querySelector('[data-cart-switch]');
-			if (event.target.matches('[data-field="id"]') && switchControl.querySelector('[data-cart-value="1"][aria-pressed="true"]')) {
-				cartTabId = event.target.value.trim();
-			}
-			refreshCartSwitches();
+		card.addEventListener('input', function () {
 			refreshTabNavigation();
 		});
 		card.addEventListener('change', refreshTabNavigation);
@@ -1156,10 +1124,6 @@
 			event.preventDefault();
 			event.stopPropagation();
 			var wasActive = card.classList.contains('active');
-			var idField = card.querySelector('[data-field="id"]');
-			if (idField && cartTabId === idField.value.trim()) {
-				cartTabId = '';
-			}
 			tabRow.parentNode.removeChild(tabRow);
 			card.parentNode.removeChild(card);
 			var next = tabPanels.querySelector('.appnuno-tab');
@@ -1168,7 +1132,6 @@
 			}
 			var nextLink = tabNavigation.querySelector('[aria-selected="true"]');
 			(nextLink || addTabButton).focus();
-			refreshCartSwitches();
 			refreshTabNavigation();
 		}
 		remove.addEventListener('click', removeTab);
@@ -1194,7 +1157,6 @@
 			revealSwitchMotion(control);
 		});
 		refreshTabNavigation();
-		refreshCartSwitches();
 	}
 
 	function readTabs(container) {
@@ -1386,7 +1348,6 @@
 		}
 	});
 	syncConditionalFields();
-	refreshCartSwitches();
 	[
 		['back-enabled', 'help_back_enabled'],
 		['back-placement', 'help_back_placement'],
@@ -1424,6 +1385,7 @@
 		});
 		var controlPaths = {
 			cartTabId: 'default-tabs',
+			badgeSources: 'default-tabs',
 			back: 'back-enabled',
 			'back.enabled': 'back-enabled',
 			'back.placement': 'back-placement',
@@ -1493,9 +1455,24 @@
 		function enabledValue(id) {
 			return document.getElementById(id).value === '1';
 		}
+		var tabs = readTabs(defaultContainer);
+		var sources = Object.create(null);
+		var cartTabId = '';
+		Array.prototype.forEach.call(tabPanels.querySelectorAll('.appnuno-tab'), function (card) {
+			var idField = card.querySelector('[data-field="id"]');
+			var sourceField = card.querySelector('[data-badge-source]');
+			var tabId = idField ? idField.value.trim() : '';
+			if (tabId && sourceField && sourceField.value) {
+				sources[tabId] = sourceField.value;
+				if (sourceField.value === 'cart') {
+					cartTabId = tabId;
+				}
+			}
+		});
 		var result = {
 			cartTabId: cartTabId,
-			defaultTabs: readTabs(defaultContainer),
+			badgeSources: sources,
+			defaultTabs: tabs,
 			routes: {},
 			back: {
 				enabled: enabledValue('back-enabled'),

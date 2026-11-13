@@ -10,6 +10,9 @@ $default_values = json_decode($default, true);
 if (count($default_values['defaultTabs'])) {
     throw new RuntimeException('Expected a new installation to start without default tabs.');
 }
+if (!isset($default_values['badgeSources']) || !is_array($default_values['badgeSources']) || count($default_values['badgeSources'])) {
+    throw new RuntimeException('Expected new configurations to start with no enabled badge sources.');
+}
 if (!in_array($default_values['glass']['colorScheme'], array('auto'), true) || !in_array($default_values['glass']['style'], array('regular'), true) || !in_array($default_values['glass']['animate'], array(true), true) || !in_array($default_values['glass']['animationDuration'], array(0.3), true) || !in_array($default_values['glass']['isInteractive'], array(true), true) || !in_array($default_values['glass']['tintColor'], array('rgba(0, 0, 0, 0.02)'), true)) {
     throw new RuntimeException('Expected native-contract glass defaults.');
 }
@@ -32,6 +35,49 @@ if (strlen($model->validateConfig($valid))) {
 $no_cart_badge = json_encode(array('cartTabId' => '', 'defaultTabs' => array(), 'routes' => array()));
 if (strlen($model->validateConfig($no_cart_badge))) {
     throw new RuntimeException('Expected a configuration with no selected cart badge tab to be valid.');
+}
+$badge_configuration = array(
+    'cartTabId' => 'cart',
+    'badgeSources' => array('wishlist' => 'cart'),
+    'defaultTabs' => array(
+        array('id' => 'cart', 'label' => 'Wishlist', 'url' => '/cart'),
+        array('id' => 'wishlist', 'label' => 'Cart', 'url' => '/wishlist')
+    ),
+    'routes' => array()
+);
+$badge_json = json_encode($badge_configuration);
+if (strlen($model->validateConfig($badge_json))) {
+    throw new RuntimeException('Expected an ID-keyed supported badge source to validate.');
+}
+$new_badge_navigation = AppnunoConfig::integration($badge_configuration, 'common/home', array('cartCount' => 2, 'badgeCounts' => array('cart' => 2)), 'en-gb', '/', array());
+if (!isset($new_badge_navigation['navigation']['tabs'][1]['badge']) || !in_array($new_badge_navigation['navigation']['tabs'][1]['badge'], array(2), true) || isset($new_badge_navigation['navigation']['tabs'][0]['badge'])) {
+    throw new RuntimeException('Expected badge counts to target the configured tab ID rather than its displayed label.');
+}
+$legacy_badge_configuration = $badge_configuration;
+unset($legacy_badge_configuration['badgeSources']);
+$legacy_badge_navigation = AppnunoConfig::integration($legacy_badge_configuration, 'common/home', array('cartCount' => 3), 'en-gb', '/', array());
+if (!isset($legacy_badge_navigation['navigation']['tabs'][0]['badge']) || !in_array($legacy_badge_navigation['navigation']['tabs'][0]['badge'], array(3), true) || isset($legacy_badge_navigation['navigation']['tabs'][1]['badge'])) {
+    throw new RuntimeException('Expected saved cartTabId configurations to continue targeting their original tab ID.');
+}
+$normalized_legacy_configuration = json_decode(AppnunoConfig::normalizeConfig(json_encode($legacy_badge_configuration)), true);
+if (!isset($normalized_legacy_configuration['badgeSources']['cart']) || !in_array($normalized_legacy_configuration['badgeSources']['cart'], array('cart'), true)) {
+    throw new RuntimeException('Expected legacy cartTabId settings to migrate to an ID-keyed badge source.');
+}
+$disabled_badge_configuration = $badge_configuration;
+$disabled_badge_configuration['badgeSources'] = array();
+$disabled_badge_navigation = AppnunoConfig::integration($disabled_badge_configuration, 'common/home', array('cartCount' => 3, 'badgeCounts' => array('cart' => 3)), 'en-gb', '/', array());
+if (isset($disabled_badge_navigation['navigation']['tabs'][0]['badge']) || isset($disabled_badge_navigation['navigation']['tabs'][1]['badge'])) {
+    throw new RuntimeException('Expected an explicit empty badge source map to disable legacy cart badge routing.');
+}
+$unsupported_wishlist_configuration = $badge_configuration;
+$unsupported_wishlist_configuration['badgeSources'] = array('wishlist' => 'wishlist');
+if (!strlen($model->validateConfig(json_encode($unsupported_wishlist_configuration)))) {
+    throw new RuntimeException('Expected an unverified wishlist source to remain unavailable.');
+}
+$missing_badge_tab_configuration = $badge_configuration;
+$missing_badge_tab_configuration['badgeSources'] = array('missing' => 'cart');
+if (!strlen($model->validateConfig(json_encode($missing_badge_tab_configuration)))) {
+    throw new RuntimeException('Expected badge sources to reference an existing tab ID.');
 }
 $form_config = json_encode(array(
     'defaultTabs' => array(array('id' => 'ci-added-tab', 'labels' => array('en-gb' => 'CI "Added" & Tab'), 'url' => '/index.php?route=information/contact')),

@@ -45,7 +45,7 @@ def read_integration(page: Page, adapter: StoreAdapter, responses: list[Response
         raise AssertionError(f"Expected bootstrap route {expected_route}, got {payload.get('route')}.")
     if not adapter.accepts_state_url(str(payload.get("stateUrl", ""))):
         raise AssertionError("The bootstrap state URL does not target the AppNuno state endpoint.")
-    if payload.get("state") != {"cartCount": 0, "identity": None}:
+    if payload.get("state") != {"cartCount": 0, "badgeCounts": {"cart": 0}, "identity": None}:
         raise AssertionError(f"Unexpected unauthenticated storefront state: {payload.get('state')}.")
     state_status, state_body = fetch_state(page, adapter)
     if state_status != 200:
@@ -65,6 +65,8 @@ def assert_catalog_icon(tab: dict[str, Any], expected_id: str) -> None:
 def assert_configured_tabs(configuration: dict[str, Any], adapter: StoreAdapter) -> None:
     if configuration.get("cartTabId") != "ci-added-tab":
         raise AssertionError("The bootstrap configuration did not publish the selected cart badge tab ID.")
+    if configuration.get("badgeSources") != {"cart": "cart", "ci-added-tab": "cart"}:
+        raise AssertionError("The per-tab badge source assignments were not published by tab ID.")
     tabs = configuration.get("defaultTabs")
     if not isinstance(tabs, list) or len(tabs) != 4:
         raise AssertionError(f"The bootstrap configuration has an unexpected default tab set: {tabs}.")

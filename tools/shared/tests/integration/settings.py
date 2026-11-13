@@ -496,41 +496,27 @@ def assert_cart_badge(page: Page) -> None:
     layout = page.locator("#default-tabs").evaluate(
         """element => Array.from(element.querySelectorAll('.appnuno-tab')).map(card => {
             const destination = card.querySelector('[data-url-select]').closest('[data-field-group]');
-            const cart = card.querySelector('[data-cart-switch]').closest('[data-field-group]');
+            const badge = card.querySelector('[data-badge-source]').closest('[data-field-group]');
             return {
-                followsDestination: destination.nextElementSibling === cart,
-                hasSwitch: !!card.querySelector('[data-cart-switch]'),
-                selected: card.querySelector('[data-cart-switch] [aria-pressed="true"][data-cart-value="1"]') !== null
+                followsDestination: destination.nextElementSibling === badge,
+                hasSource: !!card.querySelector('[data-badge-source]'),
+                options: Array.from(card.querySelector('[data-badge-source]').options).map(option => option.value),
+                selected: card.querySelector('[data-field="id"]').value
             };
         })"""
     )
-    if not layout or any(not card["followsDestination"] or not card["hasSwitch"] for card in layout) or sum(card["selected"] for card in layout) != 1:
-        raise AssertionError(f"Each tab should have one shared cart badge switch immediately after Destination: {layout}.")
-    if page.locator("#default-tabs .appnuno-cart-field .appnuno-field-description").count() != len(layout):
-        raise AssertionError("Cart badge help should appear below the label in every tab card.")
-    def click_cart_switch(tab_id: str, value: str) -> None:
-        clicked = page.evaluate(
-            """({ tabId, value }) => {
-                const card = Array.from(document.querySelectorAll('#default-tabs .appnuno-tab')).find(item => item.querySelector('[data-field="id"]').value === tabId);
-                const button = card && card.querySelector('[data-cart-switch] [data-cart-value="' + value + '"]');
-                if (!button) return false;
-                button.click();
-                return true;
-            }""",
-            {"tabId": tab_id, "value": value},
-        )
-        if not clicked:
-            raise AssertionError(f"The {tab_id} tab has no cart badge switch.")
-
-    click_cart_switch("home", "1")
-    if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
-        raise AssertionError("Enabling the cart badge on a tab should disable it on every other tab.")
-    click_cart_switch("home", "0")
-    if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count():
-        raise AssertionError("Disabling the selected tab should allow no cart badge tab to be selected.")
-    click_cart_switch("cart", "1")
-    if page.locator('#default-tabs [data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
-        raise AssertionError("Re-enabling a tab should restore exactly one cart badge selection.")
+    if not layout or any(not card["followsDestination"] or not card["hasSource"] or card["options"] != ["", "cart"] for card in layout):
+        raise AssertionError(f"Each tab should have a source selector immediately after Destination: {layout}.")
+    home_source = page.locator("#default-tabs .appnuno-tab").nth(0).locator('[data-badge-source]')
+    cart_source = page.locator("#default-tabs .appnuno-tab").nth(1).locator('[data-badge-source]')
+    if cart_source.input_value() != "cart":
+        raise AssertionError("The legacy cart tab selection should be loaded as the cart source.")
+    home_source.select_option("cart")
+    if cart_source.input_value() != "cart":
+        raise AssertionError("Assigning a source to one tab must not change another tab's source.")
+    home_source.select_option("")
+    if home_source.input_value() or cart_source.input_value() != "cart":
+        raise AssertionError("Disabling a tab badge must not affect other tab assignments.")
 
 
 def add_contact_tab(page: Page, adapter: StoreAdapter) -> None:
@@ -545,7 +531,7 @@ def add_contact_tab(page: Page, adapter: StoreAdapter) -> None:
     choose_catalog_icon(page, tab, "duo:user")
     if tab.locator("[data-tab-visibility]").input_value() != "1":
         raise AssertionError("A newly added tab should be visible by default.")
-    tab.locator('[data-cart-switch] [data-cart-value="1"]').click()
+    tab.locator('[data-badge-source]').select_option("cart")
     choose_switch(page, "input-status", "1")
 
 
@@ -676,8 +662,10 @@ def save_settings(page: Page, adapter: StoreAdapter, directory) -> None:
         raise AssertionError("The newly added tab translations did not persist after reloading the settings page.")
     if saved.locator(f'[data-language-url="{adapter.lithuanian_code}"]').input_value() != "/lt/kontaktai":
         raise AssertionError("The newly added Lithuanian tab URL did not persist after reloading the settings page.")
-    if saved.locator('[data-cart-switch] [data-cart-value="1"][aria-pressed="true"]').count() != 1:
+    if saved.locator('[data-badge-source]').input_value() != "cart":
         raise AssertionError("The cart badge tab selection did not persist after reloading the settings page.")
+    if page.locator("#default-tabs .appnuno-tab").nth(1).locator('[data-badge-source]').input_value() != "cart":
+        raise AssertionError("The original cart badge selection was not preserved after saving another tab source.")
     page_tab = page.locator("#default-tabs .appnuno-tab").nth(3)
     if page_tab.locator(f'[data-language-label="{adapter.lithuanian_code}"]').input_value() != "Krepšelio skirtukas" or page_tab.locator(f'[data-language-url="{adapter.lithuanian_code}"]').input_value() != "/lt/krepselis":
         raise AssertionError("The cart page tab did not persist after reloading the settings page.")

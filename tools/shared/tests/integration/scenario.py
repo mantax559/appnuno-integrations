@@ -27,18 +27,18 @@ def check_cart_and_customer(page, adapter: StoreAdapter) -> None:
     page.goto(adapter.absolute(adapter.home_path), wait_until="domcontentloaded", timeout=20000)
     print("Reading the visitor cart.", flush=True)
     visitor = browser_state(page, adapter)
-    if visitor.get("cartCount") != 0 or visitor.get("identity") is not None:
+    if visitor.get("cartCount") != 0 or visitor.get("badgeCounts") != {"cart": 0} or visitor.get("identity") is not None:
         raise AssertionError(f"A new visitor should have an empty cart and no identity: {visitor}.")
     print("Adding two products.", flush=True)
     adapter.add_two_products(page)
     cart = browser_state(page, adapter)
-    if cart.get("cartCount") != 2 or cart.get("identity") is not None:
+    if cart.get("cartCount") != 2 or cart.get("badgeCounts") != {"cart": 2} or cart.get("identity") is not None:
         raise AssertionError(f"The storefront state did not report two cart items: {cart}.")
     print("Registering a customer.", flush=True)
     adapter.register_customer(page)
     logged_in = browser_state(page, adapter)
     identity = logged_in.get("identity") or {}
-    if logged_in.get("cartCount") != 2 or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not str(identity.get("identifier", "")).isdigit():
+    if logged_in.get("cartCount") != 2 or logged_in.get("badgeCounts") != {"cart": 2} or identity.get("guard") != "customer" or identity.get("is_logged_in") is not True or not str(identity.get("identifier", "")).isdigit():
         raise AssertionError(f"A registered customer did not keep the cart and receive a customer identity: {logged_in}.")
     identifier = identity["identifier"]
     print("Logging the customer out.", flush=True)
@@ -48,7 +48,7 @@ def check_cart_and_customer(page, adapter: StoreAdapter) -> None:
     if remembered.get("identifier") != identifier or remembered.get("is_logged_in") is not False or remembered.get("guard") != "customer":
         raise AssertionError(f"Logging out should keep the customer id and mark the visitor as logged out: {logged_out}.")
     visible = adapter.cart_page_count(page)
-    if logged_out.get("cartCount") != visible:
+    if logged_out.get("cartCount") != visible or logged_out.get("badgeCounts") != {"cart": visible}:
         raise AssertionError(f"The logged-out cart count {logged_out.get('cartCount')} does not match the store cart {visible}.")
 
 
