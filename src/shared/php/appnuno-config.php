@@ -468,7 +468,7 @@ class AppnunoConfig {
 		);
 	}
 
-	public static function normalizeLocale(string $locale): string {
+	public static function normalizeLocale($locale) {
 		$code = strtolower(str_replace('_', '-', $locale));
 
 		return preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code) ? $code : 'en-gb';

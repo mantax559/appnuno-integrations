@@ -2,6 +2,7 @@
 require '/var/www/html/config/config.inc.php';
 
 $package_lines = array(
+    '1.7.x' => array('minimum' => '1.7.0.0', 'maximum' => '1.7.99.99'),
     '8.x' => array('minimum' => '8.0.0', 'maximum' => '8.99.99'),
     '9.x' => array('minimum' => '9.0.0', 'maximum' => '9.99.99'),
 );
@@ -57,7 +58,18 @@ if (!$module) {
 }
 $installed = Module::isInstalled('appnuno');
 $headerHookId = (int) Hook::getIdByName('displayHeader');
-$hooked = $installed && $headerHookId && (int) Db::getInstance()->getValue('SELECT id_module FROM `' . _DB_PREFIX_ . 'hook_module` WHERE id_module = ' . (int) $module->id . ' AND id_hook = ' . $headerHookId);
+$frontControllerHookId = (int) Hook::getIdByName('actionFrontControllerSetMedia');
+$hooked = $installed
+    && $headerHookId
+    && $frontControllerHookId
+    && in_array(
+        (int) Db::getInstance()->getValue(
+            'SELECT COUNT(*) FROM `' . _DB_PREFIX_ . 'hook_module` WHERE id_module = ' . (int) $module->id .
+            ' AND id_hook IN (' . $headerHookId . ', ' . $frontControllerHookId . ')'
+        ),
+        array(2),
+        true
+    );
 if ($installed && !$hooked) {
     if (!$module->uninstall()) {
         fwrite(STDERR, "AppNuno module could not be reset before installation.\n");
@@ -139,10 +151,11 @@ if (!Employee::employeeExists('limited@example.test')) {
     $limited->firstname = 'Limited';
     $limited->lastname = 'User';
     $limited->email = 'limited@example.test';
-    $limited->passwd = (new PrestaShop\PrestaShop\Core\Crypto\Hashing())->hash('appnuno-local');
+    $limited->passwd = appnunoTestPasswordHash('appnuno-local');
     $limited->id_profile = (int) $profile->id;
     $limited->id_lang = $idLang;
     $limited->active = 1;
+    $limited->optin = false;
     $limited->default_tab = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminDashboard"');
     if (!$limited->add()) {
         fwrite(STDERR, "Unable to create the limited employee.\n");
@@ -230,7 +243,7 @@ if (!Customer::customerExists('customer@example.test')) {
     $customer->firstname = 'App';
     $customer->lastname = 'Nuno';
     $customer->email = 'customer@example.test';
-    $customer->passwd = (new PrestaShop\PrestaShop\Core\Crypto\Hashing())->hash('appnuno-local');
+    $customer->passwd = appnunoTestPasswordHash('appnuno-local');
     $customer->id_lang = $idLang;
     $customer->id_shop = $idShop;
     $customer->active = 1;
@@ -257,3 +270,15 @@ if (class_exists('Cache')) {
 }
 passthru('chown -R www-data:www-data ' . escapeshellarg(_PS_ROOT_DIR_ . '/var') . ' ' . escapeshellarg($moduleDir));
 fwrite(STDOUT, "AppNuno PrestaShop module is installed.\n");
+
+function appnunoTestPasswordHash($password)
+{
+    $hashingClass = 'PrestaShop\\PrestaShop\\Core\\Crypto\\Hashing';
+    if (class_exists($hashingClass)) {
+        $hashing = new $hashingClass();
+
+        return $hashing->hash($password);
+    }
+
+    return Tools::encrypt($password);
+}

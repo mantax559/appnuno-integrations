@@ -1,11 +1,12 @@
 <?php
 $package_lines = array(
+    '17' => array('directory' => '1.7.x', 'minimum' => '1.7.0.0', 'maximum' => '1.7.99.99', 'requires_php' => '5.4'),
     '8' => array('directory' => '8.x', 'minimum' => '8.0.0', 'maximum' => '8.99.99', 'requires_php' => '7.2.5'),
     '9' => array('directory' => '9.x', 'minimum' => '9.0.0', 'maximum' => '9.99.99', 'requires_php' => '8.1'),
 );
 $package_line = isset($argv[1]) ? $argv[1] : '9';
 if (!isset($package_lines[$package_line])) {
-    throw new RuntimeException('The PrestaShop package line must be 8 or 9.');
+    throw new RuntimeException('The PrestaShop package line must be 17, 8 or 9.');
 }
 prestashop_build_package($package_lines[$package_line]);
 

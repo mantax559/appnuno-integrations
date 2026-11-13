@@ -38,7 +38,17 @@ class PrestaShopAdapter(StoreAdapter):
         page.locator("#email, input[name='email']").first.fill(email)
         page.locator("#passwd, input[name='passwd']").first.fill(self.admin_password)
         page.locator("#submit_login, button[name='submitLogin']").first.click()
-        page.locator(".nav-bar, #header_infos").first.wait_for()
+        page.locator(".nav-bar li.link-levelone.has_submenu > a").filter(has_text="Modules").first.wait_for(state="visible", timeout=90000)
+
+    def _prestashop_container(self) -> str:
+        container = os.environ.get("PRESTASHOP_CONTAINER", "")
+        if container:
+            return container
+        listed = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
+        names = [name for name in listed.stdout.splitlines() if name.endswith("prestashop-1")]
+        if len(names) != 1:
+            raise AssertionError(f"Expected one running PrestaShop container: {names}.")
+        return names[0]
 
     def login_admin(self, page: Page) -> None:
         self.login(page, self.admin_email)
@@ -46,9 +56,11 @@ class PrestaShopAdapter(StoreAdapter):
     def open_settings(self, page: Page) -> None:
         page.goto(self.base_url + "/admin-dev/", wait_until="domcontentloaded", timeout=90000)
         link = page.locator('a[href*="AdminAppnuno"]').first
-        if not link.count() or not link.is_visible():
-            page.get_by_text("Modules", exact=True).first.click()
-        link.click()
+        link.wait_for(state="attached", timeout=90000)
+        href = link.get_attribute("href")
+        if not href:
+            raise AssertionError("PrestaShop did not generate an AppNuno admin URL.")
+        page.goto(href, wait_until="domcontentloaded", timeout=90000)
         page.locator(".appnuno-settings").wait_for()
 
     def switch_admin_language(self, page: Page, code: str) -> None:
@@ -58,13 +70,7 @@ class PrestaShopAdapter(StoreAdapter):
         self.login_admin(page)
 
     def set_employee_language(self, iso: str) -> None:
-        container = os.environ.get("PRESTASHOP_CONTAINER", "")
-        if not container:
-            listed = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
-            names = [name for name in listed.stdout.splitlines() if name.endswith("prestashop-1")]
-            if len(names) != 1:
-                raise AssertionError(f"Expected one running PrestaShop container: {names}.")
-            container = names[0]
+        container = self._prestashop_container()
         script = Path(__file__).resolve().parents[1] / "docker" / "set-employee-language.php"
         subprocess.run(["docker", "cp", str(script), f"{container}:/tmp/set-employee-language.php"], check=True)
         completed = subprocess.run(["docker", "exec", container, "php", "/tmp/set-employee-language.php", iso], capture_output=True, text=True)
@@ -91,8 +97,20 @@ class PrestaShopAdapter(StoreAdapter):
         return None
 
     def add_two_products(self, page: Page) -> None:
-        page.goto(self.base_url + "/")
-        page.locator("a.product-thumbnail[href*='appnuno-sample'], h3.product-title a[href*='appnuno-sample']").first.click()
+        container = self._prestashop_container()
+        script = Path(__file__).resolve().parents[1] / "docker" / "get-product-url.php"
+        subprocess.run(["docker", "cp", str(script), f"{container}:/tmp/get-product-url.php"], check=True)
+        completed = subprocess.run(
+            ["docker", "exec", container, "php", "/tmp/get-product-url.php"],
+            capture_output=True,
+            text=True,
+        )
+        if completed.returncode:
+            raise AssertionError("PrestaShop did not generate the sample product URL: " + completed.stderr)
+        product_url = completed.stdout.strip()
+        if not product_url.startswith(self.base_url):
+            raise AssertionError(f"PrestaShop generated an unexpected sample product URL: {product_url}.")
+        page.goto(product_url)
         page.locator("#add-to-cart-or-refresh").wait_for()
         result = page.evaluate(
             """async stateUrl => {
@@ -113,7 +131,8 @@ class PrestaShopAdapter(StoreAdapter):
             raise AssertionError(f"The sample product was not added twice: {result}.")
 
     def register_customer(self, page: Page) -> None:
-        page.goto(self.storefront_url(self.english_code, "/registration"))
+        registration_path = "/login?create_account=1" if self.prestashop_tag.startswith("1.7.") else "/registration"
+        page.goto(self.storefront_url(self.english_code, registration_path))
         gender = page.locator("input[name='id_gender']")
         if gender.count():
             gender.first.check()
@@ -151,9 +170,9 @@ class PrestaShopAdapter(StoreAdapter):
             limited.goto(self.base_url + "/admin-dev/")
             link = limited.locator('a[href*="AdminAppnuno"]')
             if link.count():
-                if not link.first.is_visible():
-                    limited.get_by_text("Modules", exact=True).first.click()
-                link.first.click()
+                href = link.first.get_attribute("href")
+                if href:
+                    limited.goto(href, wait_until="domcontentloaded")
                 limited.locator("body").wait_for()
             if limited.locator("#form-appnuno").count():
                 choose_switch(limited, "input-status", "0")
@@ -168,13 +187,7 @@ class PrestaShopAdapter(StoreAdapter):
             context.close()
 
     def run_module_action(self, action: str) -> None:
-        container = os.environ.get("PRESTASHOP_CONTAINER", "")
-        if not container:
-            listed = subprocess.run(["docker", "ps", "--format", "{{.Names}}"], capture_output=True, text=True, check=True)
-            names = [name for name in listed.stdout.splitlines() if name.endswith("prestashop-1")]
-            if len(names) != 1:
-                raise AssertionError(f"Expected one running PrestaShop container: {names}.")
-            container = names[0]
+        container = self._prestashop_container()
         script = Path(__file__).resolve().parents[1] / "docker" / "module-action.php"
         subprocess.run(["docker", "cp", str(script), f"{container}:/tmp/module-action.php"], check=True)
         completed = subprocess.run(["docker", "exec", container, "php", "/tmp/module-action.php", action], capture_output=True, text=True)

@@ -5,7 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 final class AppnunoStorefront
 {
-    public static function rememberCustomer(): void
+    public static function rememberCustomer()
     {
         $customer = Context::getContext()->customer;
         if (!$customer instanceof Customer || !$customer->isLogged()) {
@@ -20,17 +20,21 @@ final class AppnunoStorefront
             return;
         }
         $path = defined('__PS_BASE_URI__') && is_string(__PS_BASE_URI__) && __PS_BASE_URI__ !== '' ? __PS_BASE_URI__ : '/';
-        setcookie('appnuno_customer_id', $identifier, array(
-            'expires' => time() + (30 * 86400),
-            'path' => $path,
-            'secure' => (bool) Configuration::get('PS_SSL_ENABLED'),
-            'httponly' => true,
-            'samesite' => 'Lax',
-        ));
+        if (PHP_VERSION_ID >= 70300) {
+            setcookie('appnuno_customer_id', $identifier, array(
+                'expires' => time() + (30 * 86400),
+                'path' => $path,
+                'secure' => (bool) Configuration::get('PS_SSL_ENABLED'),
+                'httponly' => true,
+                'samesite' => 'Lax',
+            ));
+        } else {
+            setcookie('appnuno_customer_id', $identifier, time() + (30 * 86400), $path, '', (bool) Configuration::get('PS_SSL_ENABLED'), true);
+        }
         $_COOKIE['appnuno_customer_id'] = $identifier;
     }
 
-    public static function headerScript(): string
+    public static function headerScript()
     {
         if (!self::enabled()) {
             return '';
@@ -50,7 +54,7 @@ final class AppnunoStorefront
         return '<script src="' . htmlspecialchars($url, ENT_QUOTES, 'UTF-8') . '"></script>';
     }
 
-    public static function bootstrap(): void
+    public static function bootstrap()
     {
         if (!self::enabled()) {
             self::headers('application/javascript; charset=utf-8', 404);
@@ -68,7 +72,7 @@ final class AppnunoStorefront
         echo 'window.AppNuno=window.AppNuno||{};window.AppNunoIntegration=' . $integration . ';window.AppNuno.navigation=window.AppNunoIntegration.navigation;if(window.AppNunoIntegration.state.identity){window.AppNuno.identity=window.AppNunoIntegration.state.identity;window.AppNuno.identities=[window.AppNunoIntegration.state.identity];}(function(){var s=document.createElement("script");s.src="https://appnuno.com/sdk/v1/appnuno.js";s.async=true;(document.head||document.documentElement).appendChild(s);}());';
     }
 
-    public static function state(): void
+    public static function state()
     {
         if (!self::enabled()) {
             self::headers('application/json; charset=utf-8', 404);
@@ -80,7 +84,7 @@ final class AppnunoStorefront
         echo self::json(self::statePayload());
     }
 
-    private static function integration(): string
+    private static function integration()
     {
         $stored = Configuration::get('module_appnuno_config');
         if (!is_string($stored) || strlen($stored) > 65535) {
@@ -107,7 +111,7 @@ final class AppnunoStorefront
         return self::json($integration);
     }
 
-    private static function statePayload(): array
+    private static function statePayload()
     {
         return array(
             'cartCount' => self::cartCount(),
@@ -115,7 +119,7 @@ final class AppnunoStorefront
         );
     }
 
-    private static function cartCount(): int
+    private static function cartCount()
     {
         $cart = Context::getContext()->cart;
         if (!$cart instanceof Cart) {
@@ -153,21 +157,21 @@ final class AppnunoStorefront
         );
     }
 
-    private static function enabled(): bool
+    private static function enabled()
     {
         $status = Configuration::get('module_appnuno_status');
 
         return $status === '1' || $status === 1;
     }
 
-    private static function requestPath(): string
+    private static function requestPath()
     {
         $uri = isset($_SERVER['REQUEST_URI']) && is_string($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '/';
 
         return AppnunoCatalog::relativeUrl($uri);
     }
 
-    private static function headers(string $contentType, int $status): void
+    private static function headers($contentType, $status)
     {
         while (ob_get_level() > 0) {
             ob_end_clean();
@@ -179,7 +183,7 @@ final class AppnunoStorefront
         header('X-Content-Type-Options: nosniff');
     }
 
-    private static function json($value): string
+    private static function json($value)
     {
         $json = json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 

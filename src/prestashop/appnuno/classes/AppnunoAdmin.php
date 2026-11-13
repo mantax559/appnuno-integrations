@@ -5,7 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 final class AppnunoAdmin
 {
-    public static function persist(): array
+    public static function persist()
     {
         $employee = Context::getContext()->employee;
         if (!$employee instanceof Employee || !(int) $employee->id || !self::canModify($employee)) {
@@ -62,7 +62,7 @@ final class AppnunoAdmin
         exit;
     }
 
-    public static function render(array $errors): string
+    public static function render($errors)
     {
         $posted = isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST';
         $saved = !$posted && (string) Tools::getValue('appnuno_saved') === '1';
@@ -71,12 +71,12 @@ final class AppnunoAdmin
         return '<div class="appnuno-admin"><script>document.body.classList.add("appnuno-admin-screen");</script>' . self::settingsMarkup($posted, $success, $errors) . '</div>';
     }
 
-    public static function text(string $key): string
+    public static function text($key)
     {
         return AppnunoCatalog::text($key);
     }
 
-    private static function canModify(Employee $employee): bool
+    private static function canModify(Employee $employee)
     {
         $profileId = (int) $employee->id_profile;
         if (!$profileId) {
@@ -91,7 +91,7 @@ final class AppnunoAdmin
         return (bool) $granted;
     }
 
-    private static function settingsMarkup(bool $posted, string $success, array $errors): string
+    private static function settingsMarkup($posted, $success, $errors)
     {
         $path = AppnunoPaths::adminDirectory() . '/settings.html';
         $html = is_file($path) ? file_get_contents($path) : '';
@@ -137,7 +137,7 @@ final class AppnunoAdmin
         return AppnunoConfig::renderSettings(is_string($html) ? $html : '', $replacements);
     }
 
-    private static function interfaceText(): array
+    private static function interfaceText()
     {
         $text = array();
         foreach (array('text_enabled', 'text_disabled', 'text_yes', 'text_no', 'text_visibility_on', 'text_icon_page_previous', 'text_icon_page_next', 'button_add_default_tab', 'button_add_first_tab', 'text_default_tabs_empty', 'text_default_tabs_empty_help', 'entry_cart_tab', 'help_cart_tab', 'help_status', 'text_back_button', 'entry_back_enabled', 'entry_back_placement', 'text_placement_separate', 'text_placement_bar', 'text_glass', 'text_glass_button', 'entry_glass_enabled', 'entry_glass_color_scheme', 'text_color_auto', 'text_color_light', 'text_color_dark', 'entry_glass_style', 'text_style_regular', 'text_style_clear', 'text_style_none', 'entry_glass_animate', 'entry_glass_duration', 'entry_glass_interactive', 'entry_glass_tint', 'entry_glass_opacity', 'text_navigation_colors', 'text_light_mode', 'text_dark_mode', 'entry_background', 'entry_content', 'text_language_labels', 'text_label', 'text_default_language', 'text_destination', 'text_choose_destination', 'text_custom_url', 'text_url_placeholder', 'text_tab_id', 'text_tab_id_placeholder', 'text_icon', 'text_choose_icon', 'text_icon_catalog_search', 'text_icon_catalog_loading', 'text_icon_catalog_empty', 'text_icon_catalog_error', 'text_icon_catalog_clear', 'text_icon_catalog_total', 'button_remove_tab', 'text_shown_on_pages', 'help_shown_on_pages', 'text_all_pages', 'button_manage_pages', 'text_show_on_all_pages', 'text_show_on_selected_pages', 'text_show_on_no_pages', 'button_apply_pages', 'button_cancel_pages', 'button_select_all_pages', 'button_clear_pages', 'text_tab_missing', 'text_tab_visible', 'text_tab_visibility_toggle', 'text_visibility_indicator', 'text_tab_list_empty', 'help_default_tabs', 'help_back_enabled', 'help_back_placement', 'help_glass_enabled', 'help_glass_color_scheme', 'help_glass_style', 'help_glass_animate', 'help_glass_duration', 'help_glass_interactive', 'help_glass_tint', 'help_glass_opacity', 'help_background', 'help_content', 'help_tab_id', 'help_tab_labels', 'help_tab_destination', 'help_icon_catalog', 'help_tab_visibility') as $key) {
@@ -147,7 +147,7 @@ final class AppnunoAdmin
         return $text;
     }
 
-    private static function moduleStatus(bool $posted): string
+    private static function moduleStatus($posted)
     {
         if ($posted) {
             $status = Tools::getValue('module_appnuno_status');
@@ -159,7 +159,7 @@ final class AppnunoAdmin
         return in_array($stored, array('1', 1, '1'), true) ? '1' : '0';
     }
 
-    private static function configurationState(bool $posted): array
+    private static function configurationState($posted)
     {
         if ($posted) {
             $json = Tools::getValue('module_appnuno_config');
@@ -182,7 +182,7 @@ final class AppnunoAdmin
         return array($json, is_array($configuration) ? $configuration : array());
     }
 
-    private static function json($value): string
+    private static function json($value)
     {
         $json = json_encode($value, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
 

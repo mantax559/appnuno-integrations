@@ -7,7 +7,7 @@ final class AppnunoCatalog
 {
     private static $buildingLanguages = false;
 
-    public static function text(string $key): string
+    public static function text($key)
     {
         $catalog = self::chromeCatalog();
         if (isset($catalog[$key]) && is_string($catalog[$key])) {
@@ -17,7 +17,7 @@ final class AppnunoCatalog
         return $key;
     }
 
-    public static function normalizeLocale(string $locale): string
+    public static function normalizeLocale($locale)
     {
         $code = strtolower(str_replace('_', '-', $locale));
         if (preg_match('/^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/', $code)) {
@@ -27,7 +27,7 @@ final class AppnunoCatalog
         return 'en-gb';
     }
 
-    public static function chromeLocale(): string
+    public static function chromeLocale()
     {
         $code = self::normalizeLocale(self::contextLocale());
         foreach (self::catalogCandidates($code) as $candidate) {
@@ -39,12 +39,12 @@ final class AppnunoCatalog
         return 'en-gb';
     }
 
-    public static function currentLanguageCode(): string
+    public static function currentLanguageCode()
     {
         return self::normalizeLocale(self::contextLocale());
     }
 
-    public static function languages(): array
+    public static function languages()
     {
         $found = array();
         self::$buildingLanguages = true;
@@ -84,7 +84,7 @@ final class AppnunoCatalog
         return $languages;
     }
 
-    public static function languageCodes(): array
+    public static function languageCodes()
     {
         $codes = array();
         foreach (self::languages() as $language) {
@@ -96,7 +96,7 @@ final class AppnunoCatalog
         return $codes;
     }
 
-    public static function defaultLanguageCode(): string
+    public static function defaultLanguageCode()
     {
         $codes = self::languageCodes();
         $current = self::currentLanguageCode();
@@ -107,7 +107,7 @@ final class AppnunoCatalog
         return count($codes) ? $codes[0] : 'en-gb';
     }
 
-    public static function languageName(string $code): string
+    public static function languageName($code)
     {
         if ($code === 'default') {
             return self::text('text_default_language');
@@ -123,7 +123,7 @@ final class AppnunoCatalog
         return self::knownLanguageName($code);
     }
 
-    public static function routeKeys(): array
+    public static function routeKeys()
     {
         return array(
             'common/home' => 'text_route_home',
@@ -142,14 +142,14 @@ final class AppnunoCatalog
         );
     }
 
-    public static function routeLabel(string $route): string
+    public static function routeLabel($route)
     {
         $labels = self::routeKeys();
 
         return isset($labels[$route]) ? self::text($labels[$route]) : $route;
     }
 
-    public static function routeOptions(): array
+    public static function routeOptions()
     {
         $options = array();
         foreach (self::routeKeys() as $route => $key) {
@@ -162,7 +162,7 @@ final class AppnunoCatalog
         return $options;
     }
 
-    public static function destinations(): array
+    public static function destinations()
     {
         $context = Context::getContext();
         $link = $context->link;
@@ -222,7 +222,7 @@ final class AppnunoCatalog
         return self::translatedDestinations($destinations);
     }
 
-    public static function currentRoute(): string
+    public static function currentRoute()
     {
         $controller = Context::getContext()->controller;
         $phpSelf = '';
@@ -233,7 +233,7 @@ final class AppnunoCatalog
         return self::routeFromController($phpSelf);
     }
 
-    private static function routeFromController(string $phpSelf): string
+    private static function routeFromController($phpSelf)
     {
         $routes = array(
             'index' => 'common/home',
@@ -266,7 +266,7 @@ final class AppnunoCatalog
         return isset($routes[$phpSelf]) ? $routes[$phpSelf] : 'common/home';
     }
 
-    private static function knownLanguageName(string $code): string
+    private static function knownLanguageName($code)
     {
         $names = array(
             'en-us' => 'English (United States)',
@@ -279,7 +279,7 @@ final class AppnunoCatalog
         return isset($names[$code]) ? $names[$code] : $code;
     }
 
-    private static function translatedDestinations(array $destinations): array
+    private static function translatedDestinations($destinations)
     {
         $labels = array(
             'Home' => 'text_destination_home',
@@ -312,7 +312,7 @@ final class AppnunoCatalog
         return $destinations;
     }
 
-    public static function relativeUrl(string $url): string
+    public static function relativeUrl($url)
     {
         $url = trim($url);
         if ($url === '') {
@@ -339,7 +339,7 @@ final class AppnunoCatalog
         return $path === '' ? '/' : $path;
     }
 
-    private static function normalizeHome(string $url): string
+    private static function normalizeHome($url)
     {
         $query = '';
         $path = $url;
@@ -365,7 +365,7 @@ final class AppnunoCatalog
         return $url;
     }
 
-    private static function contextLocale(): string
+    private static function contextLocale()
     {
         $language = Context::getContext()->language;
         if (is_object($language)) {
@@ -383,7 +383,7 @@ final class AppnunoCatalog
         return 'en-gb';
     }
 
-    private static function chromeCatalog(): array
+    private static function chromeCatalog()
     {
         static $catalog = null;
         if (is_array($catalog)) {
@@ -399,12 +399,12 @@ final class AppnunoCatalog
         return $catalog;
     }
 
-    private static function catalogPath(string $locale): string
+    private static function catalogPath($locale)
     {
         return AppnunoPaths::adminDirectory() . '/i18n/' . $locale . '.json';
     }
 
-    private static function catalogCandidates(string $code): array
+    private static function catalogCandidates($code)
     {
         $candidates = array($code);
         $canonical = self::canonicalLocale($code);
@@ -425,7 +425,7 @@ final class AppnunoCatalog
         return $candidates;
     }
 
-    private static function canonicalLocale(string $code): string
+    private static function canonicalLocale($code)
     {
         $locales = array(
             'ar' => 'ar-sa',

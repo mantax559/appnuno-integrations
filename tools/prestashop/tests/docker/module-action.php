@@ -42,7 +42,7 @@ if ($action === 'install') {
 fwrite(STDERR, "Use uninstall or install.\n");
 exit(1);
 
-function clearModuleCaches(): void
+function clearModuleCaches()
 {
     if (class_exists('Cache')) {
         Cache::clean('*');

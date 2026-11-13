@@ -5,27 +5,27 @@ if (!defined('_PS_VERSION_')) {
 
 final class AppnunoPaths
 {
-    public static function moduleDirectory(): string
+    public static function moduleDirectory()
     {
         return dirname(__DIR__);
     }
 
-    public static function adminDirectory(): string
+    public static function adminDirectory()
     {
         $packaged = self::moduleDirectory() . '/assets';
         if (is_file($packaged . '/settings.html')) {
             return $packaged;
         }
 
-        return dirname(__DIR__, 3) . '/shared/admin';
+        return dirname(dirname(dirname(__DIR__))) . '/shared/admin';
     }
 
-    public static function adapterFile(): string
+    public static function adapterFile()
     {
         return self::moduleDirectory() . '/views/css/adapter.css';
     }
 
-    public static function loadConfig(): void
+    public static function loadConfig()
     {
         if (class_exists('AppnunoConfig', false)) {
             return;
@@ -36,10 +36,10 @@ final class AppnunoPaths
 
             return;
         }
-        require_once dirname(__DIR__, 3) . '/shared/php/appnuno-config.php';
+        require_once dirname(dirname(dirname(__DIR__))) . '/shared/php/appnuno-config.php';
     }
 
-    public static function assetUrl(string $name): string
+    public static function assetUrl($name)
     {
         $base = self::moduleBaseUri();
         if ($name === 'adapter.css') {
@@ -49,7 +49,7 @@ final class AppnunoPaths
         return $base . 'assets/' . ltrim($name, '/');
     }
 
-    public static function version(): string
+    public static function version()
     {
         $path = self::moduleDirectory() . '/assets/version.txt';
         if (is_file($path)) {
@@ -62,7 +62,7 @@ final class AppnunoPaths
         return '1.0.0';
     }
 
-    public static function assetVersion(): string
+    public static function assetVersion()
     {
         $body = '';
         foreach (array(self::adminDirectory() . '/settings.css', self::adapterFile(), self::adminDirectory() . '/settings.js', self::adminDirectory() . '/settings.html') as $path) {
@@ -72,7 +72,7 @@ final class AppnunoPaths
         return substr(hash('sha256', $body), 0, 12);
     }
 
-    private static function moduleBaseUri(): string
+    private static function moduleBaseUri()
     {
         $module = Module::getInstanceByName('appnuno');
         if ($module instanceof Module) {

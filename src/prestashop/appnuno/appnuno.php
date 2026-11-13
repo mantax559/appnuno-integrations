@@ -33,7 +33,7 @@ class Appnuno extends Module
     {
         return parent::install()
             && $this->registerHook('displayHeader')
-            && $this->registerHook('actionFrontControllerInitAfter')
+            && $this->registerHook('actionFrontControllerSetMedia')
             && $this->installTab()
             && Configuration::updateValue('module_appnuno_status', '0')
             && Configuration::updateValue('module_appnuno_config', AppnunoConfig::defaultConfig(), true);
@@ -60,7 +60,7 @@ class Appnuno extends Module
         return AppnunoStorefront::headerScript();
     }
 
-    public function hookActionFrontControllerInitAfter($params)
+    public function hookActionFrontControllerSetMedia($params)
     {
         AppnunoStorefront::rememberCustomer();
     }
