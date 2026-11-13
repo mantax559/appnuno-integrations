@@ -107,7 +107,7 @@ final class AppnunoAdmin
         $token = htmlspecialchars((string) Tools::getAdminTokenLite('AdminAppnuno'), ENT_QUOTES, 'UTF-8');
         $replacements = array(
             'appnuno_version' => htmlspecialchars(AppnunoPaths::version(), ENT_QUOTES, 'UTF-8'),
-            'documentation_url' => 'https://appnuno.com/prestashop',
+            'documentation_url' => 'https://appnuno.com/docs',
             'cancel' => htmlspecialchars($context->link->getAdminLink('AdminDashboard'), ENT_QUOTES, 'UTF-8'),
             'form_action' => htmlspecialchars($context->link->getAdminLink('AdminAppnuno'), ENT_QUOTES, 'UTF-8'),
             'form_nonce' => '<input type="hidden" name="token" value="' . $token . '" />',

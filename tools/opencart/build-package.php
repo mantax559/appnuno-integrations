@@ -86,7 +86,7 @@ foreach ($entries as $name => $path) {
         $asset_path = in_array($line, array('4'), true) ? '../extension/appnuno/admin/view/javascript/appnuno/' : 'view/javascript/appnuno/';
         $body = str_replace(
             array('{{settings_script}}', '{{documentation_url}}'),
-            array($asset_path . 'settings.js?v=' . $ui_asset_version, 'https://appnuno.com/opencart'),
+            array($asset_path . 'settings.js?v=' . $ui_asset_version, 'https://appnuno.com/docs'),
             $body
         );
     }

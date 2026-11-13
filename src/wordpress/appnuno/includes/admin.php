@@ -136,7 +136,7 @@ final class Appnuno_Admin {
         $button_cancel = self::text('button_cancel');
         $replacements = array(
             'appnuno_version' => htmlspecialchars(Appnuno_Paths::version(), ENT_QUOTES, 'UTF-8'),
-            'documentation_url' => 'https://appnuno.com/wordpress',
+            'documentation_url' => 'https://appnuno.com/docs',
             'cancel' => htmlspecialchars(admin_url('index.php'), ENT_QUOTES, 'UTF-8'),
             'form_action' => htmlspecialchars(admin_url('admin.php?page=appnuno'), ENT_QUOTES, 'UTF-8'),
             'form_nonce' => wp_nonce_field('appnuno_settings', 'appnuno_settings_nonce', true, false),

@@ -14,7 +14,7 @@ class PrestaShopAdapter(StoreAdapter):
     name = "PrestaShop"
     base_url = os.environ.get("PRESTASHOP_SITE_URL", "http://127.0.0.1:8088").rstrip("/")
     prestashop_tag = os.environ.get("PRESTASHOP_TAG", "8.2-apache")
-    documentation_url = "https://appnuno.com/prestashop"
+    documentation_url = "https://appnuno.com/docs"
     version_key = "prestashop"
     sidebar_selector = ".nav-bar"
     content_selector = "#main-div"

@@ -21,4 +21,4 @@ The module stores its settings in `module_appnuno_status` and `module_appnuno_co
 
 Do not delete the module before updating. Deleting it removes the saved settings.
 
-Documentation: https://appnuno.com/prestashop
+Documentation: https://appnuno.com/docs

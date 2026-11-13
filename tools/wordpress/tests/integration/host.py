@@ -12,7 +12,7 @@ from integration.settings import choose_switch
 class WordPressAdapter(StoreAdapter):
     name = "WordPress"
     base_url = os.environ.get("WORDPRESS_SITE_URL", "http://127.0.0.1:8080").rstrip("/")
-    documentation_url = "https://appnuno.com/wordpress"
+    documentation_url = "https://appnuno.com/docs"
     version_key = "wordpress"
     sidebar_selector = "#adminmenuwrap"
     content_selector = "#wpbody-content"
