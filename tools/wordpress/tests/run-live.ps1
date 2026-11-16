@@ -1,7 +1,7 @@
 param(
     [string]$WordPressVersion = "7.1.4",
     [int]$WordPressPort = 8080,
-    [string]$WooCommerceVersion = "11.2.1",
+    [string]$WooCommerceVersion = "11.3.0",
     [string]$WooCommerceLine = ""
 )
 

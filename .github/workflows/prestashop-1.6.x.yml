@@ -10,16 +10,378 @@ jobs:
     runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
+      max-parallel: 4
       matrix:
         include:
-          - prestashop_tag: "1.6.1.0"
+          - prestashop_version: "1.6.0.1"
+            prestashop_tag: "1.6.0.1"
+            php_version: "5.6"
             mysql_tag: "5.6"
-          - prestashop_tag: "1.6-5.6-apache"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.2"
+            prestashop_tag: "1.6.0.2"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.3"
+            prestashop_tag: "1.6.0.3"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.4"
+            prestashop_tag: "1.6.0.4"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.5"
+            prestashop_tag: "1.6.0.5"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.6"
+            prestashop_tag: "1.6.0.6"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.7"
+            prestashop_tag: "1.6.0.7"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.8"
+            prestashop_tag: "1.6.0.8"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.9"
+            prestashop_tag: "1.6.0.9"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.11"
+            prestashop_tag: "1.6.0.11"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.12"
+            prestashop_tag: "1.6.0.12"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.13"
+            prestashop_tag: "1.6.0.13"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.0.14"
+            prestashop_tag: "1.6.0.14"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.0"
+            prestashop_tag: "1.6.1.0"
+            php_version: "5.6"
+            mysql_tag: "5.6"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.1"
+            prestashop_tag: "1.6.1.1"
+            php_version: "5.6"
             mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.2"
+            prestashop_tag: "1.6.1.2"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.3"
+            prestashop_tag: "1.6.1.3"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.4"
+            prestashop_tag: "1.6.1.4"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.5"
+            prestashop_tag: "1.6.1.5"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.6"
+            prestashop_tag: "1.6.1.6"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.7"
+            prestashop_tag: "1.6.1.7"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.8"
+            prestashop_tag: "1.6.1.8"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.9"
+            prestashop_tag: "1.6.1.9"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.10"
+            prestashop_tag: "1.6.1.10"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.11"
+            prestashop_tag: "1.6.1.11"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.12"
+            prestashop_tag: "1.6.1.12"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.13"
+            prestashop_tag: "1.6.1.13"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.14"
+            prestashop_tag: "1.6.1.14"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.15"
+            prestashop_tag: "1.6.1.15"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.16"
+            prestashop_tag: "1.6.1.16"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.17"
+            prestashop_tag: "1.6.1.17"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.18"
+            prestashop_tag: "1.6.1.18"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.19"
+            prestashop_tag: "1.6.1.19"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.20"
+            prestashop_tag: "1.6.1.20"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.21"
+            prestashop_tag: "1.6.1.21"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.22"
+            prestashop_tag: "1.6.1.22"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.23"
+            prestashop_tag: "1.6.1.23"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.24"
+            prestashop_tag: "1.6.1.24"
+            php_version: "5.6"
+            mysql_tag: "5.7"
+            test_kind: "release"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.6-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.24"
+            prestashop_tag: "1.6.1.24-php-5.5-boundary"
+            php_version: "5.5"
+            mysql_tag: "5.7"
+            test_kind: "php-lower-boundary"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-5.5-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
+          - prestashop_version: "1.6.1.24"
+            prestashop_tag: "1.6.1.24-php-7.1-boundary"
+            php_version: "7.1"
+            mysql_tag: "5.7"
+            test_kind: "php-upper-boundary"
+            build_source: true
+            base_image: "prestashop/prestashop:1.6-7.1-apache"
+            source_repository: "PrestaShop/PrestaShop-1.6"
+            mysql_legacy: true
     env:
       PRESTASHOP_TAG: ${{ matrix.prestashop_tag }}
+      PRESTASHOP_VERSION: ${{ matrix.prestashop_version }}
+      EXPECTED_PHP_VERSION: ${{ matrix.php_version }}
       APPNUNO_PRESTASHOP_LINE: 1.6.x
       MYSQL_TAG: ${{ matrix.mysql_tag }}
+      PRESTASHOP_BASE_IMAGE: ${{ matrix.base_image }}
+      PRESTASHOP_SOURCE_REPOSITORY: ${{ matrix.source_repository }}
+      COMPOSE_FILE: ${{ matrix.mysql_legacy && 'tools/prestashop/tests/docker/docker-compose.yml:tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml' || 'tools/prestashop/tests/docker/docker-compose.yml' }}
     steps:
       - uses: actions/checkout@v6
 
@@ -35,22 +397,38 @@ jobs:
 
       - name: Check the module PHP 5.4 syntax
         run: docker run --rm -v "$PWD:/repo:ro" --entrypoint sh cyberpoison/php:5.4-apache@sha256:d3bf257f2a482571b07fcc8b2fb7a48258b06456fad9f6a9a64cb6ee98866df5 -c 'find /repo/src/prestashop/appnuno /repo/src/shared/php/appnuno-config.php /repo/tools/prestashop/tests/docker -name "*.php" -print0 | xargs -0 -r -n1 php -l'
+      - name: Build the exact PrestaShop source image
+        if: matrix.build_source
+        run: |
+          docker build \
+            --file tools/prestashop/tests/docker/Dockerfile \
+            --build-arg PRESTASHOP_BASE_IMAGE="$PRESTASHOP_BASE_IMAGE" \
+            --build-arg PRESTASHOP_SOURCE_REPOSITORY="$PRESTASHOP_SOURCE_REPOSITORY" \
+            --build-arg PRESTASHOP_SOURCE_TAG="$PRESTASHOP_VERSION" \
+            --tag "prestashop/prestashop:$PRESTASHOP_TAG" tools/prestashop/tests/docker
 
       - name: Start PrestaShop with MySQL
-        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml -f tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml up -d --wait mysql prestashop
+        run: docker compose up -d --wait mysql prestashop
+
+      - name: Verify the PrestaShop version and PHP version
+        run: |
+          actual_version=$(docker compose exec -T prestashop php -r 'require "/var/www/html/config/config.inc.php"; echo _PS_VERSION_;')
+          actual_php=$(docker compose exec -T prestashop php -r 'echo PHP_MAJOR_VERSION . "." . PHP_MINOR_VERSION;')
+          test "$actual_version" = "$PRESTASHOP_VERSION"
+          test "$actual_php" = "$EXPECTED_PHP_VERSION"
 
       - name: Verify the PrestaShop MySQL installation
-        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml -f tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml run --rm installer-check
+        run: docker compose run --rm installer-check
 
       - name: Install the AppNuno module
         run: |
-          docker compose -f tools/prestashop/tests/docker/docker-compose.yml -f tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml exec -T prestashop cp /scripts/prepare-module.php /tmp/appnuno-prepare-module.php
-          docker compose -f tools/prestashop/tests/docker/docker-compose.yml -f tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml exec -T prestashop php /tmp/appnuno-prepare-module.php
+          docker compose exec -T prestashop cp /scripts/prepare-module.php /tmp/appnuno-prepare-module.php
+          docker compose exec -T prestashop php /tmp/appnuno-prepare-module.php
 
       - name: Check the AppNuno admin and storefront
         env:
           PRESTASHOP_SITE_URL: http://127.0.0.1:8088
-          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/prestashop-artifacts/${{ matrix.prestashop_version }}-${{ matrix.php_version }}-${{ matrix.test_kind }}
         run: |
           python3 -m pip install -r tools/prestashop/tests/requirements-ci.txt
           python3 -m playwright install --with-deps chromium
@@ -60,11 +438,11 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ matrix.prestashop_tag }}-browser-artifacts
-          path: ${{ runner.temp }}/prestashop-artifacts
+          name: prestashop-${{ matrix.prestashop_version }}-${{ matrix.php_version }}-${{ matrix.test_kind }}-browser-artifacts
+          path: ${{ runner.temp }}/prestashop-artifacts/${{ matrix.prestashop_version }}-${{ matrix.php_version }}-${{ matrix.test_kind }}
           if-no-files-found: warn
           retention-days: 7
 
       - name: Remove the temporary PrestaShop environment
         if: always()
-        run: docker compose -f tools/prestashop/tests/docker/docker-compose.yml -f tools/prestashop/tests/docker/docker-compose.mysql-legacy.yml down --volumes --remove-orphans
+        run: docker compose down --volumes --remove-orphans

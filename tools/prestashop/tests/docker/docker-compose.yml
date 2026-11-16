@@ -15,7 +15,7 @@ services:
       retries: 15
 
   prestashop:
-    image: prestashop/prestashop:${PRESTASHOP_TAG:-8.2-apache}
+    image: prestashop/prestashop:${PRESTASHOP_TAG:-9.2.1-8.1}
     environment:
       DB_SERVER: mysql
       DB_NAME: prestashop
@@ -30,8 +30,8 @@ services:
       PS_COUNTRY: us
       PS_LANGUAGE: en
       PS_ENABLE_SSL: 0
-      ADMIN_MAIL: admin@example.test
-      ADMIN_PASSWD: appnuno-local
+      ADMIN_MAIL: admin@admin.admin
+      ADMIN_PASSWD: admin1234
       APPNUNO_PUBLIC_DOMAIN: 127.0.0.1:${PRESTASHOP_PORT:-8088}
       APPNUNO_PRESTASHOP_LINE: ${APPNUNO_PRESTASHOP_LINE:-9.x}
     ports:
@@ -53,7 +53,7 @@ services:
       retries: 40
 
   installer-check:
-    image: prestashop/prestashop:${PRESTASHOP_TAG:-8.2-apache}
+    image: prestashop/prestashop:${PRESTASHOP_TAG:-9.2.1-8.1}
     entrypoint: ["/bin/sh", "/scripts/run-install-check.sh"]
     environment:
       DB_SERVER: mysql

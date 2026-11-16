@@ -129,7 +129,7 @@ if (!(int) Language::getIdByIso('lt')) {
     }
 }
 if (!Employee::employeeExists('limited@example.test')) {
-    $adminProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "admin@example.test"');
+    $adminProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "admin@admin.admin"');
     $profile = new Profile();
     $profileNames = array();
     $profileLanguages = Language::getLanguages(false);

@@ -1,6 +1,6 @@
 param(
-    [ValidateSet("1.6.1.0", "1.6-5.6-apache", "1.7.6-apache", "1.7.8-apache", "8.2-apache", "9.0-apache")]
-    [string]$PrestaShopTag = "8.2-apache",
+    [ValidateSet("1.6.1.0", "1.6-5.6-apache", "1.7.6-apache", "1.7.8-apache", "8.2-apache", "9.0-apache", "9.2.1-8.1")]
+    [string]$PrestaShopTag = "9.2.1-8.1",
     [int]$PrestaShopPort = 8088
 )
 

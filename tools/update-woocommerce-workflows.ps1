@@ -286,7 +286,7 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
         8 = @{ WordPress = '6.5.14'; WooCommerce = '8.9.5'; BuildArgument = ' 8' }
         9 = @{ WordPress = '6.8.12'; WooCommerce = '9.9.7'; BuildArgument = ' 9' }
         10 = @{ WordPress = '7.0.8'; WooCommerce = '10.9.4'; BuildArgument = ' 10' }
-        11 = @{ WordPress = '7.1.4'; WooCommerce = '11.2.1'; BuildArgument = '' }
+        11 = @{ WordPress = '7.1.4'; WooCommerce = '11.3.0'; BuildArgument = '' }
     }
     if ($browserTargets.ContainsKey([int]$woocommerceMajor)) {
         $browserTarget = $browserTargets[[int]$woocommerceMajor]

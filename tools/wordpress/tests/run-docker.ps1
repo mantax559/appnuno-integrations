@@ -7,7 +7,7 @@ param(
 $ErrorActionPreference = "Stop"
 $env:WORDPRESS_VERSION = $WordPressVersion
 $env:WORDPRESS_PORT = "$WordPressPort"
-$env:WOOCOMMERCE_VERSION = "11.2.1"
+$env:WOOCOMMERCE_VERSION = "11.3.0"
 $composeFile = Join-Path $PSScriptRoot "docker\docker-compose.yml"
 $exitCode = 0
 

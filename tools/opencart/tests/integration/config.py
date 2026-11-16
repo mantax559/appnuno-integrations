@@ -4,8 +4,8 @@ from pathlib import Path
 
 
 ADMIN_EMAIL: str = "admin@admin.admin"
-ADMIN_PASSWORD: str = "OpenCartLocal!4zQ9wL2p7N"
-ADMIN_USER: str = "admin"
+ADMIN_PASSWORD: str = "admin1234"
+ADMIN_USER: str = "admin@admin.admin"
 BASE_URL: str = os.environ.get("OPENCART_BASE_URL", "http://127.0.0.1:8080")
 FTP_PASSWORD: str = "opencart-ci-password"
 FTP_PORT: int = 2121

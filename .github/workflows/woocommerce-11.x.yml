@@ -104,19 +104,19 @@ jobs:
         run: php tools/wordpress/build-package.php
 
       - name: Install WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}
-        if: ${{ !(matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to') }}
+        if: ${{ !(matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.3.0' && matrix.compatibility_target == 'tested-up-to') }}
         env:
           APPNUNO_INSTALL_PLUGIN: "1"
         run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer
 
-      - name: Install WooCommerce 11.2.1 and keep the test store running
-        if: ${{ matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to' }}
+      - name: Install WooCommerce 11.3.0 and keep the test store running
+        if: ${{ matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.3.0' && matrix.compatibility_target == 'tested-up-to' }}
         env:
           APPNUNO_INSTALL_PLUGIN: "1"
         run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml -f tools/wordpress/tests/docker/docker-compose.live.yml up -d --build mysql wordpress && docker compose -f tools/wordpress/tests/docker/docker-compose.yml -f tools/wordpress/tests/docker/docker-compose.live.yml run --rm installer
 
       - name: Check the AppNuno admin and storefront
-        if: ${{ matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to' }}
+        if: ${{ matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.3.0' && matrix.compatibility_target == 'tested-up-to' }}
         env:
           APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/woocommerce-artifacts
         run: |
@@ -125,10 +125,10 @@ jobs:
           python3 tools/wordpress/tests/integration/admin.py
 
       - name: Upload browser test artifacts
-        if: ${{ always() && matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.2.1' && matrix.compatibility_target == 'tested-up-to' }}
+        if: ${{ always() && matrix.wordpress_version == '7.1.4' && matrix.woocommerce_version == '11.3.0' && matrix.compatibility_target == 'tested-up-to' }}
         uses: actions/upload-artifact@v7
         with:
-          name: woocommerce-11.2.1-browser-artifacts
+          name: woocommerce-11.3.0-browser-artifacts
           path: ${{ runner.temp }}/woocommerce-artifacts
           if-no-files-found: warn
           retention-days: 7

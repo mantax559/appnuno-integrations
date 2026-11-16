@@ -26,6 +26,18 @@
 | OpenCart | 2.0.x | [Instruction](downloads/opencart/2.0.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/2.0.x/appnuno-opencart-2.0.x.ocmod.zip) |
 | OpenCart | 1.5.x and older | Not supported | — |
 
+## Run the latest platforms locally
+
+Docker and PHP with the `zip` extension are required. Run these commands from the repository root; each platform uses a different port:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\opencart\tests\run-live.ps1 -OpenCartVersion 4.1.0.4 -OpenCartPort 8081
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.2.1-8.1 -PrestaShopPort 8088
+powershell -ExecutionPolicy Bypass -File .\tools\wordpress\tests\run-live.ps1 -WordPressVersion 7.1.4 -WordPressPort 8082 -WooCommerceVersion 11.3.0 -WooCommerceLine 11.x
+```
+
+Open OpenCart at `http://127.0.0.1:8081`, PrestaShop at `http://127.0.0.1:8088`, and WooCommerce at `http://127.0.0.1:8082`. Complete the OpenCart installer on first launch. Use `admin@admin.admin` / `admin1234` for each admin account.
+
 ## Generate OpenCart ZIP packages
 
 Run this command from the repository root. PHP must have the `zip` extension enabled. It builds or replaces ZIP packages for all supported OpenCart versions under `downloads/opencart/`.
@@ -56,6 +68,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 1.7.8-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 8.2-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.0-apache
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.2.1-8.1
 ```
 
 Each live environment stays running. Before starting another tag on the same port, stop the current stack without removing its data volumes. For example, to stop the 1.6 late stack:
@@ -91,16 +104,19 @@ php tools/wordpress/build-package.php 10
 php tools/wordpress/build-package.php
 ```
 
-## Generate WordPress and OpenCart workflows
+## Generate workflow files
 
-Run either platform-specific command from the repository root to regenerate only that platform's GitHub Actions workflow files:
+Run a platform-specific command from the repository root to regenerate only its GitHub Actions workflow files:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\update-wordpress-workflows.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\update-woocommerce-workflows.ps1
 powershell -ExecutionPolicy Bypass -File .\tools\update-opencart-workflows.ps1
+powershell -ExecutionPolicy Bypass -File .\tools\update-prestashop-workflows.ps1
 ```
 
-To regenerate both WordPress/WooCommerce and OpenCart workflows, run:
+The PrestaShop generator discovers stable releases from 1.6 onward and creates a workflow for each release line. If an exact image is unavailable, the workflow builds it from that release's official source tag.
+
+To regenerate the WooCommerce and OpenCart workflows together, run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\update-workflows.ps1

@@ -54,14 +54,14 @@ services:
     entrypoint: ["/bin/sh", "/scripts/prepare-store.sh"]
     environment:
       WORDPRESS_VERSION: ${WORDPRESS_VERSION:-7.1.4}
-      WOOCOMMERCE_VERSION: ${WOOCOMMERCE_VERSION:-11.2.1}
+      WOOCOMMERCE_VERSION: ${WOOCOMMERCE_VERSION:-11.3.0}
       WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_NAME: wordpress
       WORDPRESS_DB_USER: wordpress
       WORDPRESS_DB_PASSWORD: wordpress
       WORDPRESS_SITE_URL: http://127.0.0.1:${WORDPRESS_PORT:-8080}
       WORDPRESS_ADMIN_USER: admin
-      WORDPRESS_ADMIN_PASSWORD: "WooCommerceLocal!5hT9bC4n1P"
+      WORDPRESS_ADMIN_PASSWORD: "admin1234"
       WORDPRESS_ADMIN_EMAIL: admin@admin.admin
       WP_CLI_VERSION: ${WP_CLI_VERSION:-}
       APPNUNO_INSTALL_PLUGIN: ${APPNUNO_INSTALL_PLUGIN:-}
