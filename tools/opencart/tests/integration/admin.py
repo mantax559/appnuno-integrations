@@ -955,26 +955,28 @@ def assert_cart_badge_is_in_default_panel(page: Page) -> None:
     }""")
     if not cart_layout or any(not card["followsDestination"] or not card["hasSource"] or card["options"] != ["", "cart"] for card in cart_layout):
         raise AssertionError(f"Each tab should have a source selector immediately after Destination: {cart_layout}.")
-    second_tab = page.locator('#default-tabs .appnuno-tab').nth(1)
-    if second_tab.locator('[data-badge-source]').input_value() != "cart":
-        raise AssertionError("The legacy cart tab selection should be loaded as the cart source.")
-    first_tab = page.locator('#default-tabs .appnuno-tab').first
-    first_tab.locator('[data-badge-source]').select_option("cart")
-    if first_tab.locator('[data-badge-source]').input_value() != "cart" or second_tab.locator('[data-badge-source]').input_value() != "cart":
-        raise AssertionError("Badge sources should be assignable independently by tab.")
-    first_tab.locator('[data-badge-source]').select_option("")
-    if first_tab.locator('[data-badge-source]').input_value() or second_tab.locator('[data-badge-source]').input_value() != "cart":
-        raise AssertionError("Disabling one tab badge must preserve the other tab's source.")
-    second_key = second_tab.get_attribute("data-tab-key")
-    if not second_key:
-        raise AssertionError("A second seeded tab is required to verify independent badge source assignment.")
-    page.locator(f'#default-tabs [data-tab-target="{second_key}"]').click()
-    second_tab.locator('[data-badge-source]').select_option("cart")
-    original_viewport = page.viewport_size or {"width": 1280, "height": 900}
-    cart_key = page.locator('#default-tabs .appnuno-tab').evaluate_all("cards => { const card = cards.find(item => item.querySelector('[data-field=\"id\"]').value === 'cart') || cards[1]; return card ? card.dataset.tabKey : ''; }")
-    if not cart_key:
-        raise AssertionError("The seeded Cart tab must be available for the tab activation regression test.")
+    tab_keys = page.locator('#default-tabs .appnuno-tab').evaluate_all("""cards => Object.fromEntries(cards.map(card => [
+        card.querySelector('[data-field="id"]').value,
+        card.dataset.tabKey
+    ]))""")
+    cart_key = tab_keys.get("cart")
+    other_key = next((key for tab_id, key in tab_keys.items() if tab_id != "cart"), "")
+    if not cart_key or not other_key:
+        raise AssertionError(f"Both Cart and another seeded tab are required: {tab_keys}.")
     cart_tab = page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{cart_key}"]')
+    other_tab = page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{other_key}"]')
+    if cart_tab.locator('[data-badge-source]').input_value() != "cart":
+        raise AssertionError("The legacy cart tab selection should be loaded as the cart source.")
+    page.locator(f'#default-tabs [data-tab-target="{other_key}"]').click()
+    other_tab.locator('[data-badge-source]').select_option("cart")
+    if other_tab.locator('[data-badge-source]').input_value() != "cart" or cart_tab.locator('[data-badge-source]').input_value() != "cart":
+        raise AssertionError("Badge sources should be assignable independently by tab.")
+    other_tab.locator('[data-badge-source]').select_option("")
+    if other_tab.locator('[data-badge-source]').input_value() or cart_tab.locator('[data-badge-source]').input_value() != "cart":
+        raise AssertionError("Disabling one tab badge must preserve the other tab's source.")
+    page.locator(f'#default-tabs [data-tab-target="{cart_key}"]').click()
+    cart_tab.locator('[data-badge-source]').select_option("cart")
+    original_viewport = page.viewport_size or {"width": 1280, "height": 900}
     cart_link = page.locator(f'#default-tabs [data-tab-target="{cart_key}"]')
     try:
         for width in (390, 767, 768, 1024):
@@ -1077,7 +1079,10 @@ def assert_module_settings_persisted(page: Page) -> None:
         raise AssertionError("The newly added Lithuanian tab URL did not persist after reloading the settings page.")
     if saved_tab.locator('[data-badge-source]').input_value() != "cart":
         raise AssertionError("The cart badge tab selection did not persist after reloading the settings page.")
-    original_cart_tab = page.locator("#default-tabs .appnuno-tab").nth(1)
+    original_cart_key = tab_key_by_id(page, "cart")
+    if not original_cart_key:
+        raise AssertionError("The original Cart tab did not persist after reloading the settings page.")
+    original_cart_tab = page.locator(f'#default-tabs .appnuno-tab[data-tab-key="{original_cart_key}"]')
     if original_cart_tab.locator('[data-badge-source]').input_value() != "cart":
         raise AssertionError("The original cart badge tab selection did not persist alongside another assignment.")
     saved_page_tab = page.locator("#default-tabs .appnuno-tab").nth(3)
