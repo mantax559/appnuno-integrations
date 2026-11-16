@@ -13,6 +13,20 @@ body.appnuno-admin-screen .content-div,
   overflow: visible;
 }
 
+body.appnuno-admin-screen.page-sidebar-closed #content,
+body.appnuno-admin-screen.mobile-nav #content,
+body.appnuno-admin-screen.page-sidebar-closed #main,
+body.appnuno-admin-screen.mobile-nav #main {
+  margin-left: 0 !important;
+  width: auto !important;
+  max-width: 100%;
+}
+
+body.appnuno-admin-screen.mobile-nav #nav-sidebar,
+body.appnuno-admin-screen.page-sidebar-closed #nav-sidebar {
+  display: none !important;
+}
+
 body:has(.appnuno-admin) #footer,
 body.appnuno-admin-screen #footer {
   position: static;

@@ -1087,6 +1087,21 @@
 		card.appendChild(createUrlField(tab, path));
 		card.appendChild(createBadgeSourceField(tab, path));
 		card.appendChild(createPagesField(tab, path));
+		var idField = card.querySelector('[data-field="id"]');
+		var badgeField = card.querySelector('[data-badge-source]');
+		function syncBadgeFromLegacyId() {
+			if (!idField || !badgeField) {
+				return;
+			}
+			var tabId = idField.value || '';
+			if (Object.prototype.hasOwnProperty.call(badgeSources, tabId)) {
+				badgeField.value = badgeSources[tabId] || '';
+			}
+		}
+		if (idField) {
+			idField.addEventListener('input', syncBadgeFromLegacyId);
+			idField.addEventListener('change', syncBadgeFromLegacyId);
+		}
 		card.addEventListener('input', function () {
 			refreshTabNavigation();
 		});

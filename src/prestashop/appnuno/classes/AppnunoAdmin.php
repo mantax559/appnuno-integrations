@@ -82,6 +82,18 @@ final class AppnunoAdmin
         if (!$profileId) {
             return false;
         }
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            $idTab = (int) Tab::getIdFromClassName('AdminAppnuno');
+            if (!$idTab) {
+                return false;
+            }
+            if (defined('_PS_ADMIN_PROFILE_') && $profileId === (int) _PS_ADMIN_PROFILE_) {
+                return true;
+            }
+            $access = Profile::getProfileAccess($profileId, $idTab);
+
+            return is_array($access) && isset($access['edit']) && ((string) $access['edit'] === '1' || $access['edit'] === 1);
+        }
         $roleId = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
         if (!$roleId) {
             return false;
@@ -178,8 +190,16 @@ final class AppnunoAdmin
             $json = AppnunoConfig::defaultConfig();
             $configuration = json_decode($json, true);
         }
+        if (!is_array($configuration)) {
+            $configuration = array();
+        }
+        foreach (array('badgeSources', 'routes') as $objectKey) {
+            if (isset($configuration[$objectKey]) && is_array($configuration[$objectKey]) && !$configuration[$objectKey]) {
+                $configuration[$objectKey] = new stdClass();
+            }
+        }
 
-        return array($json, is_array($configuration) ? $configuration : array());
+        return array($json, $configuration);
     }
 
     private static function json($value)

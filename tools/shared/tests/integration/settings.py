@@ -247,6 +247,7 @@ def assert_responsive_layout(page: Page, adapter: StoreAdapter) -> None:
     try:
         for width in (320, 360, 375, 390, 414, 540, 767, 768, 820, 1024, 1280, 1440, 1600, 1920):
             page.set_viewport_size({"width": width, "height": 1000})
+            adapter.stabilize_admin_viewport(page)
             for section in ("#tab-navigation", "#tab-glass", "#tab-colors"):
                 before = page.locator("#default-tabs .appnuno-tab [data-field='id']").evaluate_all("fields => fields.map(field => field.value)")
                 page.locator(f'.appnuno-settings a[href="{section}"]').dispatch_event("click")
@@ -419,7 +420,10 @@ def assert_dialog_bounds(page: Page, dialog_id: str, sizes: tuple[tuple[int, int
             page.set_viewport_size({"width": width, "height": height})
             bounds = page.locator(dialog_id).evaluate(
                 """async dialog => {
-                    await Promise.all(dialog.getAnimations({ subtree: true }).map(animation => animation.finished.catch(() => {})));
+                    await Promise.all(dialog.getAnimations({ subtree: true }).map(animation => Promise.race([
+                        animation.finished.catch(() => {}),
+                        new Promise(resolve => setTimeout(resolve, 250))
+                    ])));
                     const content = dialog.querySelector('.appnuno-dialog-panel');
                     const body = dialog.querySelector('.appnuno-dialog-body');
                     const rect = content.getBoundingClientRect();
@@ -643,6 +647,16 @@ def fill_builtin_labels(page: Page, adapter: StoreAdapter) -> None:
         choose_catalog_icon(page, tab, icon_id)
 
 
+def submit_appnuno_settings(page: Page) -> None:
+    button = page.locator('button[form="form-appnuno"]')
+    try:
+        with page.expect_navigation(wait_until="domcontentloaded", timeout=60000):
+            button.click(timeout=15000)
+    except Exception:
+        button.click(timeout=15000, no_wait_after=True)
+    page.locator(".appnuno-alert-success").wait_for(timeout=30000)
+
+
 def save_settings(page: Page, adapter: StoreAdapter, directory) -> None:
     assert_cart_badge(page)
     fill_builtin_labels(page, adapter)
@@ -651,8 +665,7 @@ def save_settings(page: Page, adapter: StoreAdapter, directory) -> None:
     add_page_tab(page, adapter)
     add_hidden_tab(page, adapter)
     capture_screenshot(page, directory, "02-admin-settings-before-save.png")
-    page.locator('button[form="form-appnuno"]').click()
-    page.locator(".appnuno-alert-success").wait_for(timeout=20000)
+    submit_appnuno_settings(page)
     page.reload()
     saved = page.locator("#default-tabs .appnuno-tab").nth(2)
     saved.wait_for(state="attached")
@@ -706,8 +719,7 @@ def expect_admin_language(page: Page, phrases: tuple[str, ...]) -> None:
 
 def save_status(page: Page, enabled: bool) -> None:
     choose_switch(page, "input-status", "1" if enabled else "0")
-    page.locator('button[form="form-appnuno"]').click()
-    page.locator(".appnuno-alert-success").wait_for(timeout=20000)
+    submit_appnuno_settings(page)
 
 
 def reject_invalid_configuration(page: Page, adapter: StoreAdapter) -> None:

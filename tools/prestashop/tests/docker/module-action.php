@@ -30,10 +30,21 @@ if ($action === 'install') {
         fwrite(STDERR, "AppNuno module could not be installed.\n");
         exit(1);
     }
-    $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
     $limitedProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "limited@example.test"');
-    if ($updateRole && $limitedProfile) {
-        Db::getInstance()->delete('access', 'id_profile = ' . $limitedProfile . ' AND id_authorization_role = ' . $updateRole);
+    if ($limitedProfile) {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            $appnunoTab = (int) Tab::getIdFromClassName('AdminAppnuno');
+            if ($appnunoTab) {
+                Db::getInstance()->execute(
+                    'UPDATE `' . _DB_PREFIX_ . 'access` SET `edit` = 0 WHERE id_profile = ' . $limitedProfile . ' AND id_tab = ' . $appnunoTab
+                );
+            }
+        } else {
+            $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+            if ($updateRole) {
+                Db::getInstance()->delete('access', 'id_profile = ' . $limitedProfile . ' AND id_authorization_role = ' . $updateRole);
+            }
+        }
     }
     clearModuleCaches();
     fwrite(STDOUT, "installed\n");

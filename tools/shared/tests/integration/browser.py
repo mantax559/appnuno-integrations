@@ -25,7 +25,7 @@ def sdk_source() -> str | None:
 
 
 def capture_screenshot(page: Page, directory: Path, filename: str) -> None:
-    page.screenshot(path=str(directory / filename), full_page=True, animations="disabled")
+    page.screenshot(path=str(directory / filename), full_page=True, animations="disabled", timeout=15000)
 
 
 class BrowserSession:

@@ -52,6 +52,9 @@ class StoreAdapter:
     def open_settings(self, page: Page) -> None:
         raise NotImplementedError
 
+    def stabilize_admin_viewport(self, page: Page) -> None:
+        return None
+
     def switch_admin_language(self, page: Page, code: str) -> None:
         raise NotImplementedError
 

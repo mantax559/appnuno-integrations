@@ -38,10 +38,14 @@ class AdminAppnunoController extends ModuleAdminController
 
     public function setMedia($isNewTheme = false)
     {
-        parent::setMedia($isNewTheme);
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            parent::setMedia();
+        } else {
+            parent::setMedia($isNewTheme);
+        }
         $version = AppnunoPaths::assetVersion();
-        $this->addCSS(AppnunoPaths::assetUrl('settings.css') . '?v=' . $version, 'all', PHP_INT_MAX, false);
-        $this->addCSS(AppnunoPaths::assetUrl('adapter.css') . '?v=' . $version, 'all', PHP_INT_MAX, false);
+        $this->addCSS(AppnunoPaths::assetUrl('settings.css') . '?v=' . $version, 'all', null, false);
+        $this->addCSS(AppnunoPaths::assetUrl('adapter.css') . '?v=' . $version, 'all', null, false);
     }
 
     public function createTemplate($tpl_name)

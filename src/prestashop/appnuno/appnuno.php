@@ -69,15 +69,16 @@ class Appnuno extends Module
     {
         $id = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminAppnuno"');
         if (!$id) {
+            $this->ensureTabEmployeeContext();
             $tab = new Tab();
             $tab->active = 1;
             $tab->class_name = 'AdminAppnuno';
             $tab->module = $this->name;
-            $tab->id_parent = version_compare(_PS_VERSION_, '9.0.0', '<')
-                ? (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminParentModulesSf"')
-                : 0;
-            $tab->icon = 'explore';
-            $tab->enabled = 1;
+            $tab->id_parent = $this->tabParentId();
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+                $tab->icon = 'explore';
+                $tab->enabled = 1;
+            }
             $languages = Language::getLanguages(false);
             if (is_array($languages)) {
                 foreach ($languages as $language) {
@@ -86,22 +87,61 @@ class Appnuno extends Module
                     }
                 }
             }
-            if (!$tab->add()) {
+            $tab->add();
+            $id = (int) $tab->id;
+            if (!$id) {
+                $id = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminAppnuno"');
+            }
+            if (!$id) {
                 return false;
             }
-            $id = (int) $tab->id;
         }
-        $this->grantTabAccess();
+        $this->grantTabAccess($id);
 
         return $id > 0;
+    }
+
+    private function ensureTabEmployeeContext()
+    {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '>=')) {
+            return;
+        }
+        $context = Context::getContext();
+        if ($context->employee && (int) $context->employee->id_profile) {
+            return;
+        }
+        $employeeId = (int) Db::getInstance()->getValue(
+            'SELECT id_employee FROM `' . _DB_PREFIX_ . 'employee` WHERE id_profile = 1 ORDER BY id_employee ASC'
+        );
+        if ($employeeId) {
+            $context->employee = new Employee($employeeId);
+        }
+    }
+
+    private function tabParentId()
+    {
+        if (version_compare(_PS_VERSION_, '9.0.0', '>=')) {
+            return 0;
+        }
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            return (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminParentModules"');
+        }
+
+        return (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminParentModulesSf"');
     }
 
     private function uninstallTab()
     {
         $id = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminAppnuno"');
         if ($id) {
+            if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+                Db::getInstance()->delete('access', 'id_tab = ' . $id);
+            }
             $tab = new Tab($id);
             $tab->delete();
+        }
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            return;
         }
         foreach (array('CREATE', 'READ', 'UPDATE', 'DELETE') as $action) {
             $roleId = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "' . pSQL('ROLE_MOD_TAB_ADMINAPPNUNO_' . $action) . '"');
@@ -112,8 +152,13 @@ class Appnuno extends Module
         }
     }
 
-    private function grantTabAccess()
+    private function grantTabAccess($idTab)
     {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            $this->grantLegacyTabAccess((int) $idTab);
+
+            return;
+        }
         $profiles = Db::getInstance()->executeS('SELECT id_profile FROM `' . _DB_PREFIX_ . 'profile`');
         if (!is_array($profiles)) {
             return;
@@ -141,6 +186,27 @@ class Appnuno extends Module
                     ));
                 }
             }
+        }
+    }
+
+    private function grantLegacyTabAccess($idTab)
+    {
+        if (!$idTab) {
+            return;
+        }
+        $profiles = Db::getInstance()->executeS('SELECT id_profile FROM `' . _DB_PREFIX_ . 'profile`');
+        if (!is_array($profiles)) {
+            return;
+        }
+        foreach ($profiles as $profile) {
+            if (!isset($profile['id_profile'])) {
+                continue;
+            }
+            $idProfile = (int) $profile['id_profile'];
+            Db::getInstance()->execute(
+                'REPLACE INTO `' . _DB_PREFIX_ . 'access` (`id_profile`, `id_tab`, `view`, `add`, `edit`, `delete`) VALUES (' .
+                $idProfile . ', ' . $idTab . ', 1, 1, 1, 1)'
+            );
         }
     }
 }

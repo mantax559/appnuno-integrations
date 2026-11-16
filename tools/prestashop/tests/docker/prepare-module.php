@@ -2,6 +2,7 @@
 require '/var/www/html/config/config.inc.php';
 
 $package_lines = array(
+    '1.6.x' => array('minimum' => '1.6.0.0', 'maximum' => '1.6.99.99'),
     '1.7.x' => array('minimum' => '1.7.0.0', 'maximum' => '1.7.99.99'),
     '8.x' => array('minimum' => '8.0.0', 'maximum' => '8.99.99'),
     '9.x' => array('minimum' => '9.0.0', 'maximum' => '9.99.99'),
@@ -13,6 +14,16 @@ if (!is_string($package_line)
     || !version_compare(_PS_VERSION_, $package_lines[$package_line]['maximum'], '<=')) {
     fwrite(STDERR, "The AppNuno package line does not match the installed PrestaShop version.\n");
     exit(1);
+}
+
+$installDir = rtrim(_PS_ROOT_DIR_, '/\\') . '/install';
+if (is_dir($installDir)) {
+    $renamedInstallDir = rtrim(_PS_ROOT_DIR_, '/\\') . '/install-disabled-' . time();
+    if (!@rename($installDir, $renamedInstallDir)) {
+        fwrite(STDERR, "Unable to disable the PrestaShop install directory.\n");
+        exit(1);
+    }
+    passthru('rm -rf ' . escapeshellarg($renamedInstallDir));
 }
 
 $zip = '/appnuno/package/appnuno-prestashop-' . $package_line . '.zip';
@@ -88,7 +99,9 @@ if (!$installed) {
 }
 
 $defaultLanguage = new Language($idLang);
-$defaultLanguage->locale = 'en-GB';
+if (property_exists($defaultLanguage, 'locale')) {
+    $defaultLanguage->locale = 'en-GB';
+}
 $defaultLanguage->language_code = 'en-gb';
 if (!$defaultLanguage->update()) {
     fwrite(STDERR, "Unable to set the English locale.\n");
@@ -99,7 +112,9 @@ if (!(int) Language::getIdByIso('lt')) {
     $lithuanian->name = 'Lietuvių';
     $lithuanian->iso_code = 'lt';
     $lithuanian->language_code = 'lt-lt';
-    $lithuanian->locale = 'lt-LT';
+    if (property_exists($lithuanian, 'locale')) {
+        $lithuanian->locale = 'lt-LT';
+    }
     $lithuanian->date_format_lite = 'Y-m-d';
     $lithuanian->date_format_full = 'Y-m-d H:i:s';
     $lithuanian->active = true;
@@ -130,21 +145,48 @@ if (!Employee::employeeExists('limited@example.test')) {
         fwrite(STDERR, "Unable to create the limited employee profile.\n");
         exit(1);
     }
-    $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
-    $access = Db::getInstance()->executeS('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'access` WHERE id_profile = ' . $adminProfile);
-    if (is_array($access)) {
-        foreach ($access as $row) {
-            if (!isset($row['id_authorization_role'])) {
-                continue;
+    if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+        $appnunoTab = (int) Tab::getIdFromClassName('AdminAppnuno');
+        $access = Db::getInstance()->executeS('SELECT * FROM `' . _DB_PREFIX_ . 'access` WHERE id_profile = ' . $adminProfile);
+        if (is_array($access)) {
+            foreach ($access as $row) {
+                if (!isset($row['id_tab'])) {
+                    continue;
+                }
+                $idTab = (int) $row['id_tab'];
+                $edit = ($appnunoTab && $idTab === $appnunoTab) ? 0 : 1;
+                $view = isset($row['view']) ? (int) $row['view'] : 1;
+                $add = isset($row['add']) ? (int) $row['add'] : 1;
+                $delete = isset($row['delete']) ? (int) $row['delete'] : 1;
+                Db::getInstance()->execute(
+                    'REPLACE INTO `' . _DB_PREFIX_ . 'access` (`id_profile`, `id_tab`, `view`, `add`, `edit`, `delete`) VALUES (' .
+                    (int) $profile->id . ', ' . $idTab . ', ' . $view . ', ' . $add . ', ' . $edit . ', ' . $delete . ')'
+                );
             }
-            $roleId = (int) $row['id_authorization_role'];
-            if ($updateRole && $roleId === $updateRole) {
-                continue;
+        }
+        if ($appnunoTab) {
+            Db::getInstance()->execute(
+                'REPLACE INTO `' . _DB_PREFIX_ . 'access` (`id_profile`, `id_tab`, `view`, `add`, `edit`, `delete`) VALUES (' .
+                (int) $profile->id . ', ' . $appnunoTab . ', 1, 1, 0, 1)'
+            );
+        }
+    } else {
+        $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+        $access = Db::getInstance()->executeS('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'access` WHERE id_profile = ' . $adminProfile);
+        if (is_array($access)) {
+            foreach ($access as $row) {
+                if (!isset($row['id_authorization_role'])) {
+                    continue;
+                }
+                $roleId = (int) $row['id_authorization_role'];
+                if ($updateRole && $roleId === $updateRole) {
+                    continue;
+                }
+                Db::getInstance()->insert('access', array(
+                    'id_profile' => (int) $profile->id,
+                    'id_authorization_role' => $roleId,
+                ));
             }
-            Db::getInstance()->insert('access', array(
-                'id_profile' => (int) $profile->id,
-                'id_authorization_role' => $roleId,
-            ));
         }
     }
     $limited = new Employee();
@@ -155,7 +197,9 @@ if (!Employee::employeeExists('limited@example.test')) {
     $limited->id_profile = (int) $profile->id;
     $limited->id_lang = $idLang;
     $limited->active = 1;
-    $limited->optin = false;
+    if (property_exists($limited, 'optin')) {
+        $limited->optin = false;
+    }
     $limited->default_tab = (int) Db::getInstance()->getValue('SELECT id_tab FROM `' . _DB_PREFIX_ . 'tab` WHERE class_name = "AdminDashboard"');
     if (!$limited->add()) {
         fwrite(STDERR, "Unable to create the limited employee.\n");
@@ -166,10 +210,21 @@ if (!Employee::employeeExists('limited@example.test')) {
         exit(1);
     }
 }
-$updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
 $limitedProfile = (int) Db::getInstance()->getValue('SELECT id_profile FROM `' . _DB_PREFIX_ . 'employee` WHERE email = "limited@example.test"');
-if ($updateRole && $limitedProfile) {
-    Db::getInstance()->delete('access', 'id_profile = ' . (int) $limitedProfile . ' AND id_authorization_role = ' . (int) $updateRole);
+if ($limitedProfile) {
+    if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+        $appnunoTab = (int) Tab::getIdFromClassName('AdminAppnuno');
+        if ($appnunoTab) {
+            Db::getInstance()->execute(
+                'UPDATE `' . _DB_PREFIX_ . 'access` SET `edit` = 0 WHERE id_profile = ' . (int) $limitedProfile . ' AND id_tab = ' . $appnunoTab
+            );
+        }
+    } else {
+        $updateRole = (int) Db::getInstance()->getValue('SELECT id_authorization_role FROM `' . _DB_PREFIX_ . 'authorization_role` WHERE slug = "ROLE_MOD_TAB_ADMINAPPNUNO_UPDATE"');
+        if ($updateRole) {
+            Db::getInstance()->delete('access', 'id_profile = ' . (int) $limitedProfile . ' AND id_authorization_role = ' . (int) $updateRole);
+        }
+    }
 }
 
 $domain = getenv('APPNUNO_PUBLIC_DOMAIN');
@@ -257,6 +312,15 @@ if (!Customer::customerExists('customer@example.test')) {
     }
 }
 
+foreach (array('onboarding', 'gamification') as $noiseModule) {
+    if (Module::isInstalled($noiseModule) && Module::isEnabled($noiseModule)) {
+        $instance = Module::getInstanceByName($noiseModule);
+        if ($instance) {
+            $instance->disable();
+        }
+    }
+}
+
 Configuration::updateValue('module_appnuno_status', '0');
 Configuration::updateValue('module_appnuno_config', AppnunoConfig::defaultConfig(), true);
 if (method_exists('Tools', 'clearSf2Cache')) {
@@ -268,7 +332,14 @@ if (method_exists('Tools', 'clearSmartyCache')) {
 if (class_exists('Cache')) {
     Cache::clean('*');
 }
-passthru('chown -R www-data:www-data ' . escapeshellarg(_PS_ROOT_DIR_ . '/var') . ' ' . escapeshellarg($moduleDir));
+$ownershipTargets = array($moduleDir);
+if (is_dir(_PS_ROOT_DIR_ . '/var')) {
+    $ownershipTargets[] = _PS_ROOT_DIR_ . '/var';
+}
+if (is_dir(_PS_ROOT_DIR_ . '/cache')) {
+    $ownershipTargets[] = _PS_ROOT_DIR_ . '/cache';
+}
+passthru('chown -R www-data:www-data ' . implode(' ', array_map('escapeshellarg', $ownershipTargets)));
 fwrite(STDOUT, "AppNuno PrestaShop module is installed.\n");
 
 function appnunoTestPasswordHash($password)

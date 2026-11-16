@@ -109,6 +109,7 @@ def run(adapter: StoreAdapter) -> None:
         assert_not_published(session.store_page(), adapter, False)
         adapter.install(page)
         print("Module reinstalled.", flush=True)
+        adapter.login_admin(page)
         assert_reinstalled_disabled(page, adapter)
         save_status(page, True)
         assert_enabled(session.store_page(), adapter)

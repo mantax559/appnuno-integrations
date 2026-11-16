@@ -16,7 +16,7 @@
 | PrestaShop | 8.x | [Instruction](downloads/prestashop/8.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/8.x/appnuno-prestashop-8.x.zip) |
 | PrestaShop | 9.x | [Instruction](downloads/prestashop/9.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/9.x/appnuno-prestashop-9.x.zip) |
 | PrestaShop | 1.7.x | [Instruction](downloads/prestashop/1.7.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/1.7.x/appnuno-prestashop-1.7.x.zip) |
-| PrestaShop | 1.6.x | Instruction in preparation | — |
+| PrestaShop | 1.6.x | [Instruction](downloads/prestashop/1.6.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/prestashop/1.6.x/appnuno-prestashop-1.6.x.zip) |
 | PrestaShop | 1.5.x and older | Not supported | — |
 | OpenCart | 4.x | [Instruction](downloads/opencart/4.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/4.x/appnuno.ocmod.zip) |
 | OpenCart | 3.x | [Instruction](downloads/opencart/3.x/README.md) | [Download](https://github.com/mantax559/appnuno-integrations/raw/development/downloads/opencart/3.x/appnuno-opencart-3.x.ocmod.zip) |
@@ -36,9 +36,10 @@ php tools/opencart/build-package.php
 
 ## Generate the PrestaShop packages
 
-Run these commands from the repository root. PHP must have the `zip` extension enabled. They build the PrestaShop 1.7.x, 8.x and 9.x packages.
+Run these commands from the repository root. PHP must have the `zip` extension enabled. They build the PrestaShop 1.6.x, 1.7.x, 8.x and 9.x packages.
 
 ```powershell
+php tools/prestashop/build-package.php 16
 php tools/prestashop/build-package.php 17
 php tools/prestashop/build-package.php 8
 php tools/prestashop/build-package.php 9
@@ -49,16 +50,18 @@ php tools/prestashop/build-package.php 9
 The live setup script installs PrestaShop and the AppNuno module against MySQL. Docker must be installed.
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 1.6.1.0
+powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 1.6-5.6-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 1.7.6-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 1.7.8-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 8.2-apache
 powershell -ExecutionPolicy Bypass -File .\tools\prestashop\tests\run-live.ps1 -PrestaShopTag 9.0-apache
 ```
 
-Each live environment stays running. Before starting another tag on the same port, stop the current stack without removing its data volumes. For example, to stop the 1.7.8 stack:
+Each live environment stays running. Before starting another tag on the same port, stop the current stack without removing its data volumes. For example, to stop the 1.6 late stack:
 
 ```powershell
-docker compose -p appnuno-prestashop-live-1-7-8-apache -f .\tools\prestashop\tests\docker\docker-compose.yml -f .\tools\prestashop\tests\docker\docker-compose.live.yml down
+docker compose -p appnuno-prestashop-live-1-6-5-6-apache -f .\tools\prestashop\tests\docker\docker-compose.yml -f .\tools\prestashop\tests\docker\docker-compose.live.yml down
 ```
 
 To run the admin and storefront browser tests after starting one of the environments, install the test dependencies and set `PRESTASHOP_TAG` to the running image:
@@ -66,7 +69,7 @@ To run the admin and storefront browser tests after starting one of the environm
 ```powershell
 python -m pip install -r .\tools\prestashop\tests\requirements-ci.txt
 python -m playwright install chromium
-$env:PRESTASHOP_TAG = "1.7.8-apache"
+$env:PRESTASHOP_TAG = "1.6-5.6-apache"
 python .\tools\prestashop\tests\integration\admin.py
 ```
 

@@ -174,8 +174,8 @@ final class AppnunoCatalog
             array('label' => 'Search', 'url' => self::relativeUrl($link->getPageLink('search', null, $idLang))),
             array('label' => 'Account', 'url' => self::relativeUrl($link->getPageLink('my-account', null, $idLang))),
             array('label' => 'Login', 'url' => self::relativeUrl($link->getPageLink('authentication', null, $idLang))),
-            array('label' => 'Register', 'url' => self::relativeUrl($link->getPageLink('registration', null, $idLang))),
-            array('label' => 'Cart', 'url' => self::relativeUrl($link->getPageLink('cart', null, $idLang))),
+            array('label' => 'Register', 'url' => self::registerDestinationUrl($link, $idLang)),
+            array('label' => 'Cart', 'url' => self::cartDestinationUrl($link, $idLang)),
             array('label' => 'Checkout', 'url' => self::relativeUrl($link->getPageLink('order', null, $idLang))),
             array('label' => 'Contact', 'url' => self::relativeUrl($link->getPageLink('contact', null, $idLang))),
         );
@@ -222,6 +222,24 @@ final class AppnunoCatalog
         return self::translatedDestinations($destinations);
     }
 
+    private static function registerDestinationUrl($link, $idLang)
+    {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            return self::relativeUrl($link->getPageLink('authentication', null, $idLang, array('create_account' => '1')));
+        }
+
+        return self::relativeUrl($link->getPageLink('registration', null, $idLang));
+    }
+
+    private static function cartDestinationUrl($link, $idLang)
+    {
+        if (version_compare(_PS_VERSION_, '1.7.0.0', '<')) {
+            return self::relativeUrl($link->getPageLink('order', null, $idLang));
+        }
+
+        return self::relativeUrl($link->getPageLink('cart', null, $idLang));
+    }
+
     public static function currentRoute()
     {
         $controller = Context::getContext()->controller;
@@ -258,7 +276,7 @@ final class AppnunoCatalog
             'authentication' => 'account/login',
             'registration' => 'account/register',
             'cart' => 'checkout/cart',
-            'order' => 'checkout/checkout',
+            'order' => version_compare(_PS_VERSION_, '1.7.0.0', '<') ? 'checkout/cart' : 'checkout/checkout',
             'order-opc' => 'checkout/checkout',
             'order-confirmation' => 'checkout/checkout',
         );
