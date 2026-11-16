@@ -18,8 +18,8 @@ class WordPressAdapter(StoreAdapter):
     content_selector = "#wpbody-content"
     bootstrap_selector = 'script[src*="appnuno=bootstrap"]'
     special_path = "/shop/?on_sale=1"
-    admin_user = "admin"
-    admin_password = "appnuno-local"
+    admin_user = "admin@admin.admin"
+    admin_password = "WooCommerceLocal!5hT9bC4n1P"
     package_line = os.environ.get("APPNUNO_WOOCOMMERCE_LINE", "11.x")
     package = REPOSITORY / "downloads" / "woocommerce" / package_line / f"appnuno-woocommerce-{package_line}.zip"
 

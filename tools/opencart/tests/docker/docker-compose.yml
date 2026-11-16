@@ -18,6 +18,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.opencart
+      args:
+        PHP_VERSION: ${OPENCART_PHP_VERSION:-7.3}
+        PHP_BASE_IMAGE: "${OPENCART_PHP_BASE_IMAGE:-php:7.3-cli}"
     working_dir: /shared
     environment:
       OPENCART_VERSION: ${OPENCART_VERSION:-2.3.0.2}

@@ -1,4 +1,4 @@
-name: WordPress and WooCommerce 6.x compatibility
+name: WooCommerce 6.x compatibility
 
 on:
   push:
@@ -311,13 +311,13 @@ jobs:
       - name: Build the WooCommerce 6.x package
         run: php tools/wordpress/build-package.php 6
 
-      - name: Install WordPress ${{ matrix.wordpress_version }} and WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}
+      - name: Install WooCommerce ${{ matrix.woocommerce_version }} using PHP ${{ matrix.php_version }}
         if: ${{ !(matrix.wordpress_version == '6.0.18' && matrix.woocommerce_version == '6.9.5' && matrix.compatibility_target == 'tested-up-to') }}
         env:
           APPNUNO_INSTALL_PLUGIN: "1"
         run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml up --build --abort-on-container-exit --exit-code-from installer installer
 
-      - name: Install WordPress 6.0.18 and WooCommerce 6.9.5 and keep the store running
+      - name: Install WooCommerce 6.9.5 and keep the test store running
         if: ${{ matrix.wordpress_version == '6.0.18' && matrix.woocommerce_version == '6.9.5' && matrix.compatibility_target == 'tested-up-to' }}
         env:
           APPNUNO_INSTALL_PLUGIN: "1"
@@ -326,7 +326,7 @@ jobs:
       - name: Check the AppNuno admin and storefront
         if: ${{ matrix.wordpress_version == '6.0.18' && matrix.woocommerce_version == '6.9.5' && matrix.compatibility_target == 'tested-up-to' }}
         env:
-          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/wordpress-artifacts
+          APPNUNO_ARTIFACT_DIR: ${{ runner.temp }}/woocommerce-artifacts
         run: |
           python3 -m pip install -r tools/wordpress/tests/requirements-ci.txt
           python3 -m playwright install chromium
@@ -336,11 +336,11 @@ jobs:
         if: ${{ always() && matrix.wordpress_version == '6.0.18' && matrix.woocommerce_version == '6.9.5' && matrix.compatibility_target == 'tested-up-to' }}
         uses: actions/upload-artifact@v7
         with:
-          name: wordpress-woocommerce-6.9.5-browser-artifacts
-          path: ${{ runner.temp }}/wordpress-artifacts
+          name: woocommerce-6.9.5-browser-artifacts
+          path: ${{ runner.temp }}/woocommerce-artifacts
           if-no-files-found: warn
           retention-days: 7
 
-      - name: Remove the temporary WordPress environment
+      - name: Remove the temporary WooCommerce test store
         if: always()
         run: docker compose -f tools/wordpress/tests/docker/docker-compose.yml -f tools/wordpress/tests/docker/docker-compose.live.yml down --volumes --remove-orphans

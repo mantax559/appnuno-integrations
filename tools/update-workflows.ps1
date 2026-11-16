@@ -1,5 +1,7 @@
 param(
-    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\.github\workflows")
+    [string]$OutputDirectory = (Join-Path $PSScriptRoot "..\.github\workflows"),
+    [ValidateSet('All', 'WordPress', 'OpenCart')]
+    [string]$Platform = 'All'
 )
 
 $ErrorActionPreference = "Stop"
@@ -105,14 +107,17 @@ function Get-OpenCartReleases {
 $wordpressArchiveUrl = "https://wordpress.org/download/releases/"
 $woocommerceArchiveUrl = "https://developer.woocommerce.com/releases/"
 $outputPath = [System.IO.Path]::GetFullPath($OutputDirectory)
-$openCartReleases = @(Get-OpenCartReleases)
+New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
 
-if ($openCartReleases.Count -eq 0) {
-    throw "No stable OpenCart releases were found in the official GitHub release archive."
+$openCartReleases = @()
+if ($Platform -in @('All', 'OpenCart')) {
+    $openCartReleases = @(Get-OpenCartReleases)
+    if ($openCartReleases.Count -eq 0) {
+        throw "No stable OpenCart releases were found in the official GitHub release archive."
+    }
 }
 
-$openCartTemplates = @()
-
+if ($Platform -in @('All', 'WordPress')) {
 $wordpressHtml = (Invoke-WebRequest -UseBasicParsing -Uri $wordpressArchiveUrl -TimeoutSec 30).Content
 $woocommerceHtml = (Invoke-WebRequest -UseBasicParsing -Uri $woocommerceArchiveUrl -TimeoutSec 30).Content
 $latestWordPressByBranch = @{}
@@ -311,7 +316,6 @@ foreach ($release in $woocommerceMetadata) {
     }
 }
 
-New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
 Get-ChildItem -Path $outputPath -Filter 'wordpress-woocommerce-*.yml' -File | Remove-Item -Force
 $generatedWordPressFiles = [System.Collections.Generic.List[string]]::new()
 
@@ -428,7 +432,9 @@ foreach ($woocommerceMajor in $workflowEntriesByWooCommerceMajor.Keys | Sort-Obj
 Get-ChildItem -Path $outputPath -Filter 'wordpress-woocommerce-*.x.yml' -File |
     Where-Object { $_.Name -notin $generatedWordPressFiles } |
     Remove-Item -Force
+}
 
+if ($Platform -in @('All', 'OpenCart')) {
 $generatedOpenCartFiles = [System.Collections.Generic.List[string]]::new()
 $legacyOpenCartVersions = @{
     '2.0.x' = @('2.0.0.0', '2.0.1.0', '2.0.1.1', '2.0.2.0', '2.0.3.0', '2.0.3.1')
@@ -669,5 +675,14 @@ foreach ($template in $openCartTemplates) {
 if ($generatedOpenCartFiles.Count -eq 0) {
     throw "No OpenCart workflows were generated."
 }
+}
 
-Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases and generated $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."
+if ($Platform -eq 'WordPress') {
+    Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases."
+}
+elseif ($Platform -eq 'OpenCart') {
+    Write-Output "Generated $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."
+}
+else {
+    Write-Output "Generated $($generatedWordPressFiles.Count) WordPress workflows for $($woocommerceVersions.Count) WooCommerce releases and generated $($generatedOpenCartFiles.Count) OpenCart workflows from $($openCartReleases.Count) official releases."
+}

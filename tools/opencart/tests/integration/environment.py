@@ -15,7 +15,7 @@ from pyftpdlib.handlers import FTPHandler
 from pyftpdlib.servers import FTPServer
 
 from integration.compatibility import install_route
-from integration.config import BASE_URL, Runtime
+from integration.config import ADMIN_EMAIL, BASE_URL, Runtime
 
 
 def capture_screenshot(page: Page, artifact_dir: Path, filename: str) -> None:
@@ -49,7 +49,7 @@ def install_store(runtime: Runtime, page: Page) -> None:
     page.locator('input[name="db_prefix"]').fill("oc_")
     page.locator('input[name="username"]').fill(runtime.admin_user)
     page.locator('input[name="password"]').fill(runtime.admin_password)
-    page.locator('input[name="email"]').fill("opencart-ci@example.test")
+    page.locator('input[name="email"]').fill(ADMIN_EMAIL)
     click_install_continue(page)
     page.wait_for_url(install_route(runtime, "step_4"), timeout=30000)
 

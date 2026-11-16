@@ -7,7 +7,7 @@ if (!$idLang) {
     fwrite(STDERR, "Unknown PrestaShop language {$iso}.\n");
     exit(1);
 }
-$updated = Db::getInstance()->update('employee', array('id_lang' => $idLang), 'email = "admin@example.test"');
+$updated = Db::getInstance()->update('employee', array('id_lang' => $idLang), 'email = "admin@admin.admin"');
 if (!$updated) {
     fwrite(STDERR, "Unable to change the employee language.\n");
     exit(1);

@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from pathlib import Path
 
 
-ADMIN_PASSWORD: str = "opencart-ci-password"
+ADMIN_EMAIL: str = "admin@admin.admin"
+ADMIN_PASSWORD: str = "OpenCartLocal!4zQ9wL2p7N"
 ADMIN_USER: str = "admin"
 BASE_URL: str = os.environ.get("OPENCART_BASE_URL", "http://127.0.0.1:8080")
 FTP_PASSWORD: str = "opencart-ci-password"
 FTP_PORT: int = 2121
 FTP_USER: str = "opencart-ci"
-# OpenCart 3 release assets use inconsistent names; 3.0.0.2 has a tag but no release archive.
 OPENCART_30_ASSETS: dict[str, str] = {
     "3.0.0.0": "3.0.0.0-compiled.zip",
     "3.0.0.2": "",
